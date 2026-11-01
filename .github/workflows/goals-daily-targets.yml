@@ -1,0 +1,74 @@
+name: Move daily targets to My Goals
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/goals-daily-targets.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Move daily target card
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          if 'id="goals-daily-targets"' in s:
+              raise SystemExit(0)
+          assert 'id="my-goals-page"' in s and '</body>' in s, 'Goals page not installed'
+          s = s.replace('goals:foodGoalsPage}', 'goals:()=>window.foodGoalsPage()}', 1)
+          patch = '''
+          <script id="goals-daily-targets">
+          (() => {
+            const previousProfile = profileView;
+            const previousGoals = window.foodGoalsPage;
+            function targetCard(fragment) {
+              const heading = [...fragment.querySelectorAll('h2')].find(node => node.textContent.trim() === 'Ваша норма на день');
+              return heading?.closest('.card');
+            }
+            profileView = function() {
+              const template = document.createElement('template');
+              template.innerHTML = previousProfile();
+              targetCard(template.content)?.remove();
+              return template.innerHTML;
+            };
+            window.foodGoalsPage = function() {
+              const template = document.createElement('template');
+              template.innerHTML = previousGoals();
+              const source = document.createElement('template');
+              source.innerHTML = previousProfile();
+              const card = targetCard(source.content);
+              if (card) {
+                const heading = template.content.querySelector('h1');
+                if (heading) heading.after(card);
+                else template.content.prepend(card);
+              }
+              return template.innerHTML;
+            };
+            render();
+          })();
+          </script>
+          '''
+          p.write_text(s.replace('</body>', patch + '</body>', 1), encoding='utf-8')
+      - name: Check JavaScript syntax
+        run: |
+          python - <<'PY'
+          import re, subprocess
+          from pathlib import Path
+          s = Path('index.html').read_text(encoding='utf-8')
+          for js in re.findall(r'<script\b[^>]*>([\s\S]*?)</script>', s):
+              if js.strip():
+                  subprocess.run(['node', '--check'], input=js, text=True, check=True)
+          PY
+      - name: Commit change
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git diff --cached --quiet && exit 0
+          git commit -m "Move daily targets above questionnaire on My Goals"
+          git push origin HEAD:main
