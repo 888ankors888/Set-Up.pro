@@ -1,0 +1,40 @@
+/* Scoped food diary component; no external fonts or dependencies. */
+.card.nutrition-diary-premium,.nutrition-diary-premium{--nd-pane:rgba(255,255,255,.84);--nd-ink:#202c32;--nd-muted:#65747d;--nd-line:rgba(126,151,148,.16);--nd-accent:#08795e;--nd-soft:#edf8f3;background:var(--nd-pane);color:var(--nd-ink);border:1px solid rgba(255,255,255,.9);border-radius:28px;padding:26px;box-shadow:0 16px 50px rgba(34,65,58,.055),0 2px 6px rgba(34,65,58,.025);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);isolation:isolate}
+.nutrition-diary-premium .food-fit-good{--fit:#29ad85;--nd-tint:#f1faf6;--nd-tone:#16765a}
+.nutrition-diary-premium .food-fit-neutral{--fit:#e8b84f;--nd-tint:#fffbf1;--nd-tone:#83621b}
+.nutrition-diary-premium .food-fit-bad{--fit:#df7d8c;--nd-tint:#fff5f6;--nd-tone:#a34a5c}
+.nutrition-diary-premium .food-fit-key{display:flex;flex-wrap:wrap;gap:12px 22px;align-items:center;margin:0 0 18px;padding:0;color:var(--nd-muted);font-size:12.5px;line-height:1.6}
+.nutrition-diary-premium .food-fit-key>span{display:inline-flex;align-items:center;gap:9px;padding:0;border:0;font-weight:500}
+.nutrition-diary-premium .food-fit-key>span:before{content:'';width:8px;height:8px;flex:none;border-radius:50%;background:var(--fit);box-shadow:0 0 0 4px color-mix(in srgb,var(--fit) 11%,transparent)}
+.nutrition-diary-premium details.food-fit-note{margin:0 0 24px;padding:0 0 18px;border-bottom:1px solid var(--nd-line);font-size:13px;color:var(--nd-muted)}
+.nutrition-diary-premium details.food-fit-note>summary{display:flex;align-items:center;gap:9px;width:fit-content;list-style:none;cursor:pointer;font-size:13px;font-weight:600;color:var(--nd-accent);padding:5px 0}
+.nutrition-diary-premium details.food-fit-note>summary::-webkit-details-marker{display:none}
+.nutrition-diary-premium details.food-fit-note>summary:before{content:'›';font-size:23px;line-height:1;transition:transform .18s ease}
+.nutrition-diary-premium details.food-fit-note[open]>summary:before{transform:rotate(90deg)}
+.nutrition-diary-premium details.food-fit-note p{margin:12px 0 0;line-height:1.7;color:var(--nd-muted)}
+.nutrition-diary-premium .ent.food-fit{display:grid;grid-template-columns:minmax(0,1fr) auto 44px;align-items:center;gap:16px;margin:14px 0;padding:20px 18px 20px 22px;border:1px solid var(--nd-line);border-inline-start:4px solid var(--fit);border-radius:22px;background:var(--nd-tint);box-shadow:0 4px 14px rgba(31,64,56,.025);transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease}
+.nutrition-diary-premium .ent.food-fit.nd-has-photo{grid-template-columns:48px minmax(0,1fr) auto 44px}
+.nutrition-diary-premium .ent.food-fit>img{width:48px;height:48px;object-fit:cover;border-radius:14px;box-shadow:0 2px 6px rgba(20,40,32,.06)}
+.nutrition-diary-premium .nd-entry-main{min-width:0}
+.nutrition-diary-premium .nd-entry-main>b{display:block;font-size:19px;font-weight:650;letter-spacing:-.035em;line-height:1.3;color:var(--nd-ink);overflow-wrap:anywhere}
+.nutrition-diary-premium .nd-entry-meta{display:block;margin-top:6px;color:var(--nd-muted);font-size:12px;line-height:1.5}
+.nutrition-diary-premium .food-fit-label{display:block;margin-top:12px;font-size:12px;line-height:1.6}
+.nutrition-diary-premium .nd-status{display:inline-flex;padding:3px 9px;border-radius:999px;background:color-mix(in srgb,var(--fit) 11%,transparent);color:var(--nd-tone);font-weight:600;line-height:1.45}
+.nutrition-diary-premium .nd-reason{display:block;margin-top:7px;color:var(--nd-muted);font-size:12.5px;line-height:1.6;overflow-wrap:anywhere}
+.nutrition-diary-premium .nd-kcal{text-align:right!important;align-self:center;min-width:48px}
+.nutrition-diary-premium .nd-kcal>b{display:block;color:var(--nd-ink);font-size:29px;line-height:1.1;letter-spacing:-.045em;font-weight:650;font-variant-numeric:tabular-nums}
+.nutrition-diary-premium .nd-kcal>small{display:block;color:var(--nd-muted);font-size:10px;letter-spacing:.09em;text-transform:uppercase;margin-top:6px}
+.nutrition-diary-premium button.nd-delete{display:grid;place-items:center;width:44px;height:44px;padding:0;border:1px solid transparent;border-radius:14px;background:rgba(120,140,145,.075);color:var(--nd-muted);cursor:pointer;transition:background .18s ease,color .18s ease}
+.nutrition-diary-premium .nd-delete svg{width:18px;height:18px}
+.nutrition-diary-premium button.nd-add{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:56px;margin-top:28px;padding:15px 20px;background:linear-gradient(120deg,#096e57,#0b8668);color:#fff;border:1px solid rgba(255,255,255,.12);border-radius:18px;box-shadow:0 8px 20px rgba(8,121,94,.17);font-size:15px;font-weight:650;line-height:1.4;letter-spacing:-.015em;cursor:pointer;transition:transform .2s ease,box-shadow .2s ease,filter .2s ease}
+.nutrition-diary-premium .nd-add svg{width:21px;height:21px;flex:none;transition:transform .18s ease}
+.nutrition-diary-premium .nd-add[aria-expanded=true] svg{transform:rotate(45deg)}
+.nutrition-diary-premium #diary-entry-actions{margin:18px 0 0;padding:18px;border:1px solid var(--nd-line);border-radius:20px;box-shadow:none}
+.nutrition-diary-premium :is(button,summary):focus-visible{outline:3px solid color-mix(in srgb,var(--nd-accent) 55%,white);outline-offset:4px}
+@media(hover:hover) and (pointer:fine){.nutrition-diary-premium .ent.food-fit:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(31,64,56,.07)}.nutrition-diary-premium .nd-delete:hover{background:#fae8ed;color:#b34b62}.nutrition-diary-premium button.nd-add:hover{transform:translateY(-2px);box-shadow:0 12px 26px rgba(8,121,94,.22);filter:brightness(1.02)}}
+@media(max-width:520px){.card.nutrition-diary-premium,.nutrition-diary-premium{padding:19px 16px;border-radius:24px}.nutrition-diary-premium .food-fit-key{gap:9px 16px;font-size:11.5px}.nutrition-diary-premium .ent.food-fit{padding:17px 12px 17px 15px;gap:10px;grid-template-columns:minmax(0,1fr) auto 44px;border-radius:19px}.nutrition-diary-premium .ent.food-fit.nd-has-photo{grid-template-columns:38px minmax(0,1fr) auto 44px}.nutrition-diary-premium .ent.food-fit>img{width:38px;height:38px;border-radius:11px}.nutrition-diary-premium .nd-entry-main>b{font-size:18px}.nutrition-diary-premium .nd-kcal>b{font-size:26px}.nutrition-diary-premium button.nd-delete{width:44px;height:44px}.nutrition-diary-premium .nd-reason{font-size:12px}.nutrition-diary-premium button.nd-add{font-size:14px;padding-inline:12px}}
+:root[data-theme=dark] .nutrition-diary-premium{--nd-pane:rgba(28,40,35,.9);--nd-ink:#e9f1ed;--nd-muted:#acb9b2;--nd-line:rgba(179,207,190,.14);--nd-accent:#9bd9bd;border-color:var(--nd-line)}
+:root[data-theme=dark] .nutrition-diary-premium .food-fit-good{--nd-tint:#20392e;--nd-tone:#a6dec6}
+:root[data-theme=dark] .nutrition-diary-premium .food-fit-neutral{--nd-tint:#393321;--nd-tone:#ead393}
+:root[data-theme=dark] .nutrition-diary-premium .food-fit-bad{--nd-tint:#3b2931;--nd-tone:#efb6c2}
+@media(prefers-reduced-motion:reduce){.nutrition-diary-premium *{transition:none!important;animation:none!important}.nutrition-diary-premium .ent.food-fit:hover,.nutrition-diary-premium button.nd-add:hover{transform:none}}
