@@ -56,6 +56,7 @@ body{font:15px/1.6 system-ui,-apple-system,'Segoe UI',sans-serif;letter-spacing:
 @media(max-width:700px){.w{padding:20px 16px}.dashboard{grid-template-columns:1fr}.energy{gap:20px}.ring{width:144px;height:144px}.card{padding:20px}.big{font-size:36px}.week{gap:5px}.week button{border-radius:12px}.topline .tag{display:none}h1{font-size:28px}.quick{grid-template-columns:1fr 1fr}.m3 b{font-size:14px}.row{flex-wrap:wrap}.row>*{min-width:100px}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 </style>
+<style id="meal-estimate-style">.me-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:14px 0}.me-grid b,.me-grid span{display:block}.me-grid b{font-size:18px}.me-dish{box-shadow:none;margin:14px 0;border-radius:18px}.me-dish h3{margin:0;font-size:18px}.me-dish summary{cursor:pointer;color:var(--ac);padding:8px 0}.me-summary{background:var(--ac2);border-radius:18px;padding:18px;margin:16px 0}.me-summary h3{margin:4px 0}.me-summary .me-grid b{font-size:22px}#meal-estimate .chk input{flex:none}#me-edit{max-height:90vh;overflow-y:auto}@media(max-width:550px){.me-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.me-grid b{font-size:17px}}</style>
 </head>
 <body>
 <div class="w" id="app"></div>
@@ -451,88 +452,60 @@ const originalReport=aiReport;aiReport=async function(k,b){if(typeof claude==='u
 const originalRender=render;render=function(){originalRender();if(S.profile&&!editing){const br=document.querySelector('#app>.brand');if(br)br.insertAdjacentHTML('beforeend','<button class="x" style="margin-left:auto;font-size:15px" onclick="toggleTheme()" aria-label="Переключить тему">◐ Тема</button>');if(tab==='diary')document.getElementById('app').insertAdjacentHTML('beforeend','<button class="btn" onclick="manualOpen()">＋ Добавить запись за выбранный день</button>')}else{const h=document.querySelector('#app>h1');if(h&&!S.profile)h.insertAdjacentHTML('beforebegin','<div class="welcome"><div class="eyebrow">FOOD.PRO / НОВЫЙ РИТМ</div><h2>Питание без лишней сложности</h2><div class="mu">Дневник, привычки и прогресс — в одном месте. Заполните профиль, чтобы начать.</div></div>')}};
 
 
-/* food.pro — GigaChat text input */
-const FOOD_API='https://food-pro-api.onrender.com';
-let aiAccess='',aiDraft='',aiRows=[],aiQuestions=[],aiRunning=false,aiError='',aiDate='',aiMeal='';
-function aiLauncher(){return `<section class="card" id="ai-input"><div class="eyebrow">GigaChat · текстовый ввод</div><h2>Что вы ели?</h2><p class="mu">Опишите продукты и порции. Перед записью проверьте вес и выберите соответствующие продукты из каталога.</p><label for="ai-description">Описание еды</label><textarea id="ai-description" rows="3" maxlength="2000" placeholder="Рис 150 г после варки и два варёных яйца" oninput="aiDraft=this.value">${esc(aiDraft)}</textarea><div class="row" style="margin-top:12px"><button class="btn" onclick="aiOpen()">Разобрать через ИИ</button><button class="btn s" onclick="aiOpenSettings()">Доступ к ИИ</button></div><p class="subtle">На сервер отправляется только описание еды, без анкеты и истории дневника.</p></section>`}
-const todayBeforeTextAI=todayView;
-todayView=function(){return todayBeforeTextAI().replace('<div class="quick">',aiLauncher()+'<div class="quick">')};
-function aiDialog(){let d=document.getElementById('ai-dialog');if(!d){d=document.createElement('dialog');d.id='ai-dialog';d.style.width='min(760px,94vw)';d.style.maxHeight='90vh';d.style.overflowY='auto';document.body.appendChild(d)}return d}
-function aiOpenSettings(){aiOpen(true)}
-function aiOpen(settings=false){
- const input=document.getElementById('ai-description');if(input)aiDraft=input.value;
- if(!aiDate)aiDate=tab==='diary'?day:today();if(!aiMeal)aiMeal=mealNow();
- const d=aiDialog();aiDraw();if(!d.open)d.showModal();
- if(settings||!aiAccess){document.getElementById('ai-password').focus();return}
- if(aiDraft.trim()&&!aiRows.length&&!aiRunning)aiParse();
+/* Автооценка приёма пищи. Контракт API: POST /api/food/estimate -> {dishes:[{name,ingredients:[{name,quantity,unit,assumed}],assumptions:[],nutrition:{kcal:{min,max},protein:{min,max},fat:{min,max},carbs:{min,max}}}],questions:[]}. */
+const MEAL_ESTIMATE_API='https://food-pro-api.onrender.com/api/food/estimate';
+let ME={text:'',sourceText:'',dishes:[],questions:[],busy:false,error:'',demo:false,date:'',meal:'',confirmed:false};
+const ME_KEYS=[['kcal','Ккал'],['protein','Белки, г'],['fat','Жиры, г'],['carbs','Углеводы, г']];
+const meRound=n=>Math.round((n+Number.EPSILON)*10)/10;
+const meNum=n=>meRound(n).toLocaleString('ru-RU');
+const meRange=r=>r.min===r.max?meNum(r.min):meNum(r.min)+'–'+meNum(r.max);
+function meNormalize(data){
+ if(!data||!Array.isArray(data.dishes)||data.dishes.length>30)throw Error('Сервер должен вернуть массив dishes (не больше 30 блюд). Требуется новый формат API.');
+ return {dishes:data.dishes.map(d=>{
+  if(typeof d.name!=='string'||!d.name.trim()||d.name.length>200)throw Error('Некорректное название блюда');
+  const nutrition={};for(const [k] of ME_KEYS){const r=d.nutrition?.[k];if(!r||!Number.isFinite(r.min)||!Number.isFinite(r.max)||r.min<0||r.max<r.min||r.max>100000)throw Error('Некорректный диапазон КБЖУ: '+k);nutrition[k]={min:r.min,max:r.max}}
+  return {name:d.name,ingredients:(Array.isArray(d.ingredients)?d.ingredients:[]).slice(0,50).map(x=>({name:String(x.name||'').slice(0,200),quantity:x.quantity==null?null:String(x.quantity).slice(0,50),unit:String(x.unit||'').slice(0,40),assumed:!!x.assumed})),assumptions:(Array.isArray(d.assumptions)?d.assumptions:[]).slice(0,20).map(x=>String(x).slice(0,500)),nutrition,baseNutrition:JSON.parse(JSON.stringify(nutrition)),scale:1};
+ }),questions:(Array.isArray(data.questions)?data.questions:[]).slice(0,20).map(x=>String(x).slice(0,500))};
 }
-function aiCandidates(row){
- const norm=t=>String(t||'').toLowerCase().replace(/ё/g,'е');
- const words=norm(row.name+' '+(row.preparation||'')).split(/[^а-яa-z0-9]+/).filter(w=>w.length>2);
- return FD.map((food,i)=>({food,i,score:words.reduce((v,w)=>v+(norm(food.n).includes(w.slice(0,Math.min(w.length,5)))?1:0),0)})).sort((a,b)=>b.score-a.score||a.food.n.localeCompare(b.food.n,'ru'));
+function meTotals(){const totals=Object.fromEntries(ME_KEYS.map(([k])=>[k,{min:0,max:0}]));for(const d of ME.dishes)for(const [k] of ME_KEYS){totals[k].min+=d.nutrition[k].min;totals[k].max+=d.nutrition[k].max}return totals}
+function meCard(d,i){return `<article class="card me-dish"><div class="topline"><h3>${esc(d.name)}</h3><button class="x" onclick="meDelete(${i})" aria-label="Удалить блюдо">×</button></div><div class="me-grid">${ME_KEYS.map(([k,n])=>`<div><span class="subtle">${n}</span><b>~ ${meRange(d.nutrition[k])}</b></div>`).join('')}</div><details><summary>Состав и предположения</summary><ul>${d.ingredients.map(x=>`<li>${esc(x.name)}${x.quantity!=null?' — '+esc(x.quantity)+' '+esc(x.unit):''}${x.assumed?' <span class="subtle">(предположение)</span>':''}</li>`).join('')}</ul>${d.assumptions.length?`<ul class="subtle">${d.assumptions.map(a=>`<li>${esc(a)}</li>`).join('')}</ul>`:''}${d.scale!==1?`<p class="subtle">Состав указан для исходной порции; к диапазонам КБЖУ применён множитель ×${d.scale}. Это пропорциональный пересчёт, не новая оценка рецепта.</p>`:''}</details><div class="row"><div><label for="me-scale-${i}">Размер порции</label><select id="me-scale-${i}" onchange="meScale(${i},this.value)">${[[0.5,'½ порции'],[0.75,'¾ порции'],[1,'Исходная порция'],[1.5,'1½ порции'],[2,'Две порции']].map(([v,n])=>`<option value="${v}" ${d.scale===v?'selected':''}>${n}</option>`).join('')}</select></div><button class="btn s" style="align-self:end" onclick="meEdit(${i})">Изменить КБЖУ</button></div></article>`}
+function meView(){
+ if(!ME.date)ME.date=today();if(!ME.meal)ME.meal=mealNow();
+ const t=meTotals();return `<section class="card" id="meal-estimate"><div class="eyebrow">food.pro / оценка приёма пищи</div><h2>Опишите, что вы ели</h2><p class="mu">Отдельные блюда, их состав, примерные КБЖУ и итог — без обязательного взвешивания.</p><label for="me-text">Описание еды</label><textarea id="me-text" rows="3" maxlength="2000" ${ME.busy?'disabled':''} placeholder="2 жареных яйца и бутерброд с сыром" oninput="ME.text=this.value;ME.confirmed=false;const c=document.getElementById('me-confirm');if(c)c.checked=false">${esc(ME.text)}</textarea><div class="row" style="margin-top:12px"><button class="btn" onclick="meRequest()" ${ME.busy?'disabled':''}>${ME.busy?'Разбираю приём пищи…':'Рассчитать через ИИ'}</button><button class="btn s" onclick="meExample()" ${ME.busy?'disabled':''}>Посмотреть пример</button></div><p class="subtle">Публичный API, без ввода пароля. Отправляется только описание еды. Новый серверный маршрут /api/food/estimate должен быть опубликован отдельно.</p><div role="status" aria-live="polite">${ME.error?`<div class="tip w2">${esc(ME.error)}</div>`:''}</div>${ME.dishes.length?`
+ ${ME.demo?'<div class="tip w2">Демонстрационный пример по заданным диапазонам. Запрос к ИИ не выполнялся. Сохранение примера в дневник отключено.</div>':'<div class="tip">Приблизительная оценка ИИ. Если порция не указана, модель может принять типичную — проверьте предположения.</div>'}
+ <p class="subtle">Разбор описания: «${esc(ME.sourceText)}»</p>${ME.dishes.map(meCard).join('')}
+ <section class="me-summary"><div class="eyebrow">Весь приём пищи</div><h3>Итого — примерно</h3><div class="me-grid">${ME_KEYS.map(([k,n])=>`<div><span>${n}</span><b>~ ${meRange(t[k])}</b></div>`).join('')}</div><p class="subtle">Итог сложен из диапазонов блюд. Для дневных графиков будет использована середина каждого диапазона. Это не точное измерение.</p></section>
+ ${ME.questions.length?`<div class="tip"><b>Что можно уточнить</b><ul>${ME.questions.map(q=>`<li>${esc(q)}</li>`).join('')}</ul><span class="subtle">Исправьте описание и повторите расчёт. Уточнения не блокируют сохранение приблизительной оценки.</span></div>`:''}
+ <div class="row"><div><label for="me-date">Дата</label><input id="me-date" type="date" value="${esc(ME.date)}" max="${today()}" onchange="ME.date=this.value"></div><div><label for="me-meal">Приём пищи</label><select id="me-meal" onchange="ME.meal=this.value">${['Завтрак','Обед','Ужин','Перекус'].map(m=>`<option ${m===ME.meal?'selected':''}>${m}</option>`).join('')}</select></div></div><label class="chk"><input id="me-confirm" type="checkbox" ${ME.confirmed?'checked':''} onchange="ME.confirmed=this.checked">Принимаю приблизительную оценку и проверил предположения</label><button class="btn" onclick="meSave()" ${ME.demo||ME.busy?'disabled':''}>Сохранить приём пищи в дневник</button>`:''}</section>`;
 }
-function aiDraw(){
- const d=aiDialog();
- d.innerHTML=`<div class="topline"><div><div class="eyebrow">food.pro / GigaChat</div><h2>Добавить еду текстом</h2></div><button type="button" class="x" onclick="document.getElementById('ai-dialog').close()" aria-label="Закрыть">×</button></div>
- <details ${!aiAccess?'open':''}><summary>Пароль доступа к серверу ${aiAccess?'· задан':''}</summary><p class="subtle">Введите APP_ACCESS_TOKEN из Render. Не ключ GigaChat. Пароль хранится только в памяти этой вкладки до перезагрузки.</p><label for="ai-password">Пароль сервера</label><input id="ai-password" type="password" autocomplete="off" placeholder="APP_ACCESS_TOKEN" value="${esc(aiAccess)}" oninput="aiAccess=this.value"><button class="btn s" style="margin-top:8px" onclick="aiAccess='';aiDraw()">Забыть пароль</button></details>
- <label for="ai-text">Описание еды</label><textarea id="ai-text" rows="3" maxlength="2000" ${aiRunning?'disabled':''} oninput="aiDraft=this.value">${esc(aiDraft)}</textarea>
- <div class="row"><div><label for="ai-date">Дата записи</label><input id="ai-date" type="date" max="${today()}" value="${esc(aiDate)}" onchange="aiDate=this.value"></div><div><label for="ai-meal">Приём пищи</label><select id="ai-meal" onchange="aiMeal=this.value">${['Завтрак','Обед','Ужин','Перекус'].map(m=>`<option ${m===aiMeal?'selected':''}>${m}</option>`).join('')}</select></div></div>
- <p class="subtle">Описание отправляется в GigaChat через сервер food.pro. Медицинские сведения добавлять не нужно.</p>
- <button class="btn" style="margin-top:12px" ${aiRunning?'disabled':''} onclick="aiParse()">${aiRunning?'Разбираю описание…':aiRows.length?'Разобрать заново':'Разобрать'}</button>
- <div role="status" aria-live="polite">${aiError?`<div class="tip w2">${esc(aiError)}</div>`:''}</div>
- ${aiQuestions.length?`<div class="tip"><b>Уточнения модели</b><ul>${aiQuestions.map(q=>`<li>${esc(q)}</li>`).join('')}</ul><span class="subtle">Если уточнение меняет состав, исправьте описание и нажмите «Разобрать заново». Это удалит текущие правки карточек.</span></div>`:''}
- ${aiRows.length?`<h3>Проверьте продукты</h3><p class="subtle">Список каталога отсортирован по сходству слов, это не подтверждённое совпадение. Выберите вариант сами. КБЖУ берутся из существующего усреднённого каталога на 100 г, а не из ответа ИИ.</p>${aiRows.map((r,i)=>aiRowHtml(r,i)).join('')}<div id="ai-total" class="tip"></div><label class="chk"><input id="ai-confirm" type="checkbox">Я проверил состав, приготовление, вес и значения каталога</label><button class="btn" id="ai-save" onclick="aiSave()">Сохранить в дневник</button>`:''}`;
- aiTotals();
+function meRefresh(){const el=document.getElementById('meal-estimate');if(el)el.outerHTML=meView()}
+function meDelete(i){ME.dishes.splice(i,1);ME.confirmed=false;meRefresh()}
+function meScale(i,v){const n=Number(v);if(![0.5,0.75,1,1.5,2].includes(n))return;const d=ME.dishes[i];d.scale=n;for(const [k] of ME_KEYS)d.nutrition[k]={min:d.baseNutrition[k].min*n,max:d.baseNutrition[k].max*n};ME.confirmed=false;meRefresh()}
+function meExample(){if(ME.dishes.length&&!confirm('Заменить текущий результат демонстрационным примером?'))return;const result=meNormalize({dishes:[{name:'2 жареных яйца (на масле)',ingredients:[{name:'Яйца',quantity:2,unit:'шт.',assumed:false},{name:'Масло для жарки',quantity:null,unit:'',assumed:true}],assumptions:['Количество масла не указано; диапазон иллюстрирует неопределённость.'],nutrition:{kcal:{min:190,max:240},protein:{min:12,max:14},fat:{min:15,max:20},carbs:{min:1,max:1}}},{name:'Бутерброд с сыром',ingredients:[{name:'Хлеб',quantity:1,unit:'ломтик',assumed:true},{name:'Сыр',quantity:20,unit:'г',assumed:true}],assumptions:['Принят один ломтик хлеба и около 20 г сыра. Дополнительное масло на хлеб не добавлено.'],nutrition:{kcal:{min:150,max:220},protein:{min:7,max:9},fat:{min:6,max:9},carbs:{min:18,max:25}}}],questions:[]});Object.assign(ME,result,{text:'2 жареных яйца и бутерброд с сыром',sourceText:'2 жареных яйца и бутерброд с сыром',demo:true,error:'',confirmed:false});meRefresh()}
+async function meRequest(){
+ if(ME.busy)return;if(ME.text.trim().length<2){ME.error='Введите описание еды — минимум два символа.';meRefresh();return}
+ if(ME.dishes.length&&!confirm('Новый расчёт заменит текущие блюда и правки. Продолжить?'))return;
+ const description=ME.text.trim();ME.busy=true;ME.error='';meRefresh();const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),90000);
+ try{const response=await fetch(MEAL_ESTIMATE_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:description}),signal:controller.signal,credentials:'omit',cache:'no-store'});const data=await response.json().catch(()=>null);if(!response.ok){const errors={404:'На сервере ещё нет /api/food/estimate. Нужен новый обработчик оценки КБЖУ; прежний /api/food/parse возвращает только продукты.',401:'Сервер требует авторизацию. Для этой формы нужен публичный маршрут оценки с лимитами.',429:'Лимит запросов исчерпан или сервер занят. Попробуйте позже.',502:'Не удалось получить корректную оценку от GigaChat. Уточните описание или повторите позже.',503:'Сервис оценки временно не настроен или недоступен.'};throw Error(errors[response.status]||'Ошибка API: '+response.status)}const normalized=meNormalize(data);if(!normalized.dishes.length)throw Error('В описании не найдены блюда. Уточните текст.');Object.assign(ME,normalized,{sourceText:description,demo:false,confirmed:false});}
+ catch(e){ME.error=e.name==='AbortError'?'Сервер не ответил за 90 секунд.':e instanceof TypeError?'Браузер не получил ответ API. Проверьте CORS и доступность сервера; используйте опубликованный сайт, а не file://.':e.message;}
+ finally{clearTimeout(timer);ME.busy=false;meRefresh()}
 }
-function aiRowHtml(r,i){
- return `<section class="card" style="padding:14px"><div class="topline"><b>${esc(r.name)}</b><button class="x" aria-label="Удалить продукт" onclick="aiRows.splice(${i},1);aiDraw()">×</button></div><p class="subtle">Распознано: ${r.quantity!=null?esc(r.quantity)+' '+esc(r.unit||'шт.')+'; ':''}${r.weight_g!=null?esc(r.weight_g)+' г; ':''}${esc(r.preparation||'приготовление не указано')}</p><label for="ai-food-${i}">Соответствующий продукт из каталога</label><select id="ai-food-${i}" onchange="aiRows[${i}].food=this.value===''?null:Number(this.value);aiTotals()"><option value="">Выберите продукт — автоматически не подставляется</option>${aiCandidates(r).map(x=>`<option value="${x.i}" ${r.food===x.i?'selected':''}>${esc(x.food.n)} · ${x.food.k} ккал/100 г</option>`).join('')}</select><label for="ai-weight-${i}">Вес съедобной части, г ${r.quantity!=null?'(общий вес всей порции)':''}</label><input id="ai-weight-${i}" type="number" min="0.1" max="100000" step="0.1" value="${r.grams??''}" placeholder="Взвесьте без скорлупы, костей и упаковки" oninput="aiRows[${i}].grams=this.value===''?null:Number(this.value);aiTotals()"><div class="subtle" id="ai-numbers-${i}" style="margin-top:8px"></div></section>`;
+function meEdit(i){const d=ME.dishes[i];let dialog=document.getElementById('me-edit');if(!dialog){dialog=document.createElement('dialog');dialog.id='me-edit';document.body.appendChild(dialog)}dialog.innerHTML=`<form id="me-edit-form"><h2>Исправить оценку блюда</h2><label>Название</label><input name="name" required maxlength="200" value="${esc(d.name)}"><p class="subtle">Если состав изменился, надёжнее исправить описание и повторить разбор. Здесь можно вручную поправить диапазоны всей текущей порции.</p>${ME_KEYS.map(([k,n])=>`<label>${n}</label><div class="row"><div><label>От</label><input type="number" name="${k}-min" min="0" max="100000" step="any" value="${d.nutrition[k].min}" required></div><div><label>До</label><input type="number" name="${k}-max" min="0" max="100000" step="any" value="${d.nutrition[k].max}" required></div></div>`).join('')}<p id="me-edit-error" role="alert"></p><div class="row" style="margin-top:14px"><button type="button" class="btn s" onclick="document.getElementById('me-edit').close()">Отмена</button><button class="btn">Применить</button></div></form>`;document.getElementById('me-edit-form').onsubmit=e=>{e.preventDefault();const data=new FormData(e.target),nutrition={};for(const [k] of ME_KEYS){const min=Number(data.get(k+'-min')),max=Number(data.get(k+'-max'));if(!Number.isFinite(min)||!Number.isFinite(max)||min<0||max<min||max>100000){document.getElementById('me-edit-error').textContent='Проверьте диапазоны: «до» не может быть меньше «от».';return}nutrition[k]={min,max}}d.name=String(data.get('name')).trim();if(!d.name)return;d.nutrition=nutrition;d.baseNutrition=JSON.parse(JSON.stringify(nutrition));d.scale=1;d.assumptions.push('Диапазоны КБЖУ вручную изменены пользователем.');ME.confirmed=false;dialog.close();meRefresh()};dialog.showModal()}
+function meSave(){
+ if(ME.demo||ME.busy||!ME.dishes.length)return;
+ if(!ME.confirmed){toast('Подтвердите приблизительную оценку');return}
+ if(ME.text.trim()!==ME.sourceText){ME.error='Описание изменилось после расчёта. Выполните новый разбор перед сохранением.';meRefresh();return}
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(ME.date)||!Number.isFinite(dt(ME.date).getTime())||dk(dt(ME.date))!==ME.date||ME.date>today()||!['Завтрак','Обед','Ужин','Перекус'].includes(ME.meal)){toast('Проверьте дату и приём пищи');return}
+ const checked=meNormalize({dishes:ME.dishes,questions:ME.questions});
+ const group=crypto.randomUUID(),time=new Date().toTimeString().slice(0,5),t=meTotals(),mid=r=>meRound((r.min+r.max)/2);
+ const added=checked.dishes.map((d,i)=>({id:crypto.randomUUID(),date:ME.date,time,meal:ME.meal,name:d.name,g:0,k:mid(d.nutrition.kcal),p:mid(d.nutrition.protein),f:mid(d.nutrition.fat),c:mid(d.nutrition.carbs),thumb:'',estimate:true,weight_unknown:true,meal_group:group,estimate_range:d.nutrition,estimate_ingredients:d.ingredients,estimate_assumptions:d.assumptions,estimate_scale:ME.dishes[i].scale,meal_total_range:t}));
+ const next={...S,entries:[...S.entries,...added]};try{localStorage.setItem('nt1',JSON.stringify(next))}catch(e){toast('Не удалось сохранить. Записи не добавлены.');return}
+ S=next;day=ME.date;tab='diary';Object.assign(ME,{dishes:[],questions:[],text:'',sourceText:'',confirmed:false,error:''});render();toast('Приём пищи записан как оценка ИИ');
 }
-function aiTotals(){
- let total={g:0,k:0,p:0,f:0,c:0},ready=aiRows.length>0;
- aiRows.forEach((r,i)=>{
-  const food=r.food==null?null:FD[r.food],valid=food&&Number.isFinite(r.grams)&&r.grams>0&&r.grams<=100000;
-  if(!valid)ready=false;
-  const line=document.getElementById('ai-numbers-'+i);
-  if(!valid){if(line)line.textContent='Выберите продукт и укажите вес. КБЖУ пока не рассчитаны.';return}
-  const m=r.grams/100;total.g+=r.grams;total.k+=food.k*m;total.p+=food.p*m;total.f+=food.f*m;total.c+=food.u*m;
-  if(line)line.textContent=`${Math.round(food.k*m)} ккал · Б ${(food.p*m).toFixed(1)} · Ж ${(food.f*m).toFixed(1)} · У ${(food.u*m).toFixed(1)} г`;
- });
- const summary=document.getElementById('ai-total');if(summary)summary.textContent=(ready?'Итого: ':'Частичный итог (не все продукты заполнены): ')+`${Math.round(total.k)} ккал · Б ${total.p.toFixed(1)} · Ж ${total.f.toFixed(1)} · У ${total.c.toFixed(1)} г`;
- const button=document.getElementById('ai-save');if(button)button.disabled=!ready;
- const confirm=document.getElementById('ai-confirm');if(confirm)confirm.checked=false;
- return ready;
-}
-async function aiParse(){
- if(aiRunning)return;
- const text=document.getElementById('ai-text');if(text)aiDraft=text.value;
- if(!aiAccess){aiError='Введите пароль APP_ACCESS_TOKEN. Ключ GigaChat сюда не вводится.';aiDraw();return}
- if(aiDraft.trim().length<2){aiError='Опишите еду: минимум два символа.';aiDraw();return}
- if(aiRows.length&&!confirm('Повторный разбор заменит текущие карточки и правки. Продолжить?'))return;
- aiRunning=true;aiError='';aiDraw();
- const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),90000);
- try{
-  const response=await fetch(FOOD_API+'/api/food/parse',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+aiAccess},body:JSON.stringify({text:aiDraft.trim()}),signal:controller.signal,credentials:'omit',cache:'no-store'});
-  const result=await response.json().catch(()=>null);
-  if(!response.ok){const messages={401:'Пароль доступа неверен. Проверьте APP_ACCESS_TOKEN.',503:'Сервер ещё не настроен.',422:'Сервер отклонил описание. Проверьте длину текста.',502:'GigaChat не смог разобрать описание. Попробуйте позже или уточните текст.'};throw new Error(messages[response.status]||('Ошибка сервера '+response.status))}
-  if(!result||!Array.isArray(result.items)||!Array.isArray(result.questions))throw new Error('Сервер вернул неизвестный формат ответа.');
-  aiRows=result.items.map(r=>({...r,food:null,grams:typeof r.weight_g==='number'&&r.weight_g>0?r.weight_g:null}));aiQuestions=result.questions;
-  if(!aiRows.length)aiError='Продукты не найдены. Уточните описание.';
- }catch(error){aiError=error.name==='AbortError'?'Сервер не ответил за 90 секунд. Повторите запрос.':error instanceof TypeError?'Нет соединения с API. Проверьте интернет, запуск Render и настройку CORS сервера. При открытии файла напрямую используйте опубликованный сайт или localhost.':error.message}
- finally{clearTimeout(timer);aiRunning=false;aiDraw()}
-}
-function aiSave(){
- if(!aiRows.length)return;
- if(!document.getElementById('ai-confirm')?.checked){toast('Подтвердите проверку продуктов и веса');return}
- const valid=aiRows.every(r=>r.food!=null&&FD[r.food]&&Number.isFinite(r.grams)&&r.grams>0&&r.grams<=100000);
- if(!valid||!/^\d{4}-\d{2}-\d{2}$/.test(aiDate)||aiDate>today()||!['Завтрак','Обед','Ужин','Перекус'].includes(aiMeal)){toast('Проверьте дату, продукты и вес');return}
- const time=new Date().toTimeString().slice(0,5),round=n=>Math.round(n*10)/10;
- const added=aiRows.map(r=>{const f=FD[r.food],m=r.grams/100;return {id:crypto.randomUUID(),date:aiDate,time,meal:aiMeal,name:f.n,g:round(r.grams),k:round(f.k*m),p:round(f.p*m),f:round(f.f*m),c:round(f.u*m),thumb:''}});
- const next={...S,entries:[...S.entries,...added]};
- try{localStorage.setItem('nt1',JSON.stringify(next))}catch(error){toast('Не удалось сохранить. Освободите память браузера; записи не добавлены.');return}
- S=next;const savedDate=aiDate;aiRows=[];aiQuestions=[];aiDraft='';aiError='';document.getElementById('ai-dialog').close();day=savedDate;tab='diary';render();toast('Продукты записаны в дневник');
-}
-const profileBeforeTextAI=profileView;
-profileView=function(){return profileBeforeTextAI()+`<div class="card"><h2>GigaChat: текстовый ввод</h2><p class="mu">Подключён адрес сервера food.pro. Перед первым запросом введите отдельный пароль APP_ACCESS_TOKEN. Ключ GigaChat хранится только на сервере.</p><button class="btn s" onclick="aiOpenSettings()">Настроить доступ</button><p class="subtle">Фотоанализ и ИИ-отчёты не перенесены на GigaChat.</p></div>`};
+const todayBeforeEstimate=todayView;
+todayView=function(){return todayBeforeEstimate().replace('<div class="quick">',meView()+'<div class="quick">')};
+const entriesBeforeEstimate=entries;
+entries=function(k){const list=S.entries.filter(e=>e.date===k&&e.estimate&&e.estimate_range);let html=entriesBeforeEstimate(k);for(const e of list){const gramLabel=String(e.g)+' г';if(e.weight_unknown)html=html.replace(esc(e.meal)+' · '+e.time+' · '+gramLabel,esc(e.meal)+' · '+e.time+' · вес не указан · оценка ИИ')}if(!list.length)return html;return html+`<details style="margin-top:16px"><summary>Диапазоны оценок ИИ</summary>${list.map(e=>`<p><b>${esc(e.name)}</b><br>${ME_KEYS.map(([key,label])=>esc(label)+': ~'+meRange(e.estimate_range[key])).join(' · ')}<br><small class="mu">В суммах дневника учтена середина диапазона. Вес не определён.</small></p>`).join('')}</details>`};
 
 render();
 setInterval(()=>{const b=$('#bn');if(b)b.innerHTML=bannerHtml()},60000);
