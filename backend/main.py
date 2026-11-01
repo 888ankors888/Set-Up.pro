@@ -191,3 +191,6 @@ install_report_routes(app)
 
 from day_report_api import install_day_routes
 install_day_routes(app)
+
+from sports_api import install_sports_routes
+install_sports_routes(app)
