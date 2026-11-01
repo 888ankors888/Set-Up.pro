@@ -955,5 +955,25 @@ setInterval(()=>{const b=$('#bn');if(b)b.innerHTML=bannerHtml()},60000);
 </script>
 =======
 >>>>>>> 7c2afd045fcf27808950e32074e2885ea2c68de2
+
+<script id="food-remove-today">
+(() => {
+  const previousRender = render;
+  render = function() {
+    if (tab === 'today') tab = 'diary';
+    previousRender();
+    document.querySelectorAll('#nav button').forEach(button => {
+      if (button.textContent.trim() === 'Сегодня') button.remove();
+    });
+    if (tab !== 'diary') return;
+    const app = document.getElementById('app');
+    app?.querySelectorAll('button').forEach(button => {
+      if (button.getAttribute('aria-controls') === 'diary-entry-actions' || button.textContent.trim() === 'Добавить запись за выбранный день') button.remove();
+    });
+    app?.querySelector('#diary-entry-actions')?.remove();
+  };
+  render();
+})();
+</script>
 </body>
 </html>
