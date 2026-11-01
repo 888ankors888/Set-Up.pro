@@ -117,6 +117,6 @@ def available_models(auth: Annotated[HTTPAuthorizationCredentials | None, Depend
             stage = 'models_request'
             models = client.get_models()
         stage = 'models_extract'
-        return {'models': [item.id for item in models.data], 'sdk_version': version('gigachat'), 'selected_model': os.getenv('GIGACHAT_MODEL', 'GigaChat')}
+        return {'models': [item.id_ for item in models.data], 'sdk_version': version('gigachat'), 'selected_model': os.getenv('GIGACHAT_MODEL', 'GigaChat')}
     except Exception as exc:
         raise safe_error(exc, stage) from None
