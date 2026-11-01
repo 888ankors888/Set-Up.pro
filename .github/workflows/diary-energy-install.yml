@@ -1,0 +1,35 @@
+name: Install diary daily energy card
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/diary-energy-install.yml']
+permissions:
+  contents: write
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Validate and install daily energy card
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import subprocess
+          subprocess.run(['node','--check','diary-energy.js'],check=True)
+          p=Path('index.html')
+          html=p.read_text()
+          assert 'function diaryView(' in html and 'function targets(' in html
+          assert '</body>' in html and 'id="diary-daily-energy"' not in html
+          js=Path('diary-energy.js').read_text()
+          p.write_text(html.replace('</body>','<script>\n'+js+'\n</script>\n</body>',1))
+          PY
+      - name: Commit integration and remove temporary workflow
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git rm .github/workflows/diary-energy-install.yml
+          git commit -m "Connect daily energy card to selected diary date"
+          git push origin HEAD:main
