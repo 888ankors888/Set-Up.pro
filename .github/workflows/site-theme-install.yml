@@ -1,0 +1,41 @@
+name: Install unified mint glass site theme
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/site-theme-install.yml']
+permissions:
+  contents: write
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Validate theme and existing interactions
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import subprocess
+          css=Path('site-theme.css').read_text()
+          assert css.count('{')==css.count('}')
+          assert 'url(' not in css and '@import' not in css
+          assert '--ac:#08795e' in css and '--bad:' in css and '--wr:' in css
+          assert '[data-theme=dark]' in css and 'prefers-reduced-motion' in css
+          subprocess.run(['node','sports/tests/strength-entry.test.js'],check=True)
+          subprocess.run(['node','tests/ui-refinements.test.js'],check=True)
+          subprocess.run(['node','tests/today-sport-screens.test.js'],check=True)
+          p=Path('index.html')
+          html=p.read_text()
+          assert '</head>' in html and 'id="site-unified-theme"' not in html
+          html=html.replace('</head>','<style id="site-unified-theme">\n'+css+'\n</style>\n</head>',1)
+          p.write_text(html)
+          PY
+      - name: Commit integration and remove installer
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git rm .github/workflows/site-theme-install.yml
+          git commit -m "Apply shared mint palette and soft glass styling site-wide"
+          git push origin HEAD:main
