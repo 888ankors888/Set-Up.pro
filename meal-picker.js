@@ -9,17 +9,14 @@
  function plate(index){return '<svg viewBox="0 0 120 120" fill="none" aria-hidden="true"><circle cx="60" cy="60" r="55" fill="#fff" stroke="#dce8e2" stroke-width="3"/><circle cx="60" cy="60" r="45" fill="#f3f6f1"/>'+food[index]+'</svg>'}
  function mount(){
   if(tab!=='diary'||!S.profile||editing)return;
-  const estimate=document.getElementById('meal-estimate');if(!estimate)return;
+  const estimate=document.getElementById('meal-entry-anchor')||document.getElementById('meal-estimate');if(!estimate)return;
   document.getElementById('meal-picker')?.remove();
   const t=targets(S.profile),valid=Number.isFinite(t.k)&&t.k>0&&Number.isFinite(t.p);
   const section=document.createElement('section');section.id='meal-picker';section.className='meal-picker';section.setAttribute('aria-label','Выберите приём пищи');
   section.innerHTML='<div class="meal-picker-grid">'+meals.map(([name,share],i)=>'<button type="button" class="meal-pick" data-meal-index="'+i+'" aria-pressed="'+(ME.meal===name)+'" '+(ME.busy?'disabled':'')+'><span class="meal-pick-copy"><span class="meal-pick-title">'+name.toLocaleUpperCase('ru-RU')+'</span><span class="meal-pick-hint">'+(valid?'Ориентир: ≈ '+Math.round(t.k*share)+' ккал · белок ≈ '+Math.round(t.p*share)+' г. '+Math.round(share*100)+'% дневного ориентира из анкеты.':'Заполните анкету в «Мои цели», чтобы увидеть ориентир.')+'</span></span>'+plate(i)+'</button>').join('')+'</div><p class="subtle">Условное распределение дневного ориентира, не обязательная норма и не медицинская рекомендация. Тарелки — иллюстрации, не персональное меню. Учитывайте ограничения из анкеты.</p>';
   section.querySelectorAll('[data-meal-index]').forEach(button=>button.onclick=()=>{
    if(ME.busy)return;
-   ME.meal=meals[Number(button.dataset.mealIndex)][0];
-   meRefresh();
-   document.getElementById('meal-estimate')?.scrollIntoView({behavior:'smooth',block:'start'});
-   document.getElementById('me-text')?.focus({preventScroll:true});
+   window.foodOpenMealWindow(meals[Number(button.dataset.mealIndex)][0]);
   });
   estimate.before(section);
  }
