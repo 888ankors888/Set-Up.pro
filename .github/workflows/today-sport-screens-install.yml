@@ -1,0 +1,38 @@
+name: Install Today nutrition sports switch and plan controls
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/today-sport-screens-install.yml']
+permissions:
+  contents: write
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Validate and connect Today screens
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import subprocess
+          assert Path('ui-refinements.js').is_file()
+          subprocess.run(['node','--check','today-sport-screens.js'],check=True)
+          subprocess.run(['node','tests/today-sport-screens.test.js'],check=True)
+          subprocess.run(['node','tests/ui-refinements.test.js'],check=True)
+          subprocess.run(['node','sports/tests/strength-entry.test.js'],check=True)
+          p=Path('index.html')
+          html=p.read_text()
+          assert '</body>' in html and 'foodTodayMode' not in html
+          js=Path('today-sport-screens.js').read_text()
+          p.write_text(html.replace('</body>','<script>\n'+js+'\n</script>\n</body>',1))
+          PY
+      - name: Commit integration and remove installer
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git rm .github/workflows/today-sport-screens-install.yml
+          git commit -m "Separate Today nutrition and sports screens and move program buttons into weekly plan"
+          git push origin HEAD:main
