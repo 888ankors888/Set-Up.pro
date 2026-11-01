@@ -8,12 +8,12 @@
   const app=document.getElementById('app');
   const heading=[...app.querySelectorAll('.dashboard h2')].find(node=>['Вода','Водный баланс'].includes(node.textContent.trim()));
   const card=heading?.closest('.card');if(!card)return;
-  const water=Number((S.water||{})[day]||0),goal=Number((S.waterGoalsByDate||{})[day]||S.waterGoal||2000);
+  const water=Number((S.water||{})[day]||0),goal=Number(S.profile?.nutritionGoalSettings?.waterMl||S.waterGoal||2000);
   card.classList.add('water-balance-card');
-  card.innerHTML='<h2>Водный баланс</h2><div class="wb-panel"><div class="wb-top"><div><div class="wb-value" aria-live="polite">'+liters(water)+' л</div><div class="wb-goal">Цель '+liters(goal)+' л</div></div>'+ice+'</div><div class="wb-glasses" aria-label="Добавление воды: каждый стакан добавляет 250 мл">'+Array.from({length:7},(_,i)=>'<button type="button" class="wb-glass" data-wb-add aria-label="Добавить 250 мл воды" title="Добавить 250 мл">'+glass(water>=goal*(i+1)/7,i===0)+'</button>').join('')+'</div></div><div class="wb-actions"><button type="button" class="btn s" data-wb-minus '+(water<=0?'disabled':'')+'>− 250 мл</button><button type="button" class="btn s" data-wb-goal '+(goal+250>10000?'disabled':'')+'>Цель +250 мл</button></div><p class="subtle">Каждый стакан добавляет 250 мл. Заполнение показывает долю личной цели за выбранный день. Личная цель, не медицинская норма.</p>';
+  card.innerHTML='<h2>Водный баланс</h2><div class="wb-panel"><div class="wb-top"><div><div class="wb-value" aria-live="polite">'+liters(water)+' л</div><div class="wb-goal">Цель '+liters(goal)+' л</div></div>'+ice+'</div><div class="wb-glasses" aria-label="Добавление воды: каждый стакан добавляет 250 мл">'+Array.from({length:7},(_,i)=>'<button type="button" class="wb-glass" data-wb-add aria-label="Добавить 250 мл воды" title="Добавить 250 мл">'+glass(water>=goal*(i+1)/7,i===0)+'</button>').join('')+'</div></div><div class="wb-actions"><button type="button" class="btn s" data-wb-minus '+(water<=0?'disabled':'')+'>− 250 мл</button><button type="button" class="btn s" data-wb-plus>+250 мл</button></div><p class="subtle">Каждый стакан добавляет 250 мл. Заполнение показывает долю личной цели за выбранный день. Личная цель, не медицинская норма.</p>';
   card.querySelectorAll('[data-wb-add]').forEach(button=>button.onclick=()=>foodDiaryWaterAdd(250));
   card.querySelector('[data-wb-minus]').onclick=()=>foodDiaryWaterAdd(-250);
-  card.querySelector('[data-wb-goal]').onclick=()=>foodDiaryWaterGoal();
+  card.querySelector('[data-wb-plus]').onclick=()=>foodDiaryWaterAdd(250);
  }
  function top(){if(tab==='diary')window.scrollTo({top:0,left:0,behavior:'instant'})}
  const previousRender=render;
