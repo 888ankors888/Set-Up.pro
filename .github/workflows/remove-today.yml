@@ -1,0 +1,52 @@
+name: Remove Today section
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/remove-today.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Update nutrition navigation
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          if 'id="food-remove-today"' in s:
+              raise SystemExit(0)
+          assert '</body>' in s and 'function render()' in s, 'Unexpected HTML structure'
+          patch = '''
+          <script id="food-remove-today">
+          (() => {
+            const previousRender = render;
+            render = function() {
+              if (tab === 'today') tab = 'diary';
+              previousRender();
+              document.querySelectorAll('#nav button').forEach(button => {
+                if (button.textContent.trim() === 'Сегодня') button.remove();
+              });
+              if (tab !== 'diary') return;
+              const app = document.getElementById('app');
+              app?.querySelectorAll('button').forEach(button => {
+                if (button.getAttribute('aria-controls') === 'diary-entry-actions' || button.textContent.trim() === 'Добавить запись за выбранный день') button.remove();
+              });
+              app?.querySelector('#diary-entry-actions')?.remove();
+            };
+            render();
+          })();
+          </script>
+          '''
+          p.write_text(s.replace('</body>', patch + '</body>', 1), encoding='utf-8')
+      - name: Commit HTML changes
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git diff --cached --quiet && exit 0
+          git commit -m "Remove Today section and redundant diary add button"
+          git push origin HEAD:main
