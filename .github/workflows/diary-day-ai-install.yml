@@ -1,0 +1,42 @@
+name: Install daily AI analysis with 350 character limit
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/diary-day-ai-install.yml']
+permissions:
+  contents: write
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Validate and connect day analysis
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import ast, subprocess
+          ast.parse(Path('backend/day_report_api.py').read_text())
+          subprocess.run(['node','--check','diary-day-ai.js'],check=True)
+          p=Path('backend/main.py')
+          source=p.read_text()
+          assert 'install_day_routes' not in source
+          source+='\nfrom day_report_api import install_day_routes\ninstall_day_routes(app)\n'
+          ast.parse(source)
+          p.write_text(source)
+          p=Path('index.html')
+          html=p.read_text()
+          assert 'id="diary-daily-energy"' in html
+          assert '</body>' in html and 'foodDiaryDayAnalyze' not in html
+          js=Path('diary-day-ai.js').read_text()
+          p.write_text(html.replace('</body>','<script>\n'+js+'\n</script>\n</body>',1))
+          PY
+      - name: Commit integration and remove temporary workflow
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html backend/main.py
+          git rm .github/workflows/diary-day-ai-install.yml
+          git commit -m "Connect daily diary AI analysis capped at 350 characters"
+          git push origin HEAD:main
