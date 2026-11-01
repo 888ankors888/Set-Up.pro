@@ -1,0 +1,48 @@
+name: Move training weekly activity to bottom
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/training-week-bottom.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Update training layout
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          if 'id="training-week-bottom"' in s:
+              raise SystemExit(0)
+          assert '</body>' in s and 'Активность за неделю' in s, 'Unexpected HTML structure'
+          patch = '''
+          <script id="training-week-bottom">
+          (() => {
+            function moveWeek() {
+              if (tab !== 'training') return;
+              const app = document.getElementById('app');
+              if (!app) return;
+              const summary = [...app.querySelectorAll('details > summary')].find(node => node.textContent.trim() === 'Активность за неделю');
+              const block = summary?.parentElement;
+              if (block && (block.parentElement !== app || app.lastElementChild !== block)) app.appendChild(block);
+            }
+            const previousRender = render;
+            render = function() { previousRender(); moveWeek(); };
+            moveWeek();
+          })();
+          </script>
+          '''
+          p.write_text(s.replace('</body>', patch + '</body>', 1), encoding='utf-8')
+      - name: Commit layout change
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git diff --cached --quiet && exit 0
+          git commit -m "Move training weekly activity to bottom of page"
+          git push origin HEAD:main
