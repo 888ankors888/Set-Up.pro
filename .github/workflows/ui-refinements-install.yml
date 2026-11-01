@@ -1,0 +1,78 @@
+name: Refine activity, weekly program, daily water and profile
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/ui-refinements-install.yml']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Update activity and interface hooks
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import subprocess
+          part=Path('sports/strength-entry.js')
+          old_part=part.read_text()
+          fragment=old_part
+          old="node('name-wrap').hidden=strong&&!custom"
+          assert fragment.count(old)==1
+          fragment=fragment.replace(old,"node('name-wrap').hidden=['walk','run','bike'].includes(val('kind'))||(strong&&!custom)",1)
+          old="name:val('name').trim()||TYPES[kind]"
+          assert fragment.count(old)==1
+          fragment=fragment.replace(old,"name:['walk','run','bike'].includes(kind)?(old?.kind===kind?old.name:TYPES[kind]):val('name').trim()||TYPES[kind]",1)
+          p=Path('sports/sports-ui.js')
+          old_ui=p.read_text()
+          assert old_ui.count(old_part)==1
+          ui=old_ui.replace(old_part,fragment,1)
+          tests=Path('sports/tests/strength-entry.test.js')
+          text=tests.read_text()
+          old="TYPES:{walk:'Ходьба',strength:'Силовая'}"
+          assert text.count(old)==1
+          text=text.replace(old,"TYPES:{walk:'Ходьба',run:'Бег',bike:'Велосипед',strength:'Силовая'}",1)
+          marker="entries=[{id:'old-id'"
+          assert text.count(marker)==1
+          check="for(const [kind,name] of [['walk','Ходьба'],['run','Бег'],['bike','Велосипед']]){nodes.kind.value=kind;nodes.kind.onchange();assert(nodes['name-wrap'].hidden);nodes.name.value='STALE';form.onsubmit({preventDefault:()=>{}});assert.equal(saved.entries[0].name,name)}nodes.kind.value='strength';nodes.kind.onchange();\n"
+          text=text.replace(marker,check+marker,1)
+          index=Path('index.html')
+          html=index.read_text()
+          assert html.count(old_ui)==1 and 'foodValidateWaterGoals' not in html
+          html=html.replace(old_ui,ui,1)
+          old='goal=S.waterGoal||2000'
+          assert html.count(old)==1
+          html=html.replace(old,'goal=(S.waterGoalsByDate||{})[today()]||S.waterGoal||2000',1)
+          old='<small class="mu">/ ${(goal/1000).toFixed(1)} л</small>'
+          assert html.count(old)==1
+          new='<small class="mu">/ ${(goal/1000).toFixed(goal%1000===0?1:2)} л</small><button type="button" class="water-goal-plus" onclick="foodIncreaseWaterGoal()" ${goal+250>10000?\'disabled\':\'\'} aria-label="Увеличить план воды на сегодня на 250 мл" title="+250 мл к плану на сегодня" style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;margin-left:8px;border:1px solid var(--ln);border-radius:10px;background:var(--ac2);color:var(--ac);font-size:20px;cursor:pointer">+</button>'
+          html=html.replace(old,new,1)
+          old='Личная цель, не медицинская норма. Изменяется в профиле.'
+          assert html.count(old)==1
+          html=html.replace(old,'Личная цель, не медицинская норма. Плюс рядом с объёмом увеличивает только план на сегодня на 250 мл.',1)
+          old='sports:window.sportsValidateImport(d.sports)};'
+          assert html.count(old)==1
+          html=html.replace(old,'sports:window.sportsValidateImport(d.sports),waterGoalsByDate:window.foodValidateWaterGoals(d.waterGoalsByDate)};',1)
+          extra=Path('ui-refinements.js').read_text()
+          assert '</body>' in html
+          html=html.replace('</body>','<script>\n'+extra+'\n</script>\n</body>',1)
+          part.write_text(fragment)
+          p.write_text(ui)
+          tests.write_text(text)
+          index.write_text(html)
+          for name in ['sports/strength-entry.js','sports/sports-ui.js','ui-refinements.js']:
+              subprocess.run(['node','--check',name],check=True)
+          subprocess.run(['node','sports/tests/strength-entry.test.js'],check=True)
+          subprocess.run(['node','tests/ui-refinements.test.js'],check=True)
+          PY
+      - name: Commit changes and remove installer
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add sports/strength-entry.js sports/sports-ui.js sports/tests/strength-entry.test.js index.html
+          git rm .github/workflows/ui-refinements-install.yml
+          git commit -m "Simplify cardio entry, fold weekly program, add daily water goal plus and clean profile"
+          git push origin HEAD:main
