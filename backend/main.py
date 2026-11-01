@@ -185,3 +185,6 @@ def public_script():
 
 from photo_api import install_photo_routes
 install_photo_routes(app)
+
+from report_api import install_report_routes
+install_report_routes(app)
