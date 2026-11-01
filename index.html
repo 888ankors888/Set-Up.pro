@@ -353,7 +353,7 @@ function repCard(p){
   <div class="m3"><div><b>${r0(s.avg.p)} г</b><span>белки/день</span></div><div><b>${r0(s.avg.f)} г</b><span>жиры/день</span></div><div><b>${r0(s.avg.c)} г</b><span>углеводы/день</span></div></div>
   ${wLine(p)}${s.top.length?`<div class="mu" style="margin-top:10px">Частые блюда: ${s.top.map(esc).join(', ')}</div>`:''}
   ${S.reports[p.key]?`<div class="tip" style="white-space:pre-wrap">${esc(S.reports[p.key])}</div>`:''}
-  <button class="btn s" style="margin-top:10px" onclick="aiReport('${p.key}',this)">${S.reports[p.key]?'Обновить разбор ИИ':'Разбор от ИИ'}</button></div>`;
+  </div>`;
 }
 async function aiReport(key,btn){
   const p=[...periods().wk,...periods().mo].find(x=>x.key===key),s=stats(p),pr=S.profile;
