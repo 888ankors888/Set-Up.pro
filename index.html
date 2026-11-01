@@ -469,7 +469,7 @@ function reportView(){
 }
 function profileView(){
   const p=S.profile,t=targets(p);
-  return `<h1>Профиль</h1><div class="card"><h2>Ваша норма на день</h2><div class="m3" style="margin:0"><div><b>${t.k}</b><span>ккал</span></div><div><b>${t.p} г</b><span>белки</span></div><div><b>${t.f} г</b><span>жиры</span></div></div><div class="mu" style="margin-top:8px">Углеводы: ${t.c} г. Расчёт по формуле Миффлина — Сан-Жеора с поправкой на цель.</div></div>
+  return `<h1>Настройки</h1><div class="card"><h2>Ваша норма на день</h2><div class="m3" style="margin:0"><div><b>${t.k}</b><span>ккал</span></div><div><b>${t.p} г</b><span>белки</span></div><div><b>${t.f} г</b><span>жиры</span></div></div><div class="mu" style="margin-top:8px">Углеводы: ${t.c} г. Расчёт по формуле Миффлина — Сан-Жеора с поправкой на цель.</div></div>
   ${remCard()}<button class="btn s" onclick="editing=true;render()">Изменить анкету</button>
   <button class="btn d" style="margin-top:10px" onclick="if(confirm('Удалить все данные приложения на этом устройстве?')){S={profile:null,entries:[],reports:{},weights:{},rem:defRem()};save();render()}">Удалить все данные</button>
   <p class="mu">Оценка порции по фото приблизительна и не заменяет рекомендаций врача. Данные хранятся только в этом браузере.</p>`;
@@ -478,7 +478,7 @@ function render(){
   const nav=$('#nav');
   if(!S.profile||editing){$('#app').innerHTML=brand(true)+formView();nav.style.display='none';return}
   nav.style.display='flex';
-  const T=[['today','Сегодня'],['diary','Дневник'],['journal','Журнал'],['report','Отчёты'],['goals','Мои цели'],['profile','Профиль']];
+  const T=[['today','Сегодня'],['diary','Дневник'],['journal','Журнал'],['report','Отчёты'],['goals','Мои цели'],['profile','Настройки']];
   nav.innerHTML=T.map(x=>`<button class="${tab===x[0]?'on':''}" onclick="tab='${x[0]}';day=today();render();scrollTo(0,0)">${ic(x[0])}<span>${x[1]}</span></button>`).join('');
   $('#app').innerHTML=brand()+({today:todayView,diary:diaryView,journal:journalView,report:reportView,profile:profileView,goals:()=>window.foodGoalsPage()})[tab]();
   if(tab==='journal')jList();
@@ -1054,6 +1054,21 @@ setInterval(()=>{const b=$('#bn');if(b)b.innerHTML=bannerHtml()},60000);
       else template.content.prepend(card);
     }
     return template.innerHTML;
+  };
+  render();
+})();
+</script>
+
+<script id="settings-goals-icons">
+(() => {
+  const previousIcon = ic;
+  ic = function(key) {
+    const paths = {
+      goals: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',
+      profile: '<path d="m9 3-.5 2-2 .9-1.9-.6-2 3.4 1.5 1.4v2.8L2.6 14l2 3.4 1.9-.6 2 .9.5 2.3h4l.5-2.3 2-.9 1.9.6 2-3.4-1.5-1.1v-2.8l1.5-1.4-2-3.4-1.9.6-2-.9L13 3Z"/><circle cx="11" cy="11.5" r="3"/>'
+    };
+    if (!(key in paths)) return previousIcon(key);
+    return '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + paths[key] + '</svg>';
   };
   render();
 })();
