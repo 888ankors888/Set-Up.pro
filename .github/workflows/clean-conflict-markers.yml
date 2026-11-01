@@ -1,0 +1,31 @@
+name: Clean visible conflict markers
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/clean-conflict-markers.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  clean:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Remove marker lines only
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('index.html')
+          source = p.read_text(encoding='utf-8')
+          markers = {'<<<<<<< HEAD', '=======', '>>>>>>> 7c2afd045fcf27808950e32074e2885ea2c68de2'}
+          cleaned = ''.join(line for line in source.splitlines(keepends=True) if line.strip() not in markers)
+          if cleaned != source:
+              p.write_text(cleaned, encoding='utf-8')
+      - name: Commit cleanup
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git diff --cached --quiet && exit 0
+          git commit -m "Remove visible merge conflict markers from index.html"
+          git push origin HEAD:main
