@@ -1,0 +1,41 @@
+name: Replace water ice illustration
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/replace-water-ice.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install transparent ice image
+        shell: python
+        run: |
+          import base64, re
+          from pathlib import Path
+          data = base64.b64decode(Path('assets/water-ice.webp.base64').read_text(), validate=True)
+          assert data[:4] == b'RIFF' and data[8:12] == b'WEBP'
+          Path('assets/water-ice.webp').write_bytes(data)
+          p = Path('water-balance.js')
+          s = p.read_text(encoding='utf-8')
+          pattern = r"const ice='[^\n]*';"
+          replacement = "const ice='<img class=\"wb-ice\" src=\"assets/water-ice.webp?v=1\" alt=\"\" style=\"object-fit:contain\" decoding=\"async\">';"
+          s, count = re.subn(pattern, lambda match: replacement, s)
+          assert count == 1, 'Ice declaration not found'
+          p.write_text(s, encoding='utf-8')
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          s = re.sub(r'water-balance\.js\?v=\d+', 'water-balance.js?v=3', s)
+          p.write_text(s, encoding='utf-8')
+      - run: node --check water-balance.js
+      - name: Commit illustration replacement
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add assets/water-ice.webp water-balance.js index.html
+          git diff --cached --quiet && exit 0
+          git commit -m "Replace water balance ice with background-removed user image"
+          git push origin HEAD:main
