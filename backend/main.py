@@ -182,3 +182,6 @@ def food_app():
 @app.get('/public-text.js', include_in_schema=False)
 def public_script():
     return FileResponse(Path(__file__).resolve().parent / 'public-text.js', media_type='application/javascript', headers={'Cache-Control': 'no-store'})
+
+from photo_api import install_photo_routes
+install_photo_routes(app)
