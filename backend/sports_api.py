@@ -3,6 +3,7 @@ from types import SimpleNamespace
 from typing import Literal
 from fastapi import HTTPException, Request
 from pydantic import BaseModel, Field
+from sports_normalization import NormalizedPlan
 
 class SportsInput(BaseModel):
     age: int = Field(ge=18, le=85)
@@ -30,7 +31,7 @@ class Session(BaseModel):
     intensity: Literal['light','moderate']
     exercises: list[Exercise] = Field(max_length=6)
 
-class SportsPlan(BaseModel):
+class SportsPlan(NormalizedPlan):
     summary: str = Field(max_length=600)
     sessions: list[Session] = Field(min_length=1,max_length=5)
     warnings: list[str] = Field(max_length=6)
@@ -46,7 +47,8 @@ def install_sports_routes(app):
             raise HTTPException(409,'При ограничениях автоматический план недоступен; согласуйте нагрузку со специалистом')
         if len(set(payload.days))!=len(payload.days) or any(d<0 or d>6 for d in payload.days):
             raise HTTPException(422,'Проверьте дни занятий')
-        plan=generate(SimpleNamespace(text=payload.model_dump_json()),request,PROMPT,SportsPlan,4000)
+        schema_prompt=PROMPT+'\nОбязательная JSON-схема ответа: '+json.dumps(SportsPlan.model_json_schema(),ensure_ascii=False)+'\nВсе обязательные поля нужны. Не используй null для обязательных полей. repetitions — строка, sets и minutes — целые числа; weekday 0=понедельник, 6=воскресенье.'
+        plan=generate(SimpleNamespace(text=payload.model_dump_json()),request,schema_prompt,SportsPlan,4000)
         days=[s.weekday for s in plan.sessions]
         strength={s.weekday for s in plan.sessions if s.kind=='strength'}
         if len(set(days))!=len(days) or not set(days)<=set(payload.days) or any(s.minutes>payload.minutes or (payload.level=='beginner' and s.minutes>30) for s in plan.sessions) or (payload.level=='beginner' and len(days)>3) or len(strength)>3 or any((d+1)%7 in strength for d in strength):

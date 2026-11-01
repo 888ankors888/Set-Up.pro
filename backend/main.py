@@ -15,6 +15,7 @@ from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from gigachat import GigaChat
 from pydantic import BaseModel, Field, model_validator
+from sports_normalization import safe_validation_fields
 
 app = FastAPI(title='food.pro API')
 bearer = HTTPBearer(auto_error=False)
@@ -78,6 +79,7 @@ def client():
     return GigaChat(credentials=key, scope=os.getenv('GIGACHAT_SCOPE', 'GIGACHAT_API_PERS'), base_url='https://api.giga.chat/v1', ca_bundle_file=os.getenv('GIGACHAT_CA_BUNDLE', 'russian_trusted_root_ca_pem.crt'), verify_ssl_certs=True, timeout=45)
 
 def safe_error(exc, stage):
+    validation=safe_validation_fields(exc)
     names, status, seen = [], None, set()
     while exc is not None and id(exc) not in seen and len(names) < 6:
         seen.add(id(exc))
@@ -88,6 +90,8 @@ def safe_error(exc, stage):
                 break
         exc = exc.__cause__ or exc.__context__
     detail = {'message': 'Ошибка GigaChat; диагностические данные без секретов', 'stage': stage, 'error_types': names, 'upstream_status': status}
+    if validation:
+        detail['validation_fields']=validation
     logger.warning('food_api_error %s', json.dumps(detail, ensure_ascii=True))
     return HTTPException(502, detail=detail)
 
