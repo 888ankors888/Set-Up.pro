@@ -1,0 +1,49 @@
+name: Open meal entry as modal
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/meal-entry-modal.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Connect meal selection to modal
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('meal-picker.js')
+          s = p.read_text(encoding='utf-8')
+          s = s.replace("const estimate=document.getElementById('meal-estimate');", "const estimate=document.getElementById('meal-entry-anchor')||document.getElementById('meal-estimate');")
+          start = "   ME.meal=meals[Number(button.dataset.mealIndex)][0];"
+          end = "   document.getElementById('me-text')?.focus({preventScroll:true});"
+          replacement = '   window.foodOpenMealWindow(meals[Number(button.dataset.mealIndex)][0]);'
+          if start in s:
+              a = s.index(start); b = s.index(end, a) + len(end)
+              s = s[:a] + replacement + s[b:]
+          assert replacement in s
+          p.write_text(s, encoding='utf-8')
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          assert '</head>' in s and '</body>' in s
+          s = s.replace('meal-picker.js?v=1', 'meal-picker.js?v=2')
+          if 'href="meal-entry-modal.css?v=1"' not in s:
+              s = s.replace('</head>', '<link rel="stylesheet" href="meal-entry-modal.css?v=1">\n</head>', 1)
+          if 'src="meal-entry-modal.js?v=1"' not in s:
+              s = s.replace('</body>', '<script src="meal-entry-modal.js?v=1"></script>\n</body>', 1)
+          p.write_text(s, encoding='utf-8')
+      - name: Check JavaScript syntax
+        run: |
+          node --check meal-picker.js
+          node --check meal-entry-modal.js
+      - name: Commit modal integration
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html meal-picker.js
+          git diff --cached --quiet && exit 0
+          git commit -m "Hide inline meal form and open it as modal from meal cards"
+          git push origin HEAD:main
