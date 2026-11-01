@@ -478,7 +478,7 @@ function render(){
   const nav=$('#nav');
   if(!S.profile||editing){$('#app').innerHTML=brand(true)+formView();nav.style.display='none';return}
   nav.style.display='flex';
-  const T=[['today','Сегодня'],['diary','Дневник'],['journal','Журнал'],['report','Отчёты'],['goals','Мои цели'],['profile','Настройки']];
+  const T=[['goals','Мои цели'],['today','Сегодня'],['diary','Дневник'],['journal','Журнал'],['report','Отчёты'],['profile','Настройки']];
   nav.innerHTML=T.map(x=>`<button class="${tab===x[0]?'on':''}" onclick="tab='${x[0]}';day=today();render();scrollTo(0,0)">${ic(x[0])}<span>${x[1]}</span></button>`).join('');
   $('#app').innerHTML=brand()+({today:todayView,diary:diaryView,journal:journalView,report:reportView,profile:profileView,goals:()=>window.foodGoalsPage()})[tab]();
   if(tab==='journal')jList();
