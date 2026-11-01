@@ -188,3 +188,6 @@ install_photo_routes(app)
 
 from report_api import install_report_routes
 install_report_routes(app)
+
+from day_report_api import install_day_routes
+install_day_routes(app)
