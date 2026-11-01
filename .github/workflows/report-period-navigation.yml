@@ -1,0 +1,35 @@
+name: Install report period arrow navigation
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/report-period-navigation.yml']
+permissions:
+  contents: write
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Validate and install report navigation
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import subprocess
+          subprocess.run(['node','--check','report-period-navigation.js'],check=True)
+          p=Path('index.html')
+          html=p.read_text()
+          assert 'function reportView(' in html and 'function repCard(' in html
+          assert '</body>' in html and 'foodReportSectionMove' not in html
+          js=Path('report-period-navigation.js').read_text()
+          p.write_text(html.replace('</body>','<script>\n'+js+'\n</script>\n</body>',1))
+          PY
+      - name: Commit integration and remove temporary workflow
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git rm .github/workflows/report-period-navigation.yml
+          git commit -m "Connect calendar month and week arrows in reports"
+          git push origin HEAD:main
