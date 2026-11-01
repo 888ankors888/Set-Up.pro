@@ -1,0 +1,51 @@
+name: Make weekly energy chart collapsible
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/collapse-week-energy.yml']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Make chart collapsed by default and validate
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import subprocess, tempfile
+          p=Path('diary-week-chart.js')
+          original=p.read_text()
+          js=original
+          marker=' const previousDiary=diaryView;'
+          assert js.count(marker)==1
+          js=js.replace(marker," let weekEnergyOpen=false;\n window.foodEnergyWeekToggle=function(open){weekEnergyOpen=Boolean(open)};\n"+marker,1)
+          old='<section class="card" id="diary-week-energy"><h2>Энергия за неделю</h2>'
+          new="""<details class="card" id="diary-week-energy"${weekEnergyOpen?' open':''} ontoggle="foodEnergyWeekToggle(this.open)"><summary style="cursor:pointer;font-size:18px;font-weight:600">Энергия за неделю</summary>"""
+          assert js.count(old)==1
+          js=js.replace(old,new,1)
+          old_end='</p></section>`;'
+          assert js.count(old_end)==1
+          js=js.replace(old_end,'</p></details>`;',1)
+          with tempfile.NamedTemporaryFile(mode='w',suffix='.js') as f:
+              f.write(js)
+              f.flush()
+              subprocess.run(['node','--check',f.name],check=True)
+          index=Path('index.html')
+          html=index.read_text()
+          assert html.count(original)==1
+          html=html.replace(original,js,1)
+          p.write_text(js)
+          index.write_text(html)
+          PY
+      - name: Commit integration and remove temporary workflow
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add diary-week-chart.js index.html
+          git rm .github/workflows/collapse-week-energy.yml
+          git commit -m "Collapse weekly diary energy chart by default"
+          git push origin HEAD:main
