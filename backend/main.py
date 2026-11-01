@@ -3,11 +3,13 @@ import os
 import secrets
 from typing import Annotated
 
-from fastapi import FastAPI, Header, HTTPException
+from fastapi import Depends, FastAPI, HTTPException
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from gigachat import GigaChat
 from pydantic import BaseModel, Field, ValidationError
 
 app = FastAPI(title='food.pro API')
+bearer = HTTPBearer(auto_error=False)
 
 class FoodInput(BaseModel):
     text: str = Field(min_length=2, max_length=2000)
@@ -30,13 +32,14 @@ def health():
     return {'status': 'ok', 'configured': bool(os.getenv('GIGACHAT_CREDENTIALS') and os.getenv('APP_ACCESS_TOKEN'))}
 
 @app.post('/api/food/parse', response_model=ParsedFood)
-def parse_food(payload: FoodInput, authorization: Annotated[str | None, Header()] = None):
+def parse_food(payload: FoodInput, auth: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer)] = None):
     token = os.getenv('APP_ACCESS_TOKEN', '')
     credentials = os.getenv('GIGACHAT_CREDENTIALS', '')
     if not token or not credentials:
         raise HTTPException(503, 'Сервер ещё не настроен')
-    if not secrets.compare_digest(authorization or '', 'Bearer ' + token):
-        raise HTTPException(401, 'Неверный пароль доступа')
+    supplied = auth.credentials if auth else ''
+    if not secrets.compare_digest(supplied.encode('utf-8'), token.encode('utf-8')):
+        raise HTTPException(401, 'Неверный пароль доступа', headers={'WWW-Authenticate': 'Bearer'})
     if not payload.text.strip():
         raise HTTPException(422, 'Введите описание еды')
     try:
