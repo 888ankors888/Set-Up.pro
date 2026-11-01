@@ -972,5 +972,21 @@ setInterval(()=>{const b=$('#bn');if(b)b.innerHTML=bannerHtml()},60000);
   render();
 })();
 </script>
+
+<script id="training-week-bottom">
+(() => {
+  function moveWeek() {
+    if (tab !== 'training') return;
+    const app = document.getElementById('app');
+    if (!app) return;
+    const summary = [...app.querySelectorAll('details > summary')].find(node => node.textContent.trim() === 'Активность за неделю');
+    const block = summary?.parentElement;
+    if (block && (block.parentElement !== app || app.lastElementChild !== block)) app.appendChild(block);
+  }
+  const previousRender = render;
+  render = function() { previousRender(); moveWeek(); };
+  moveWeek();
+})();
+</script>
 </body>
 </html>
