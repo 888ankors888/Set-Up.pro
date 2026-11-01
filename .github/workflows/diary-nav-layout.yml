@@ -1,0 +1,56 @@
+name: Update diary navigation labels and order
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/diary-nav-layout.yml']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Patch navigation and validate JavaScript
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import subprocess, tempfile
+          p=Path('sports/sports-ui.js')
+          original=p.read_text()
+          js=original
+          old="[['sport','Спорт'],['training','Тренировки']]"
+          assert js.count(old)==1
+          js=js.replace(old,"[['sport','Спорт'],['training','Дневник тренировок']]",1)
+          marker="for(const [id,label] of [['sport','Спорт'],['training','Дневник тренировок']])"
+          assert js.count(marker)==1
+          prefix="const foodDiary=[...nav.querySelectorAll('button')].find(b=>b.textContent.trim()==='Дневник питания');if(foodDiary)foodDiary.dataset.section='food-diary';"
+          js=js.replace(marker,prefix+marker,1)
+          old="b.textContent=label;b.onclick=()=>sportsGo(id);nav.appendChild(b)"
+          assert js.count(old)==1
+          new="b.dataset.section=id;b.innerHTML='<span>'+label+'</span>';b.onclick=()=>sportsGo(id);if(id==='training'&&foodDiary)foodDiary.after(b);else nav.appendChild(b)"
+          js=js.replace(old,new,1)
+          marker=' render();\n})();'
+          assert js.count(marker)==1
+          css=" const navStyle=document.createElement('style');navStyle.id='diary-nav-layout';navStyle.textContent='#nav button[data-section=food-diary],#nav button[data-section=training]{white-space:nowrap}#nav button[data-section=food-diary] span,#nav button[data-section=training] span{white-space:nowrap}@media(min-width:1000px){#nav button[data-section=food-diary],#nav button[data-section=training]{font-size:13px;gap:10px;padding-inline:12px}}@media(max-width:999px){#nav{overflow-x:auto;justify-content:flex-start;overscroll-behavior-x:contain}#nav button{flex:0 0 auto;min-width:66px;padding-inline:12px;white-space:nowrap}#nav button span{white-space:nowrap}}';document.head.appendChild(navStyle);\n"
+          js=js.replace(marker,css+marker,1)
+          with tempfile.NamedTemporaryFile(mode='w',suffix='.js') as f:
+              f.write(js)
+              f.flush()
+              subprocess.run(['node','--check',f.name],check=True)
+          index=Path('index.html')
+          html=index.read_text()
+          assert html.count(original)==1
+          html=html.replace(original,js,1)
+          p.write_text(js)
+          index.write_text(html)
+          PY
+      - name: Commit layout and remove installer
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add sports/sports-ui.js index.html
+          git rm .github/workflows/diary-nav-layout.yml
+          git commit -m "Place training diary after food diary and prevent label wrapping"
+          git push origin HEAD:main
