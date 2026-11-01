@@ -1,0 +1,88 @@
+name: Water goal from questionnaire
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/questionnaire-water-goal.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Update water card and questionnaire
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('water-balance.js')
+          s = p.read_text(encoding='utf-8')
+          old = "goal=Number((S.waterGoalsByDate||{})[day]||S.waterGoal||2000)"
+          new = "goal=Number(S.profile?.nutritionGoalSettings?.waterMl||S.waterGoal||2000)"
+          assert old in s or new in s, 'Unexpected water goal expression'
+          s = s.replace(old, new)
+          old_button = "data-wb-goal '+(goal+250>10000?'disabled':'')+'>Цель +250 мл"
+          s = s.replace(old_button, 'data-wb-plus>+250 мл')
+          s = s.replace("card.querySelector('[data-wb-goal]').onclick=()=>foodDiaryWaterGoal();", "card.querySelector('[data-wb-plus]').onclick=()=>foodDiaryWaterAdd(250);")
+          assert 'data-wb-plus' in s and 'data-wb-goal' not in s
+          p.write_text(s, encoding='utf-8')
+          js = '''(() => {
+            const previousForm = formView;
+            formView = function() {
+              const template = document.createElement('template');
+              template.innerHTML = previousForm();
+              const input = template.content.querySelector('#food-water-goal');
+              if (!input) return template.innerHTML;
+              const label = template.content.querySelector('label[for="food-water-goal"]');
+              const note = input.nextElementSibling;
+              if (note?.tagName === 'P' && note.textContent.includes('Если выбран водный баланс')) note.remove();
+              const card = document.createElement('section');
+              card.className = 'card'; card.id = 'questionnaire-water-goal';
+              const heading = document.createElement('h2'); heading.textContent = 'Цель по воде';
+              card.appendChild(heading);
+              if (label) { label.textContent = 'Личная цель, мл в день'; card.appendChild(label); }
+              input.step = '50';
+              card.appendChild(input);
+              const help = document.createElement('p'); help.className = 'subtle';
+              help.textContent = 'Эта цель используется в дневнике питания независимо от выбранных привычек. Личный ориентир, не медицинская норма.';
+              card.appendChild(help);
+              const button = template.content.querySelector('button[onclick="saveForm()"]');
+              if (button) button.before(card); else template.content.appendChild(card);
+              return template.innerHTML;
+            };
+            const previousSave = saveForm;
+            saveForm = function() {
+              const input = document.getElementById('food-water-goal');
+              if (!input) return previousSave();
+              const water = Number(input.value);
+              if (!Number.isInteger(water) || water < 250 || water > 10000) { toast('Укажите цель воды от 250 до 10000 мл'); return; }
+              const before = S.profile;
+              previousSave();
+              if (S.profile && S.profile !== before) {
+                S.profile.nutritionGoalSettings = {...S.profile.nutritionGoalSettings, waterMl:water};
+                S.waterGoal = water; save(); render();
+              }
+            };
+            render();
+          })();
+          '''
+          Path('questionnaire-water-goal.js').write_text(js, encoding='utf-8')
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          assert '</body>' in s
+          s = s.replace('water-balance.js?v=1', 'water-balance.js?v=2')
+          if 'src="questionnaire-water-goal.js?v=1"' not in s:
+              s = s.replace('</body>', '<script src="questionnaire-water-goal.js?v=1"></script>\n</body>', 1)
+          p.write_text(s, encoding='utf-8')
+      - name: Check script syntax
+        run: |
+          node --check water-balance.js
+          node --check questionnaire-water-goal.js
+      - name: Commit water goal update
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html water-balance.js questionnaire-water-goal.js
+          git diff --cached --quiet && exit 0
+          git commit -m "Use questionnaire water goal and make plus button log 250 ml"
+          git push origin HEAD:main
