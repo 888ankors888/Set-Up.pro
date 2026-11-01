@@ -198,3 +198,6 @@ install_day_routes(app)
 
 from sports_api import install_sports_routes
 install_sports_routes(app)
+
+from combined_report_api import install_combined_routes
+install_combined_routes(app)
