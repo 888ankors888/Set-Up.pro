@@ -1,0 +1,50 @@
+name: Expand water glass rows
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dynamic-water-glasses.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Make each glass represent 250 ml
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+          p = Path('water-balance.js')
+          s = p.read_text(encoding='utf-8')
+          old_count = 'Array.from({length:7},'
+          new_count = 'Array.from({length:Math.max(7,Math.ceil(water/250))},'
+          assert old_count in s or new_count in s, 'Unexpected glass count expression'
+          s = s.replace(old_count, new_count)
+          s = s.replace('glass(water>=goal*(i+1)/7,i===0)', 'glass(water>=250*(i+1),i===0)')
+          s = s.replace('Каждый стакан добавляет 250 мл. Заполнение показывает долю личной цели за выбранный день.', 'Один стакан — 250 мл. Нажатие добавляет 250 мл. Дополнительные стаканы появляются по мере заполнения; цель берётся из анкеты.')
+          assert 'glass(water>=250*(i+1),i===0)' in s
+          p.write_text(s, encoding='utf-8')
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          s, count = re.subn(r'water-balance\.js\?v=\d+', 'water-balance.js?v=4', s)
+          assert count >= 1, 'Water script link missing'
+          p.write_text(s, encoding='utf-8')
+      - name: Check syntax and glass counts
+        run: |
+          node --check water-balance.js
+          node - <<'JS'
+          const count = water => Math.max(7,Math.ceil(water/250));
+          for (const [water, expected] of [[0,7],[1750,7],[2000,8],[2500,10],[3000,12]]) {
+            if (count(water) !== expected) throw new Error('Wrong glass count');
+          }
+          JS
+      - name: Commit expanding glass layout
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add water-balance.js index.html
+          git diff --cached --quiet && exit 0
+          git commit -m "Expand water balance with additional 250 ml glasses"
+          git push origin HEAD:main
