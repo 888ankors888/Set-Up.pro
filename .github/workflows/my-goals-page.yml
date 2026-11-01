@@ -1,0 +1,85 @@
+name: Move questionnaire to My Goals
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/my-goals-page.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Add goals page and navigation
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          if 'id="my-goals-page"' in s:
+              raise SystemExit(0)
+          nav = "['profile','Профиль']"
+          route = 'profile:profileView}'
+          assert nav in s and route in s and '</body>' in s, 'Unexpected routing structure'
+          s = s.replace(nav, "['goals','Мои цели'],['profile','Профиль']", 1)
+          s = s.replace(route, 'profile:profileView,goals:foodGoalsPage}', 1)
+          patch = '''
+          <script id="my-goals-page">
+          (() => {
+            const previousProfile = profileView;
+            profileView = function() {
+              const template = document.createElement('template');
+              template.innerHTML = previousProfile();
+              template.content.querySelectorAll('h2').forEach(heading => {
+                if (heading.textContent.trim() === 'Мои цели') heading.closest('.card')?.remove();
+              });
+              template.content.querySelectorAll('button').forEach(button => {
+                if (['Изменить анкету', 'Изменить цели в анкете'].includes(button.textContent.trim())) button.remove();
+              });
+              return template.innerHTML;
+            };
+            window.foodGoalsPage = function() {
+              const template = document.createElement('template');
+              template.innerHTML = formView();
+              const heading = template.content.querySelector('h1');
+              if (heading) heading.textContent = 'Мои цели';
+              template.content.querySelectorAll('button[onclick="saveForm()"]').forEach(button => { button.textContent = 'Сохранить анкету'; });
+              return template.innerHTML;
+            };
+            const previousRender = render;
+            render = function() {
+              if (S.profile && editing) { editing = false; tab = 'goals'; }
+              previousRender();
+              const button = document.querySelector('#nav button[onclick*="goals"]');
+              if (button && !button.querySelector('svg')) button.insertAdjacentHTML('afterbegin', ic('profile'));
+            };
+            const previousSave = saveForm;
+            saveForm = function() {
+              const origin = tab, previous = S.profile;
+              previousSave();
+              if (origin === 'goals' && S.profile && S.profile !== previous) { editing = false; tab = 'goals'; render(); toast('Анкета сохранена'); }
+            };
+            render();
+          })();
+          </script>
+          '''
+          p.write_text(s.replace('</body>', patch + '</body>', 1), encoding='utf-8')
+      - name: Check JavaScript syntax
+        run: |
+          python - <<'PY'
+          import re, subprocess
+          from pathlib import Path
+          s = Path('index.html').read_text(encoding='utf-8')
+          for js in re.findall(r'<script\b[^>]*>([\s\S]*?)</script>', s):
+              if js.strip():
+                  subprocess.run(['node', '--check'], input=js, text=True, check=True)
+          PY
+      - name: Commit page change
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git diff --cached --quiet && exit 0
+          git commit -m "Move full questionnaire from Profile to My Goals"
+          git push origin HEAD:main
