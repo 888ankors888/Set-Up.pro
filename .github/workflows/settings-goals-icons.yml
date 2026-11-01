@@ -1,0 +1,58 @@
+name: Settings label and goals icon
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/settings-goals-icons.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Update labels and icons
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          if 'id="settings-goals-icons"' in s:
+              raise SystemExit(0)
+          assert "['profile','Профиль']" in s and '</body>' in s, 'Unexpected navigation structure'
+          s = s.replace("['profile','Профиль']", "['profile','Настройки']", 1)
+          s = s.replace('<h1>Профиль</h1>', '<h1>Настройки</h1>')
+          patch = '''
+          <script id="settings-goals-icons">
+          (() => {
+            const previousIcon = ic;
+            ic = function(key) {
+              const paths = {
+                goals: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',
+                profile: '<path d="m9 3-.5 2-2 .9-1.9-.6-2 3.4 1.5 1.4v2.8L2.6 14l2 3.4 1.9-.6 2 .9.5 2.3h4l.5-2.3 2-.9 1.9.6 2-3.4-1.5-1.1v-2.8l1.5-1.4-2-3.4-1.9.6-2-.9L13 3Z"/><circle cx="11" cy="11.5" r="3"/>'
+              };
+              if (!(key in paths)) return previousIcon(key);
+              return '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + paths[key] + '</svg>';
+            };
+            render();
+          })();
+          </script>
+          '''
+          p.write_text(s.replace('</body>', patch + '</body>', 1), encoding='utf-8')
+      - name: Check script syntax
+        run: |
+          python - <<'PY'
+          import re, subprocess
+          from pathlib import Path
+          for js in re.findall(r'<script\b[^>]*>([\s\S]*?)</script>', Path('index.html').read_text(encoding='utf-8')):
+              if js.strip():
+                  subprocess.run(['node', '--check'], input=js, text=True, check=True)
+          PY
+      - name: Commit UI update
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git diff --cached --quiet && exit 0
+          git commit -m "Rename Profile to Settings and add goals/settings icons"
+          git push origin HEAD:main
