@@ -91,3 +91,32 @@ def parse_food(payload: FoodInput, auth: Annotated[HTTPAuthorizationCredentials 
         return ParsedFood.model_validate(json.loads(content))
     except Exception as exc:
         raise safe_error(exc, 'response_validation') from None
+
+@app.get('/api/models')
+def available_models(auth: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer)] = None):
+    from importlib.metadata import version
+    token = os.getenv('APP_ACCESS_TOKEN', '')
+    credentials = os.getenv('GIGACHAT_CREDENTIALS', '')
+    if not token or not credentials:
+        raise HTTPException(503, 'Сервер ещё не настроен')
+    supplied = auth.credentials if auth else ''
+    if not secrets.compare_digest(supplied.encode('utf-8'), token.encode('utf-8')):
+        raise HTTPException(401, 'Неверный пароль доступа', headers={'WWW-Authenticate': 'Bearer'})
+    stage = 'models_client_init'
+    try:
+        with GigaChat(
+            credentials=credentials,
+            scope=os.getenv('GIGACHAT_SCOPE', 'GIGACHAT_API_PERS'),
+            base_url='https://api.giga.chat/v1',
+            ca_bundle_file=os.getenv('GIGACHAT_CA_BUNDLE', 'russian_trusted_root_ca_pem.crt'),
+            verify_ssl_certs=True,
+            timeout=45,
+        ) as client:
+            stage = 'oauth_token'
+            client.get_token()
+            stage = 'models_request'
+            models = client.get_models()
+        stage = 'models_extract'
+        return {'models': [item.id for item in models.data], 'sdk_version': version('gigachat'), 'selected_model': os.getenv('GIGACHAT_MODEL', 'GigaChat')}
+    except Exception as exc:
+        raise safe_error(exc, stage) from None
