@@ -480,7 +480,7 @@ function render(){
   nav.style.display='flex';
   const T=[['today','Сегодня'],['diary','Дневник'],['journal','Журнал'],['report','Отчёты'],['goals','Мои цели'],['profile','Профиль']];
   nav.innerHTML=T.map(x=>`<button class="${tab===x[0]?'on':''}" onclick="tab='${x[0]}';day=today();render();scrollTo(0,0)">${ic(x[0])}<span>${x[1]}</span></button>`).join('');
-  $('#app').innerHTML=brand()+({today:todayView,diary:diaryView,journal:journalView,report:reportView,profile:profileView,goals:foodGoalsPage})[tab]();
+  $('#app').innerHTML=brand()+({today:todayView,diary:diaryView,journal:journalView,report:reportView,profile:profileView,goals:()=>window.foodGoalsPage()})[tab]();
   if(tab==='journal')jList();
 }
 
@@ -1023,6 +1023,37 @@ setInterval(()=>{const b=$('#bn');if(b)b.innerHTML=bannerHtml()},60000);
     const origin = tab, previous = S.profile;
     previousSave();
     if (origin === 'goals' && S.profile && S.profile !== previous) { editing = false; tab = 'goals'; render(); toast('Анкета сохранена'); }
+  };
+  render();
+})();
+</script>
+
+<script id="goals-daily-targets">
+(() => {
+  const previousProfile = profileView;
+  const previousGoals = window.foodGoalsPage;
+  function targetCard(fragment) {
+    const heading = [...fragment.querySelectorAll('h2')].find(node => node.textContent.trim() === 'Ваша норма на день');
+    return heading?.closest('.card');
+  }
+  profileView = function() {
+    const template = document.createElement('template');
+    template.innerHTML = previousProfile();
+    targetCard(template.content)?.remove();
+    return template.innerHTML;
+  };
+  window.foodGoalsPage = function() {
+    const template = document.createElement('template');
+    template.innerHTML = previousGoals();
+    const source = document.createElement('template');
+    source.innerHTML = previousProfile();
+    const card = targetCard(source.content);
+    if (card) {
+      const heading = template.content.querySelector('h1');
+      if (heading) heading.after(card);
+      else template.content.prepend(card);
+    }
+    return template.innerHTML;
   };
   render();
 })();
