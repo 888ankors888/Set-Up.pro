@@ -1,0 +1,39 @@
+name: Install expanded food goals
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/food-goals-install.yml']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Install goals UI and validate JavaScript
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import subprocess
+          p = Path('index.html')
+          html = p.read_text(encoding='utf-8')
+          assert '<h2>Цель</h2>' in html
+          assert 'food-expanded-goals' not in html
+          assert '</head>' in html and '</body>' in html
+          subprocess.run(['node', '--check', 'goals-ui.js'], check=True)
+          js = Path('goals-ui.js').read_text(encoding='utf-8')
+          style = '<style id="food-expanded-goals">.food-goal-option{display:flex;align-items:flex-start;gap:12px;padding:12px 0;margin:0;color:var(--tx);border-bottom:1px solid var(--ln)}.food-goal-option input{width:18px;height:18px;flex:none;margin:4px 0 0;accent-color:var(--ac)}.food-goal-option b,.food-goal-option small{display:block}.food-goal-option small{font-size:13px;color:var(--mu);font-weight:400}#food-goals-form .row input{min-width:0}#food-goals-form~.card summary{cursor:pointer;color:var(--ac);padding-top:14px}</style>'
+          html = html.replace('</head>', style + '\n</head>', 1)
+          html = html.replace('</body>', '<script>\n' + js + '\n</script>\n</body>', 1)
+          p.write_text(html, encoding='utf-8')
+          PY
+      - name: Commit interface and remove temporary workflow
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git rm .github/workflows/food-goals-install.yml
+          git commit -m "Connect body composition and nutrition goals in questionnaire"
+          git push origin HEAD:main
