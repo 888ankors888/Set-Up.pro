@@ -1,0 +1,35 @@
+name: Install sports planning API foundation
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/sports-api-install.yml']
+permissions:
+  contents: write
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Validate and connect sports API
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import ast
+          ast.parse(Path('backend/sports_api.py').read_text())
+          p=Path('backend/main.py')
+          source=p.read_text()
+          assert 'install_sports_routes' not in source
+          source+='\nfrom sports_api import install_sports_routes\ninstall_sports_routes(app)\n'
+          ast.parse(source)
+          p.write_text(source)
+          PY
+      - name: Commit integration and remove installer
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add backend/main.py
+          git rm .github/workflows/sports-api-install.yml
+          git commit -m "Connect GigaChat sports planning API foundation"
+          git push origin HEAD:main
