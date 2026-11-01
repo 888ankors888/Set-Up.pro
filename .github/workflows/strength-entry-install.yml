@@ -1,0 +1,56 @@
+name: Install strength group and exercise selection
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/strength-entry-install.yml']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Update activity form and validation
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import subprocess
+          p=Path('sports/sports-ui.js')
+          original=p.read_text()
+          js=original
+          assert 'STRENGTH_GROUPS' not in js
+          start=js.index(' window.sportsOpen=function(')
+          end=js.index(' window.sportsDelete=function(',start)
+          fragment=Path('sports/strength-entry.js').read_text()
+          assert 'se-effort' not in fragment and 'se-notes' not in fragment
+          js=js[:start]+fragment+'\n'+js[end:]
+          old='!Number.isInteger(e.effort)||e.effort<1||e.effort>10'
+          assert js.count(old)==1
+          js=js.replace(old,'(e.effort!=null&&(!Number.isInteger(e.effort)||e.effort<1||e.effort>10))',1)
+          old='!num(e.minutes,1440)||e.minutes<=0||'
+          assert js.count(old)==1
+          js=js.replace(old,old+'!strengthMetadataOK(e)||',1)
+          old=' · сложность ${e.effort}/10'
+          assert js.count(old)==1
+          js=js.replace(old,'',1)
+          old='${TYPES[e.kind]} · ${e.minutes} мин'
+          assert js.count(old)==1
+          js=js.replace(old,"${TYPES[e.kind]}${e.muscleGroup?' · '+esc(STRENGTH_GROUPS[e.muscleGroup].label):''} · ${e.minutes} мин",1)
+          p.write_text(js)
+          subprocess.run(['node','--check',str(p)],check=True)
+          subprocess.run(['node','sports/tests/strength-entry.test.js'],check=True)
+          index=Path('index.html')
+          html=index.read_text()
+          assert html.count(original)==1
+          index.write_text(html.replace(original,js,1))
+          PY
+      - name: Commit integration and remove installer
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add sports/sports-ui.js index.html
+          git rm .github/workflows/strength-entry-install.yml
+          git commit -m "Add dependent muscle and exercise selectors without effort or notes inputs"
+          git push origin HEAD:main
