@@ -1,0 +1,35 @@
+name: Install weekly diary energy chart
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/diary-week-install.yml']
+permissions:
+  contents: write
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Validate and install weekly chart
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import subprocess
+          subprocess.run(['node','--check','diary-week-chart.js'],check=True)
+          p=Path('index.html')
+          html=p.read_text()
+          assert 'id="diary-daily-energy"' in html
+          assert '</body>' in html and 'id="diary-week-energy"' not in html
+          js=Path('diary-week-chart.js').read_text()
+          p.write_text(html.replace('</body>','<script>\n'+js+'\n</script>\n</body>',1))
+          PY
+      - name: Commit integration and remove temporary workflow
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git rm .github/workflows/diary-week-install.yml
+          git commit -m "Connect weekly calorie chart below diary energy card"
+          git push origin HEAD:main
