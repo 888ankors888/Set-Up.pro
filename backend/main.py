@@ -120,6 +120,7 @@ def available_models(auth: Annotated[HTTPAuthorizationCredentials | None, Depend
         return {'models': [item.id_ for item in models.data], 'sdk_version': version('gigachat'), 'selected_model': os.getenv('GIGACHAT_MODEL', 'GigaChat')}
     except Exception as exc:
         raise safe_error(exc, stage) from None
+<<<<<<< HEAD
 
 
 # Browser access for the existing GitHub Pages origin and local development.
@@ -145,3 +146,5 @@ def food_app():
     if not html.is_file():
         raise HTTPException(503, 'Файл интерфейса ещё не опубликован')
     return FileResponse(html, media_type='text/html', headers={'Cache-Control': 'no-store'})
+=======
+>>>>>>> 1907727bcba36af152b43c078bc3ab7c52dcb58f
