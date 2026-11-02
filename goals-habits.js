@@ -109,8 +109,12 @@
     answers.customHabit = items['13:4']?.enabled ? items['13:4'].target : '';
     return {version:1,items};
   };
+  window.foodHabitDefinitions=()=>categories.flatMap(([category,image,list],g)=>list.map((title,i)=>({id:key(g,i),title,category,image,canonical:key(g,i)===g+':'+i}))).filter(d=>d.canonical);
+  window.foodHabitSettings=initial;
   const style = document.createElement('style');
   style.textContent = '#goals-questionnaire-habits [hidden]{display:none!important}.habit-categories{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.habit-category{border:1px solid var(--ln)!important;border-radius:18px;padding:0!important;margin:0!important;align-self:start;background:var(--card)}.habit-category>summary{display:flex;align-items:center;gap:12px;padding:16px;list-style:none}.habit-category>summary::-webkit-details-marker{display:none}.habit-category>summary>span:nth-child(2){flex:1}.habit-category small{display:block;color:var(--mu);font-size:12px;font-weight:400;margin-top:4px}.habit-picture{display:grid;place-items:center;font-size:30px;min-width:52px;height:52px;background:var(--ac2);border-radius:16px}.habit-list{padding:0 16px 16px}.habit-choice{padding:12px 0;border-top:1px solid var(--ln)}.habit-check{display:flex;align-items:flex-start;gap:10px;color:var(--tx)}.habit-check input{margin-top:5px}.habit-options{padding:4px 0 10px 28px}@media(max-width:700px){.habit-categories{grid-template-columns:1fr}}';
   document.head.appendChild(style);
   render();
+  const loadTracker=()=>{if(document.querySelector('script[data-habit-tracker]'))return;const script=document.createElement('script');script.dataset.habitTracker='';script.src=new URL('habit-tracker.js?v=1',document.baseURI).href;document.head.appendChild(script);};
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',loadTracker,{once:true});else loadTracker();
 })();
