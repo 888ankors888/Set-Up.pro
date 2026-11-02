@@ -1,5 +1,5 @@
 (() => {
-  const cards = [['intro','👋','Знакомство'],['goal','🎯','Моя цель'],['experience','🏋️','Мой опыт'],['health','🩺','Моё здоровье'],['rhythm','📅','Мой ритм'],['format','❤️','Мой формат'],['life','🌿','Мой быт'],['nutrition','🥗','Моё питание'],['expectations','📈','Мои ожидания']];
+  const cards = [['goal','🎯','Моя цель'],['experience','🏋️','Мой опыт'],['health','🩺','Моё здоровье'],['rhythm','📅','Мой ритм'],['energy','⚡','Моя энергия'],['format','❤️','Мой формат'],['expectations','📈','Мои ожидания']];
   const fields = [
     ['goal','priority','Что для вас важнее?','radio','health:Здоровье|appearance:Внешний вид|numbers:Измеримый результат|enjoyment:Удовольствие от занятий'],
     ['goal','event','Есть событие или срок?','radio','no:Нет|yes:Да'],['goal','eventDate','Дата события','date',''],['goal','eventName','Что за событие?','text',''],
@@ -13,12 +13,9 @@
     ['health','doctor','Обсуждали нагрузки с врачом?','radio','yes:Да|no:Нет|planned:Планирую консультацию'],
     ['health','cardio','Есть противопоказания к кардио?','radio','no:Нет известных|yes:Да|unknown:Не знаю'],
     ['rhythm','daysCount','Сколько занятий в неделю реально выделить?','select','1:Одно|2:Два|3:Три|4:Четыре|5:Пять'],
+    ['energy','afterWorkEnergy','Как вы чувствуете себя после обычного рабочего дня?','radio','energized:Полон(а) сил, могу еще тренироваться|tired:Устаю, но легкая тренировка взбодрит|exhausted:Очень устаю, сил хватает только на диван'],
     ['format','avoid','Что не нравится?','check','running:Бег|squats:Приседания|plank:Планка|groups:Групповые занятия|steady:Однообразное кардио|other:Другое'],['format','avoidOther','Какие ещё нагрузки не нравятся?','text',''],
     ['format','coach','Нужна помощь тренера?','radio','always:Постоянно|sometimes:Периодически|independent:Справляюсь самостоятельно'],
-    ['life','steps','Сколько шагов обычно проходите за день?','select','under3:Менее 3 000|3to7:3 000–7 000|7to10:7 000–10 000|over10:Более 10 000|unknown:Не знаю'],
-    ['life','sleep','Сколько обычно спите? Это не цель сна.','select','under6:Менее 6 часов|6to7:6–7 часов|7to8:7–8 часов|over8:Более 8 часов|variable:По-разному'],
-    ['life','stress','Как оцениваете текущий стресс?','radio','low:Низкий|medium:Средний|high:Высокий'],['life','smoking','Курите?','radio','no:Нет|sometimes:Иногда|yes:Да'],
-    ['nutrition','nutritionHelp','Какие рекомендации по питанию нужны?','radio','yes:Подробные|no:Не нужны|general:Только общие принципы'],
     ['expectations','metrics','Что хотите отслеживать?','check','weight:Вес|measurements:Обхваты|photos:Фото|strength:Силовые показатели|steps:Шаги|wellbeing:Самочувствие'],
     ['expectations','reminders','Как часто хотели бы получать напоминания?','radio','daily:Ежедневно|three:Три раза в неделю|weekly:Раз в неделю|none:Не напоминать'],
     ['expectations','channels','Какой канал был бы удобен?','check','push:Push|email:Email|messenger:Telegram / WhatsApp|call:Звонок'],
@@ -46,11 +43,6 @@
       const node=root.querySelector('[data-sq="'+key+'"]');if(node)node.hidden=!show;
     }
   }
-  function summaries(root) {
-    const val=id=>{const node=root.querySelector('#'+id);return node?.selectedOptions?.[0]?.textContent || node?.value || '—';};
-    const values={intro:'Пол: '+val('sex')+' · Возраст: '+val('age')+' · Рост: '+val('h')+' см · Вес: '+val('w')+' кг · Целевой вес: '+val('tw')+' кг',life:'Характер дня указан в блоке «О вас». Здесь — текущие шаги, сон и самочувствие.',nutrition:'Приёмов пищи: '+val('gqp-meals')+' · Цель воды: '+val('food-water-goal')+' мл. Это цель, не выпитый объём.'};
-    for(const [key,value] of Object.entries(values)){const node=root.querySelector('[data-sq-summary="'+key+'"]');if(node)node.textContent=value;}
-  }
   const previousForm=formView;
   formView=function(){
     const template=document.createElement('template');template.innerHTML=previousForm();
@@ -63,26 +55,23 @@
     old.querySelector('#goals-questionnaire-sport-title')?.remove();block.appendChild(old);
     block.insertAdjacentHTML('beforeend','<div class="eyebrow">Блок 3 из 4</div><h2 id="goals-questionnaire-sport-title">Спорт</h2><p class="mu">Откройте нужную карточку. Общие данные не нужно заполнять повторно.</p><div class="sport-categories">'+cards.map(([key,image,title])=>'<details class="sport-category"><summary><span aria-hidden="true">'+image+'</span><span>'+title+'</span><span aria-hidden="true">⌄</span></summary><div data-sq-card="'+key+'">'+fields.filter(f=>f[0]===key).map(f=>question(f,answers)).join('')+'</div></details>').join('')+'</div><p class="subtle">Новые пожелания пока сохраняются, но не все передаются генератору. Реабилитация, HIIT, бассейн и связь с тренером не добавляются автоматически. Напоминания и каналы связи — пока предпочтения, не подключённые услуги.</p>');
     const target=key=>block.querySelector('[data-sq-card="'+key+'"]');
-    target('intro').insertAdjacentHTML('afterbegin','<p data-sq-summary="intro"></p>'+link('about','Изменить данные о себе'));
     target('goal').insertAdjacentHTML('afterbegin','<p class="subtle">Вес и общий ориентир задаются в «О вас». Здесь выберите направление тренировок.</p>');
     move(root,'sp-goal',target('goal'));
     move(root,'sp-restrictions',target('health'));
     target('health').insertAdjacentHTML('afterbegin','<p class="subtle">Общие сведения о здоровье находятся в «О вас». Этот блок уточняет ограничения нагрузки, а не ставит диагноз.</p>'+link('about','Изменить общие ограничения'));
-    for(const id of ['sp-minutes','sp-place','sp-equipment','gqp-sportTime'])move(root,id,target('rhythm'));
+    for(const id of ['sp-minutes','sp-place','gqp-sportTime'])move(root,id,target('rhythm'));
     old.querySelectorAll('.sp-day').forEach(input=>{const label=input.closest('label');if(label)target('rhythm').appendChild(label);});
+    target('energy').insertAdjacentHTML('beforeend','<p class="subtle">Выберите один вариант. Ответ учитывается в ИИ-анализе при рекомендациях по интенсивности. Автоматический подбор интенсивности программы по этому ответу пока не подключён.</p>');
     for(const id of ['gqp-activities','gqp-company']){
       const node=old.querySelector('[data-gqp="'+id.slice(4)+'"]');if(node)target('format').appendChild(node);
     }
-    target('life').insertAdjacentHTML('afterbegin','<p data-sq-summary="life"></p>'+link('about','Изменить характер дня')+link('habits','Изменить цели сна и движения'));
-    target('nutrition').insertAdjacentHTML('afterbegin','<p data-sq-summary="nutrition"></p>'+link('nutrition','Изменить питание')+link('habits','Изменить цель воды'));
     const enable=old.querySelector('#sp-enabled');if(enable)block.querySelector('.sport-categories').before(enable.closest('label')||enable);
-    conditional(root);summaries(root);return template.innerHTML;
+    conditional(root);return template.innerHTML;
   };
-  document.addEventListener('change',event=>{if(event.target.closest('[data-sq]'))conditional(document);summaries(document);});
-  document.addEventListener('input',()=>summaries(document));
+  document.addEventListener('change',event=>{if(event.target.closest('[data-sq]'))conditional(document);});
   document.addEventListener('click',event=>{const button=event.target.closest('[data-sq-jump]');if(!button)return;const target=document.getElementById('goals-questionnaire-'+button.dataset.sqJump);target?.scrollIntoView({behavior:'smooth',block:'start'});});
   window.foodCollectSport=function(profile,sportsProfile){
-    const answers={};
+    const answers={...(profile?.sportQuestionnaire?.answers || {})};
     for(const [,key,,type,text] of fields){
       const options=choices(text);
       const value=type==='check'?[...document.querySelectorAll('[data-sq-key="'+key+'"]:checked')].map(n=>n.value):type==='radio'?document.querySelector('[data-sq-key="'+key+'"]:checked')?.value||'':document.getElementById('sq-'+key)?.value||'';
