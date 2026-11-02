@@ -204,3 +204,20 @@ install_combined_routes(app)
 
 from nutrition_goal_api import install_nutrition_goal_routes
 install_nutrition_goal_routes(app)
+
+
+# Only public frontend assets; never serve backend, tests, or hidden files.
+_FRONTEND_ROOT = Path(__file__).resolve().parent.parent
+_FRONTEND_ASSETS = {}
+for _folder, _patterns in (('', ('*.js','*.css')), ('sports', ('*.js','*.css')), ('assets', ('*.webp','*.png','*.jpg','*.jpeg','*.svg','*.ico'))):
+    for _pattern in _patterns:
+        for _asset in (_FRONTEND_ROOT / _folder).glob(_pattern):
+            if _asset.is_file() and _asset.resolve().is_relative_to(_FRONTEND_ROOT):
+                _FRONTEND_ASSETS[_asset.relative_to(_FRONTEND_ROOT).as_posix()] = _asset
+
+@app.get('/{asset:path}', include_in_schema=False)
+def questionnaire_frontend_asset(asset: str):
+    path = _FRONTEND_ASSETS.get(asset)
+    if path is None:
+        raise HTTPException(404, 'Not found')
+    return FileResponse(path, headers={'Cache-Control': 'no-store'})
