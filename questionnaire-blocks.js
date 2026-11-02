@@ -86,3 +86,36 @@
   const style=document.createElement('style');style.textContent='#goals-questionnaire-about [hidden]{display:none!important}';document.head.appendChild(style);
   const previous=render;render=function(){previous();update()};update();
 })();
+
+(() => {
+  if(window.foodGoalsActionLayoutInstalled)return;
+  window.foodGoalsActionLayoutInstalled=true;
+  function actionBar(block){
+    let row=block.querySelector('[data-goals-action-bar]');
+    if(!row){row=document.createElement('div');row.className='goals-compact-actions';row.dataset.goalsActionBar='';block.appendChild(row);}
+    return row;
+  }
+  function compactLayout(){
+    for(const id of ['about','nutrition','sport','habits']){
+      const block=document.getElementById('goals-questionnaire-'+id),save=block?.querySelector('[data-save-block]');
+      if(!block||!save)continue;
+      const row=actionBar(block),ai=block.querySelector(id==='nutrition'?'#nutrition-ai-button':'#sport-ai-button');
+      const hint=ai?.nextElementSibling?.classList.contains('subtle')?ai.nextElementSibling:null;
+      if(ai&&ai.parentElement!==row)row.appendChild(ai);
+      if(save.parentElement!==row)row.appendChild(save);
+      if(hint&&hint.parentElement!==row.parentElement)row.after(hint);
+      else if(hint&&hint.previousElementSibling!==row)row.after(hint);
+      const result=block.querySelector(id==='nutrition'?'#nutrition-ai-result':'#sport-ai-result');
+      if(result&&result.parentElement!==block)block.appendChild(result);
+      else if(result&&result.compareDocumentPosition(row)&Node.DOCUMENT_POSITION_FOLLOWING)block.appendChild(result);
+      const status=block.querySelector('[data-block-save-status]');if(status)block.appendChild(status);
+    }
+    const habits=document.getElementById('goals-questionnaire-habits');
+    const full=document.querySelector('#app button[onclick="saveForm()"]');
+    if(habits&&full){full.classList.add('goals-save-all');const row=actionBar(habits);if(full.parentElement!==row)row.appendChild(full);}
+  }
+  const style=document.createElement('style');style.id='goals-compact-actions-style';
+  style.textContent='.goals-questionnaire-block .goals-compact-actions{display:flex;align-items:stretch;gap:10px;flex-wrap:wrap;margin-top:16px}.goals-questionnaire-block .goals-compact-actions>.btn{display:inline-flex;align-items:center;justify-content:center;flex:0 1 auto;width:auto;min-width:0;min-height:44px;margin:0!important;padding:8px 12px;border-radius:10px;font-size:13px;line-height:1.25;white-space:normal;text-align:center}.goals-questionnaire-block .goals-compact-actions>#nutrition-ai-button,.goals-questionnaire-block .goals-compact-actions>#sport-ai-button{background:var(--ac2);color:var(--ac);border:1px solid var(--ln)}.goals-questionnaire-block .goals-compact-actions>.goals-save-all{background:#2458a6;color:#fff;border:1px solid #2458a6}.goals-questionnaire-block .goals-compact-actions>.goals-save-all:hover{background:#1c4787;border-color:#1c4787}@media(max-width:600px){.goals-questionnaire-block .goals-compact-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.goals-questionnaire-block .goals-compact-actions>.btn{width:100%;padding:8px;font-size:12px}.goals-questionnaire-block .goals-compact-actions>.btn:only-child{width:auto;justify-self:start;grid-column:1/-1}}';
+  document.head.appendChild(style);
+  const previous=render;render=function(){previous();compactLayout()};compactLayout();
+})();
