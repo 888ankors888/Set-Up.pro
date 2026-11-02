@@ -28,6 +28,41 @@
     const checked=(key,value)=>!!root.querySelector('[data-nq-key="'+key+'"][value="'+value+'"]:checked');
     for(const [key,show] of Object.entries({ethicsOther:checked('ethics','other'),medicalOther:checked('medicalDiet','other'),appsOther:checked('apps','other'),ownCalories:checked('knowCalories','yes')})){const node=root.querySelector('[data-nq="'+key+'"]');if(node)node.hidden=!show;}
   }
+  window.nutritionInsight=function(){
+    const maps={
+      breakfast:{daily:'регулярный завтрак',sometimes:'иногда завтрак',never:'без завтрака'},
+      produce:{'0':'мало овощей и фруктов','1to2':'1–2 порции овощей и фруктов','3to4':'3–4 порции овощей и фруктов','5plus':'достаточно овощей и фруктов',unknown:'объём овощей и фруктов пока не указан'},
+      sweets:{none:'сладкое почти отсутствует',rare:'редкое сладкое',daily:'ежедневное сладкое',often:'много сладкого'},
+      fastfood:{none:'фастфуд почти отсутствует','1to2':'умеренное количество фастфуда','3plus':'частый фастфуд',daily:'ежедневный фастфуд'},
+      lateEating:{no:'вечернее переедание не беспокоит',sometimes:'иногда вечером еды больше, чем хотелось',often:'часто вечером еды больше, чем хотелось'},
+      screenEating:{no:'еда обычно без спешки',sometimes:'иногда еда на ходу или перед экраном',often:'часто еда на ходу или перед экраном'},
+      cookDays:{daily:'есть время готовить каждый день',few:'готовка возможна 2–3 раза в неделю',weekends:'готовка возможна по выходным',none:'времени на готовку мало'},
+      mealPrep:{yes:'заготовки уже удобны',no:'заготовки пока не подходят',learn:'интересны заготовки, но нужен простой старт'}
+    };
+    const a=S.profile?.nutritionQuestionnaire?.answers||{};
+    const p=S.profile||{};
+    const protein=(a.protein||[]).filter(v=>v!=='none');
+    const tips=[];
+    if(!protein.length)tips.push('Добавьте один привычный источник белка в основной приём пищи.');
+    else if(protein.length<2)tips.push('Чередуйте выбранный источник белка с ещё одним удобным вариантом.');
+    if(['0','1to2'].includes(a.produce))tips.push('Начните с одной дополнительной порции овощей или фруктов в день.');
+    if(['daily','often'].includes(a.sweets))tips.push('Замените одну сладкую порцию в день на фрукт, йогурт или чай.');
+    if(['3plus','daily'].includes(a.fastfood))tips.push('На этой неделе выберите один домашний или простой вариант вместо фастфуда.');
+    if(['sometimes','often'].includes(a.lateEating))tips.push('Если вечером тянет поесть, начните со стакана воды и небольшого заранее выбранного перекуса.');
+    if(['sometimes','often'].includes(a.screenEating))tips.push('Один приём пищи в день попробуйте есть без экрана и в спокойном темпе.');
+    if(a.usualWater!==''&&Number(a.usualWater)<1.5)tips.push('Держите бутылку воды рядом и добавьте один стакан между приёмами пищи.');
+    const focus=tips.slice(0,3);
+    const message='✨ <strong>Анализ питания</strong><br><br><strong>Что видно сейчас:</strong><br>• '+(maps.breakfast[a.breakfast]||'режим завтрака не указан')+'.<br>• '+(maps.produce[a.produce]||'объём овощей и фруктов пока не указан')+'.<br>• '+(maps.sweets[a.sweets]||'частота сладкого не указана')+', '+(maps.fastfood[a.fastfood]||'частота фастфуда не указана')+'.<br><br><strong>На что сделать акцент:</strong><br>'+(focus.length?focus.map(t=>'• '+t).join('<br>'):'• Пока сохраните текущие привычки и начните вести записи — этого достаточно для первого шага.')+'<br><br><strong>Контекст:</strong><br>• '+(maps.cookDays[a.cookDays]||'время на готовку не указано')+', '+(maps.mealPrep[a.mealPrep]||'отношение к заготовкам не указано')+'.<br>• Основная цель: '+(p.goal==='lose'?'снижение веса':p.goal==='gain'?'набор массы':'поддержание веса')+'.<br><br><strong>Мотивация:</strong> не нужно менять всё сразу. Один небольшой повторяемый шаг в неделю уже улучшает картину. Приложение поможет замечать прогресс и сохранять привычки без жёстких запретов.<br><br><em>Это общий ориентир по анкете, а не медицинская или диетическая консультация.</em>';
+    return message.length>1000?message.slice(0,997)+'…':message;
+  };
+  document.addEventListener('click',event=>{
+    if(event.target.id!=='nutrition-ai-button')return;
+    const result=document.getElementById('nutrition-ai-result');
+    if(!result)return;
+    result.innerHTML=nutritionInsight();
+    result.hidden=false;
+    result.scrollIntoView({behavior:'smooth',block:'center'});
+  });
   const previousForm=formView;
   formView=function(){
     const template=document.createElement('template');template.innerHTML=previousForm();
@@ -36,7 +71,7 @@
     const old=document.createElement('div');old.id='nutrition-legacy-fields';old.hidden=true;
     while(block.firstChild)old.appendChild(block.firstChild);
     old.querySelector('#goals-questionnaire-nutrition-title')?.remove();block.appendChild(old);
-    block.insertAdjacentHTML('beforeend','<div class="eyebrow">Блок 2 из 4</div><h2 id="goals-questionnaire-nutrition-title">Питание</h2><p class="mu">Опишите привычный режим. Нет правильных или неправильных ответов; дополнительные вопросы можно пропустить.</p><div class="nutrition-categories">'+cards.map(([key,image,title])=>'<details class="nutrition-category"><summary><span aria-hidden="true">'+image+'</span><span>'+title+'</span><span aria-hidden="true">⌄</span></summary><div data-nq-card="'+key+'">'+fields.filter(f=>f[0]===key).map(f=>question(f,answers)).join('')+'</div></details>').join('')+'</div><p class="subtle">Эта анкета не диагностирует дефициты и заболевания. Медицинская диета указывается по назначению специалиста. Новые ответы пока сохраняются: автоматический подбор меню и уведомления ещё не подключены.</p>');
+    block.insertAdjacentHTML('beforeend','<div class="eyebrow">Блок 2 из 4</div><h2 id="goals-questionnaire-nutrition-title">Питание</h2><p class="mu">Опишите привычный режим. Нет правильных или неправильных ответов; дополнительные вопросы можно пропустить.</p><div class="nutrition-categories">'+cards.map(([key,image,title])=>'<details class="nutrition-category"><summary><span aria-hidden="true">'+image+'</span><span>'+title+'</span><span aria-hidden="true">⌄</span></summary><div data-nq-card="'+key+'">'+fields.filter(f=>f[0]===key).map(f=>question(f,answers)).join('')+'</div></details>').join('')+'</div><div id="nutrition-ai-result" class="nutrition-ai-result" hidden></div><button type="button" id="nutrition-ai-button" class="btn nutrition-ai-button">✨ Анализ питания через ИИ</button><p class="subtle">Анализ формируется в приложении по сохранённым ответам «О вас» и «Питание». Он не отправляет данные во внешние сервисы и не заменяет консультацию врача или нутрициолога.</p>');
     const target=key=>block.querySelector('[data-nq-card="'+key+'"]');
     move(root,'gqp-meals',target('routine'));
     const meals=root.querySelector('#gqp-meals');
@@ -78,6 +113,6 @@
     if(answers.ethics.includes('other')&&!answers.ethicsOther)throw Error('Укажите дополнительные ограничения');
     return {version:1,answers,requiresProfessionalReview:answers.medicalDiet.some(v=>v!=='none')};
   };
-  const style=document.createElement('style');style.textContent='#goals-questionnaire-nutrition [hidden]{display:none!important}.nutrition-categories{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.nutrition-category{margin:0!important;padding:0!important;border:1px solid var(--ln)!important;border-radius:18px;align-self:start}.nutrition-category>summary{display:flex;align-items:center;gap:12px;padding:16px;list-style:none}.nutrition-category>summary>span:first-child{font-size:30px;display:grid;place-items:center;min-width:52px;height:52px;border-radius:16px;background:var(--ac2)}.nutrition-category>summary>span:nth-child(2){flex:1}.nutrition-category>summary::-webkit-details-marker{display:none}.nutrition-category>[data-nq-card]{padding:0 16px 16px}.nutrition-question{border:0;margin:14px 0;padding:0}.nutrition-question .chk{display:flex;align-items:flex-start;padding:8px 0}.nutrition-question input[type=radio],.nutrition-question input[type=checkbox]{width:auto;flex:none;margin-top:5px}@media(max-width:700px){.nutrition-categories{grid-template-columns:1fr}}';document.head.appendChild(style);
+  const style=document.createElement('style');style.textContent='#goals-questionnaire-nutrition [hidden]{display:none!important}.nutrition-categories{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.nutrition-category{margin:0!important;padding:0!important;border:1px solid var(--ln)!important;border-radius:18px;align-self:start}.nutrition-category>summary{display:flex;align-items:center;gap:12px;padding:16px;list-style:none}.nutrition-category>summary>span:first-child{font-size:30px;display:grid;place-items:center;min-width:52px;height:52px;border-radius:16px;background:var(--ac2)}.nutrition-category>summary>span:nth-child(2){flex:1}.nutrition-category>summary::-webkit-details-marker{display:none}.nutrition-category>[data-nq-card]{padding:0 16px 16px}.nutrition-question{border:0;margin:14px 0;padding:0}.nutrition-question .chk{display:flex;align-items:flex-start;padding:8px 0}.nutrition-question input[type=radio],.nutrition-question input[type=checkbox]{width:auto;flex:none;margin-top:5px}.nutrition-ai-button{width:100%;margin:16px 0 8px;background:linear-gradient(135deg,var(--ac),var(--ac2));color:#fff;border:0}.nutrition-ai-result{margin:16px 0;padding:16px;border:1px solid var(--ln);border-radius:18px;background:var(--ac2);line-height:1.5}.nutrition-ai-result strong{display:inline-block;margin-bottom:4px}@media(max-width:700px){.nutrition-categories{grid-template-columns:1fr}}';document.head.appendChild(style);
   render();
 })();
