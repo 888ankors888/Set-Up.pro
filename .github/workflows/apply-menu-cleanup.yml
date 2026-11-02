@@ -1,4 +1,4 @@
-name: Apply verified menu cleanup
+name: Apply concise navigation labels
 on:
   push:
     branches: [refactor/code-cleanup]
@@ -12,7 +12,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: refactor/code-cleanup
-      - name: Apply guarded HTML changes and check syntax
+      - name: Rename navigation labels and check syntax
         shell: python
         run: |
           from pathlib import Path
@@ -20,42 +20,31 @@ jobs:
           p = Path('index.html')
           raw = p.read_bytes()
           actual = hashlib.sha1(b'blob ' + str(len(raw)).encode() + b'\0' + raw).hexdigest()
-          assert actual == '59eec5525da608c22f6af0859934a7395a7ce846', 'HTML changed; stop rather than overwrite'
+          assert actual == 'cfdfe3a70461f3a577f85d7d546d8096cdc6d0af', 'HTML changed; stop rather than overwrite'
           s = raw.decode('utf-8')
-          a = s.index('function todayView(){')
-          b = s.index('function diaryView()', a)
-          s = s[:a] + s[b:]
-          a = s.index('const originalToday=todayView;')
-          b = s.index('function downloadData(', a)
-          s = s[:a] + s[b:]
-          prefixes = ('const todayBeforeEstimate=todayView;', 'todayView=function(){return todayBeforeEstimate()', ' const oldToday=todayView;', ' const previousToday=todayView;')
-          s = ''.join(line for line in s.splitlines(keepends=True) if not line.startswith(prefixes))
-          s = s.replace("['today','Сегодня'],", '').replace('today:todayView,', '')
-          s = s.replace("tab='today'", "tab='diary'").replace("tab!=='today'", "tab!=='diary'")
-          s = s.replace('function render(){\n', "function render(){\n  if(tab==='today')tab='diary'; // Compatibility with older external scripts.\n", 1)
-          old = "    if (tab === 'today') tab = 'diary';\n    previousRender();\n    document.querySelectorAll('#nav button').forEach(button => {\n      if (button.textContent.trim() === 'Сегодня') button.remove();\n    });"
-          assert old in s
-          s = s.replace(old, '    previousRender();', 1)
-          assert s.count("['journal','Журнал'],") == 1
-          s = s.replace("['journal','Журнал'],", '', 1)
-          assert 'todayView' not in s
-          assert "['today','Сегодня']" not in s
-          assert 'journal:journalView' in s and "go('journal')" in s
-          assert 'return summary(day)+meView()+template.innerHTML+weekHTML;' in s
-          assert 'report-ai' not in s
+          replacements = [
+              ("s.textContent='Дневник питания'", "s.textContent='Питание'"),
+              ("b.textContent.trim()==='Дневник питания'", "b.textContent.trim()==='Питание'"),
+              ("['training','Дневник тренировок']", "['training','Спорт']"),
+          ]
+          for old, new in replacements:
+              assert s.count(old) == 1, 'Unexpected navigation markup: ' + old
+              s = s.replace(old, new, 1)
+          assert "h.textContent='Дневник питания'" in s
+          assert '<h1>Дневник тренировок</h1>' in s
           checked = 0
           for attrs, code in re.findall(r'<script\b([^>]*)>([\s\S]*?)</script>', s):
               if 'src=' in attrs or not code.strip():
                   continue
               subprocess.run(['node', '--check'], input=code, text=True, check=True)
               checked += 1
-          assert checked == 21, f'Unexpected inline script count: {checked}'
+          assert checked == 21
           p.write_bytes(s.encode('utf-8'))
-      - name: Commit HTML to refactor branch only
+      - name: Commit labels to refactor branch only
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -- index.html
           git diff --cached --quiet && exit 0
-          git commit -m "refactor: remove Today page and Journal navigation item"
+          git commit -m "ui: rename navigation buttons to Nutrition and Sport"
           git push origin HEAD:refactor/code-cleanup
