@@ -8,10 +8,10 @@
     ['nutrition','allergens','Какие продукты вызывают аллергию?','multi',[['milk','Молоко'],['eggs','Яйца'],['fish','Рыба'],['shellfish','Ракообразные'],['peanuts','Арахис'],['nuts','Орехи'],['soy','Соя'],['wheat','Пшеница'],['sesame','Кунжут'],['other','Другие']]],
     ['nutrition','allergyOther','Другие аллергены (необязательно)','text',[]],
     ['nutrition','intolerances','Непереносимости или ограничения врача (необязательно)','text',[]],
-    ['nutrition','dislikes','Что вы не любите? Это предпочтение, не аллергия.','multi',[['fish','Рыба'],['meat','Мясо'],['dairy','Молочные продукты'],['legumes','Бобовые'],['spicy','Острое'],['other','Другое']]],
+    ['nutrition','dislikes','Что вы не любите? Это предпочтение, не аллергия.','multi',[['fish','Рыба'],['meat','Мясо'],['dairy','Молочные продукты'],['legumes','Бобовые'],['spicy','Острое'],['liver','Печень'],['curd','Творог'],['broccoli','Брокколи'],['buckwheat','Гречка'],['other','Другое']]],
     ['nutrition','dislikesOther','Другие нелюбимые продукты (необязательно)','text',[]],
-    ['nutrition','meals','Сколько приёмов пищи вам удобно?','select',[['2','Два'],['3','Три'],['4','Четыре'],['flexible','Без фиксированного режима']]],
-    ['nutrition','foodSource','Как обычно организуете еду?','select',[['home','Готовлю дома'],['out','Ем вне дома'],['delivery','Заказываю'],['mixed','Комбинирую']]],
+    ['nutrition','meals','Сколько приёмов пищи вам удобно?','select',[['1to2','Один–два'],['3','Три'],['4','Четыре'],['5plus','Пять и больше'],['flexible','Без фиксированного режима']]],
+    ['nutrition','foodSource','Как обычно организуете еду?','select',[['home','Готовлю дома'],['family','Готовит семья'],['out','Ем вне дома'],['delivery','Заказываю'],['mixed','Комбинирую']]],
     ['nutrition','cooking','Сколько времени готовы готовить?','select',[['15','До 15 минут'],['30','До 30 минут'],['60','До часа'],['flexible','Время не принципиально']]],
     ['nutrition','budget','Какой бюджет учитывать?','select',[['economy','Экономный'],['medium','Средний'],['flexible','Без особых ограничений']]],
     ['sport','activities','Какие занятия вам нравятся? Можно несколько.','multi',[['walk','Ходьба'],['strength','Силовые'],['bike','Велосипед'],['run','Бег'],['mobility','Подвижность'],['other','Другие']]],
@@ -109,6 +109,7 @@
       if (!sportsProfile.enabled) { if (!sportsProfile.days.length) sportsProfile.days = [0,2,4]; if (!valid(sportsProfile.minutes,10,90)) sportsProfile.minutes = 25; }
       if (!['beginner','regular','experienced'].includes(sportsProfile.level) || !['activity','strength','endurance','muscle','mobility'].includes(sportsProfile.goal) || !['home','gym','outdoor'].includes(sportsProfile.place) || !['none','yes','unsure'].includes(sportsProfile.restrictions) || !Number.isInteger(sportsProfile.minutes) || !valid(sportsProfile.minutes,10,90) || sportsProfile.equipment.length > 200 || sportsProfile.days.length < 1 || sportsProfile.days.length > 5 || new Set(sportsProfile.days).size !== sportsProfile.days.length || sportsProfile.days.some(n => !Number.isInteger(n) || n < 0 || n > 6)) throw Error('Проверьте спорт: 1–5 дней и 10–90 минут');
       if (typeof window.foodCollectHabits === "function") profile.habitsV2 = window.foodCollectHabits(profile);
+      if (typeof window.foodCollectNutrition === "function") profile.nutritionQuestionnaire = window.foodCollectNutrition(profile);
       const next = {...S, profile, waterGoal:settings.waterMl, weights:{...S.weights,[today()]:profile.w}, sports:{...S.sports,profile:sportsProfile}};
       localStorage.setItem('nt1', JSON.stringify(next));
       S = next;
