@@ -43,6 +43,9 @@
     const root=document.getElementById('nav');if(!root)return;
     let button=root.querySelector('[data-section="habits"]');
     if(!button){button=document.createElement('button');button.type='button';button.dataset.section='habits';button.innerHTML='<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="3"/><path d="m8 12 3 3 5-6"/></svg><span>Привычки</span>';button.onclick=foodHabitsGo;root.appendChild(button);}
+    const buttons=[...root.querySelectorAll('button')];
+    const nutrition=buttons.find(b=>b!==button&&b.textContent.trim()==='Питание')||root.querySelector('[data-section="food-diary"]')||buttons.find(b=>b!==button&&b.textContent.trim()==='Дневник питания');
+    if(nutrition&&button.nextElementSibling!==nutrition)nutrition.before(button);
     if(tab==='habits')root.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b===button));else button.classList.remove('on');
   }
   document.addEventListener('change',event=>{
