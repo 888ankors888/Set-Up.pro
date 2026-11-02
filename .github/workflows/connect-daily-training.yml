@@ -1,0 +1,115 @@
+name: Connect and check daily training planner
+on:
+  push:
+    branches: [feature/daily-training-plan]
+    paths: ['daily-training*.js','backend/day_training_api.py','.github/workflows/connect-daily-training.yml']
+permissions:
+  contents: write
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install test dependencies
+        run: pip install -r backend/requirements.txt 'pydantic>=2,<3' httpx
+      - name: Connect day route and planner loader on feature branch
+        shell: python
+        run: |
+          from pathlib import Path
+          import ast,subprocess
+          p=Path('backend/sports_api.py');s=p.read_text()
+          hook='    from day_training_api import install_day_training_routes\n    install_day_training_routes(app)'
+          if hook not in s:
+              assert subprocess.check_output(['git','hash-object',str(p)],text=True).strip()=='8a26e12274e93b6ef2cbe443aec55056088187fe'
+              s=s.rstrip()+'\n\n'+hook+'\n'
+          ast.parse(s);p.write_text(s)
+          p=Path('today-sport-screens.js');s=p.read_text()
+          if 'data-daily-planner' not in s:
+              assert subprocess.check_output(['git','hash-object',str(p)],text=True).strip()=='ac810df20ae5214dcb3174876fe1c37d5414dfd3'
+              s+='\n(() => {const load=()=>{if(document.querySelector("script[data-daily-planner]"))return;const script=document.createElement("script");script.dataset.dailyPlanner="";script.src=new URL("daily-training.js?v=1",document.baseURI).href;document.head.appendChild(script);};if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",load,{once:true});else load();})();\n'
+          p.write_text(s)
+      - name: Check syntax and daily API with mocked provider
+        shell: python
+        run: |
+          import ast,json,sys,types,subprocess
+          from pathlib import Path
+          for p in Path('backend').glob('*.py'): ast.parse(p.read_text())
+          for p in ('daily-training.js','daily-training-ai.js','today-sport-screens.js'):
+              subprocess.run(['node','--check',p],check=True)
+          assert 'today-sport-screens.js' in Path('index.html').read_text()
+          sys.path.insert(0,'backend')
+          from fastapi import FastAPI
+          from fastapi.testclient import TestClient
+          from pydantic import ValidationError
+          from day_training_api import DayActivity
+          from sports_api import install_sports_routes
+          mode='walk'
+          calls=[]
+          def generate(payload,request,prompt,schema,tokens):
+              facts=json.loads(payload.text);calls.append(facts)
+              activity={'kind':'walk','name':'Test walk','minutes':20}
+              if mode=='strength': activity={'kind':'strength','name':'Test strength','minutes':10,'muscleGroup':'legs'}
+              if mode=='long': activity['minutes']=60
+              result={'date':'2026-11-05' if mode=='wrong-date' else facts['date'],'summary':'Test draft','intensity':'light','warnings':[],'activities':[activity]}
+              return schema.model_validate(result)
+          sys.modules['main']=types.SimpleNamespace(generate=generate)
+          app=FastAPI();install_sports_routes(app);client=TestClient(app)
+          paths=[r.path for r in app.routes]
+          assert paths.count('/api/sports/day-plan')==1 and '/api/sports/plan' in paths
+          base=dict(date='2026-11-04',age=30,level='regular',goal='strength',body_goal='maintain',restrictions='none',health_flag=False,injury='no',cardio='no',limitations=False,minutes=30,profile_minutes=45,place='home',equipment='',intensity='light',wellbeing='ready',existing_minutes=0)
+          r=client.post('/api/sports/day-plan',json=base)
+          assert r.status_code==200 and r.json()['date']==base['date'] and r.json()['source']=='gigachat'
+          before=len(calls)
+          for patch,status in [({'wellbeing':'pain'},409),({'injury':'unknown'},409),({'minutes':91},422),({'health_flag':'false'},422),({'existing_minutes':30},409)]:
+              assert client.post('/api/sports/day-plan',json=base|patch).status_code==status
+          assert len(calls)==before
+          for mode in ('wrong-date','long'):
+              assert client.post('/api/sports/day-plan',json=base).status_code==502
+          mode='strength'
+          assert client.post('/api/sports/day-plan',json=base|{'strength_dates':['2026-11-03']}).status_code==502
+          assert client.post('/api/sports/day-plan',json=base|{'date':'2026-11-08','strength_dates':['2026-11-09']}).status_code==502
+          try:
+              DayActivity(kind='strength',name='Test',minutes=10,muscleGroup='legs',weight=50)
+          except ValidationError: pass
+          else: raise AssertionError('AI working weight accepted')
+          print({'daily_route':'passed','provider_calls_mocked':len(calls)})
+      - name: Check planning core against real sports validator
+        shell: bash
+        run: |
+          node <<'JS'
+          const fs=require('fs'),vm=require('vm'),assert=require('assert');let fail=false,id=0;
+          const c={S:{profile:null,sports:{version:1,profile:null,entries:[],plan:null}},tab:'goals',editing:false,formView:()=>'',saveForm:()=>{},todayView:()=>'',reportView:()=>'',render:()=>{},today:()=> '2026-11-02',dt:s=>new Date(s+'T12:00:00'),dk:d=>[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-'),esc:String,fmt:String,toast:()=>{},crypto:{randomUUID:()=> 'p'+(++id)},localStorage:{setItem:()=>{if(fail)throw Error('quota')}},document:{getElementById:()=>null,createElement:()=>({}),head:{appendChild:()=>{}},addEventListener:()=>{}},Date,JSON,Set,URL};
+          c.window=c;vm.createContext(c);
+          vm.runInContext(fs.readFileSync('sports/sports-ui.js','utf8'),c);
+          vm.runInContext(fs.readFileSync('daily-training.js','utf8'),c);
+          const p=c.foodDailyPlanner;
+          assert.equal(p.week('2026-11-08')[0],'2026-11-02');assert.equal(p.week('2026-11-08')[6],'2026-11-08');
+          p.append('2026-11-04',[{kind:'walk',minutes:20}]);assert.equal(c.S.sports.entries.length,0);
+          assert.throws(()=>p.commit('2026-11-04',[p.day('2026-11-04').items[0].id],[{minutes:20}]));
+          p.append('2026-11-02',[{kind:'walk',minutes:10}]);const item=p.day('2026-11-02').items[0];
+          p.commit('2026-11-02',[item.id],[{minutes:8}]);assert.equal(c.S.sports.entries[0].minutes,8);
+          assert.throws(()=>p.commit('2026-11-02',[item.id],[{minutes:8}]));
+          const before=JSON.stringify(c.S);fail=true;assert.throws(()=>p.append('2026-11-03',[{kind:'walk',minutes:10}]));assert.equal(JSON.stringify(c.S),before);fail=false;
+          assert.throws(()=>p.append('2026-11-03',[{kind:'walk',minutes:0}]));
+          p.append('2026-11-02',[{kind:'walk',minutes:10},{kind:'walk',minutes:15}]);const pending=p.day('2026-11-02').items.slice(1),snapshot=JSON.stringify(c.S);
+          assert.throws(()=>p.commit('2026-11-02',pending.map(i=>i.id),[{minutes:10},{minutes:0}]));assert.equal(JSON.stringify(c.S),snapshot);
+          assert.equal(p.day('2026-11-04').items.length,1);
+          console.log({real_validator:'passed',recorded_entries:c.S.sports.entries.length});
+          JS
+      - name: Commit tested integration to feature branch only
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- backend/sports_api.py today-sport-screens.js
+          git diff --cached --quiet && exit 0
+          git commit -m "feat: connect tested daily planner and day-specific AI route"
+          git push origin HEAD:feature/daily-training-plan
