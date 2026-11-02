@@ -23,17 +23,17 @@ jobs:
         run: |
           set -euo pipefail
           git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git config user.email '41898282+users.noreply.github.com'
           git fetch origin main
           test "$(git rev-parse origin/main)" = 61d1136d4ad8b3ebc8fef38e3f05c05d7d172004
-          test "$(git rev-parse "${FEATURE_SHA}^")" = 8027746ad07b2f4ec7905d54231aa2f4f1d2b86e
+          test "$(git rev-parse "${FEATURE_SHA}^")" = 65ccdbee8466fcafaaf165321b3e9cf4a6aa22c6
           git checkout -b publish-goals origin/main
           if ! git merge --no-commit --no-ff "$FEATURE_SHA"; then
             test "$(git diff --name-only --diff-filter=U)" = backend/nutrition_goal_api.py
           fi
           git checkout origin/main -- backend/nutrition_goal_api.py
           git diff --exit-code origin/main -- backend/nutrition_goal_api.py
-          git rm --ignore-unmatch .github/workflows/connect-nutrition-ai.yml .github/workflows/install-goals-questionnaire.yml .github/workflows/publish-goals-render.yml
+          git rm -f --ignore-unmatch .github/workflows/connect-nutrition-ai.yml .github/workflows/install-goals-questionnaire.yml .github/workflows/publish-goals-render.yml
       - name: Serve public frontend files and validate syntax
         shell: python
         run: |
