@@ -1,0 +1,108 @@
+name: Publish reviewed goals questionnaire to Render
+on:
+  push:
+    branches: [feature/goals-questionnaire]
+    paths: [.github/workflows/publish-goals-render.yml]
+permissions:
+  contents: write
+concurrency:
+  group: publish-goals-render
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.sha }}
+      - name: Merge pinned questionnaire preserving production API
+        env:
+          FEATURE_SHA: ${{ github.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git fetch origin main
+          test "$(git rev-parse origin/main)" = 61d1136d4ad8b3ebc8fef38e3f05c05d7d172004
+          test "$(git rev-parse "${FEATURE_SHA}^")" = 8027746ad07b2f4ec7905d54231aa2f4f1d2b86e
+          git checkout -b publish-goals origin/main
+          if ! git merge --no-commit --no-ff "$FEATURE_SHA"; then
+            test "$(git diff --name-only --diff-filter=U)" = backend/nutrition_goal_api.py
+          fi
+          git checkout origin/main -- backend/nutrition_goal_api.py
+          git diff --exit-code origin/main -- backend/nutrition_goal_api.py
+          git rm --ignore-unmatch .github/workflows/connect-nutrition-ai.yml .github/workflows/install-goals-questionnaire.yml .github/workflows/publish-goals-render.yml
+      - name: Serve public frontend files and validate syntax
+        shell: python
+        run: |
+          from pathlib import Path
+          import ast, re, subprocess
+          p=Path('backend/main.py')
+          s=p.read_text(encoding='utf-8')
+          assert 'def questionnaire_frontend_asset' not in s
+          s+='''
+
+          # Only public frontend assets; never serve backend, tests, or hidden files.
+          _FRONTEND_ROOT = Path(__file__).resolve().parent.parent
+          _FRONTEND_ASSETS = {}
+          for _folder, _patterns in (('', ('*.js','*.css')), ('sports', ('*.js','*.css')), ('assets', ('*.webp','*.png','*.jpg','*.jpeg','*.svg','*.ico'))):
+              for _pattern in _patterns:
+                  for _asset in (_FRONTEND_ROOT / _folder).glob(_pattern):
+                      if _asset.is_file() and _asset.resolve().is_relative_to(_FRONTEND_ROOT):
+                          _FRONTEND_ASSETS[_asset.relative_to(_FRONTEND_ROOT).as_posix()] = _asset
+
+          @app.get('/{asset:path}', include_in_schema=False)
+          def questionnaire_frontend_asset(asset: str):
+              path = _FRONTEND_ASSETS.get(asset)
+              if path is None:
+                  raise HTTPException(404, 'Not found')
+              return FileResponse(path, headers={'Cache-Control': 'no-store'})
+          '''
+          ast.parse(s)
+          p.write_text(s,encoding='utf-8')
+          for source in Path('backend').glob('*.py'):
+              ast.parse(source.read_text(encoding='utf-8'))
+          scripts=[*Path('.').glob('*.js'),*Path('sports').glob('*.js')]
+          for source in scripts:
+              subprocess.run(['node','--check',str(source)],check=True)
+          html=Path('index.html').read_text(encoding='utf-8')
+          for attrs,code in re.findall(r'<script\b([^>]*)>([\s\S]*?)</script>',html):
+              if 'src=' not in attrs and code.strip():
+                  subprocess.run(['node','--check'],input=code,text=True,check=True)
+          for name in ('goals-questionnaire.js','goals-preferences.js','goals-habits.js','goals-sport.js','goals-nutrition.js','nutrition-goal-ai.js'):
+              assert name in html and Path(name).is_file(), name
+          for name in ('questionnaire-options.js','questionnaire-blocks.js'):
+              assert Path(name).is_file(), name
+          assert '/api/goals/sport-analysis' in Path('backend/nutrition_goal_api.py').read_text()
+          assert 'normalize_sections' in Path('backend/nutrition_goal_api.py').read_text()
+      - name: Publish to main and allow Render automatic deployment
+        run: |
+          set -euo pipefail
+          git add -- backend/main.py
+          test -z "$(git diff --name-only --diff-filter=U)"
+          git commit -m "Publish My Goals questionnaire with block saves and public frontend assets"
+          git push origin HEAD:main
+      - name: Verify public files after Render deploy
+        shell: python
+        run: |
+          import json,time,urllib.request
+          base='https://food-pro-api.onrender.com'
+          failure=None
+          for attempt in range(36):
+              try:
+                  with urllib.request.urlopen(base+'/questionnaire-blocks.js',timeout=15) as r:
+                      assert 'foodSaveQuestionnaireBlock' in r.read().decode()
+                  with urllib.request.urlopen(base+'/questionnaire-options.js',timeout=15) as r:
+                      assert '5 и более' in r.read().decode()
+                  with urllib.request.urlopen(base+'/openapi.json',timeout=15) as r:
+                      paths=json.load(r)['paths']
+                      assert '/api/goals/sport-analysis' in paths
+                      assert '/api/goals/nutrition-analysis' in paths
+                  break
+              except Exception as exc:
+                  failure=type(exc).__name__
+                  time.sleep(5)
+          else:
+              raise RuntimeError('Render publication not verified: '+str(failure))
