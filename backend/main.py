@@ -201,3 +201,6 @@ install_sports_routes(app)
 
 from combined_report_api import install_combined_routes
 install_combined_routes(app)
+
+from nutrition_goal_api import install_nutrition_goal_routes
+install_nutrition_goal_routes(app)
