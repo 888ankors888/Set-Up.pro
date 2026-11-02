@@ -107,6 +107,7 @@
       const sportsProfile = {...S.sports?.profile, enabled:!!document.getElementById('sp-enabled')?.checked, level:val('sp-level'), goal:val('sp-goal'), place:val('sp-place'), equipment:val('sp-equipment').trim(), minutes:num('sp-minutes'), days:[...document.querySelectorAll('.sp-day:checked')].map(n => Number(n.value)), restrictions:val('sp-restrictions')};
       if (!sportsProfile.enabled) { if (!sportsProfile.days.length) sportsProfile.days = [0,2,4]; if (!valid(sportsProfile.minutes,10,90)) sportsProfile.minutes = 25; }
       if (!['beginner','regular','experienced'].includes(sportsProfile.level) || !['activity','strength','endurance','muscle','mobility'].includes(sportsProfile.goal) || !['home','gym','outdoor'].includes(sportsProfile.place) || !['none','yes','unsure'].includes(sportsProfile.restrictions) || !Number.isInteger(sportsProfile.minutes) || !valid(sportsProfile.minutes,10,90) || sportsProfile.equipment.length > 200 || sportsProfile.days.length < 1 || sportsProfile.days.length > 5 || new Set(sportsProfile.days).size !== sportsProfile.days.length || sportsProfile.days.some(n => !Number.isInteger(n) || n < 0 || n > 6)) throw Error('Проверьте спорт: 1–5 дней и 10–90 минут');
+      if (typeof window.foodCollectHabits === "function") profile.habitsV2 = window.foodCollectHabits(profile);
       const next = {...S, profile, waterGoal:settings.waterMl, weights:{...S.weights,[today()]:profile.w}, sports:{...S.sports,profile:sportsProfile}};
       localStorage.setItem('nt1', JSON.stringify(next));
       S = next;
