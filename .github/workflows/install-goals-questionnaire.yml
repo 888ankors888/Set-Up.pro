@@ -1,8 +1,8 @@
-name: Connect shared questionnaire, sport and habits
+name: Connect shared questionnaire modules
 on:
   push:
     branches: [feature/goals-questionnaire]
-    paths: [goals-questionnaire.js, goals-preferences.js, goals-habits.js, goals-sport.js, .github/workflows/install-goals-questionnaire.yml]
+    paths: [goals-questionnaire.js, goals-preferences.js, goals-habits.js, goals-sport.js, goals-nutrition.js, .github/workflows/install-goals-questionnaire.yml]
 permissions:
   contents: write
 jobs:
@@ -12,42 +12,40 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: feature/goals-questionnaire
-      - name: Connect collectors and remove repeated habit rows
+      - name: Connect nutrition saving and shared choices
         shell: python
         run: |
           from pathlib import Path
           import re, subprocess
           p = Path('goals-preferences.js')
           text = p.read_text(encoding='utf-8')
-          anchor = '      if (!sportsProfile.enabled)'
-          hook = '      if (typeof window.foodCollectSport === "function") profile.sportQuestionnaire = window.foodCollectSport(profile, sportsProfile);'
+          for name in ('foodCollectSport','foodCollectHabits'):
+              assert 'window.'+name in text, 'Previous integration missing'
+          anchor = '      const next = {...S, profile, waterGoal:settings.waterMl, weights:'
+          hook = '      if (typeof window.foodCollectNutrition === "function") profile.nutritionQuestionnaire = window.foodCollectNutrition(profile);'
           assert text.count(anchor) == 1
           if hook not in text:
-              text = text.replace(anchor, hook + '\n' + anchor, 1)
-          habits_anchor = '      const next = {...S, profile, waterGoal:settings.waterMl, weights:'
-          habits_hook = '      if (typeof window.foodCollectHabits === "function") profile.habitsV2 = window.foodCollectHabits(profile);'
-          assert text.count(habits_anchor) == 1
-          if habits_hook not in text:
-              text = text.replace(habits_anchor, habits_hook + '\n' + habits_anchor, 1)
+              text = text.replace(anchor,hook+'\n'+anchor,1)
+          replacements = [
+              ("['2','Два'],['3','Три'],['4','Четыре'],['flexible','Без фиксированного режима']", "['1to2','Один–два'],['3','Три'],['4','Четыре'],['5plus','Пять и больше'],['flexible','Без фиксированного режима']"),
+              ("['home','Готовлю дома'],['out','Ем вне дома'],['delivery','Заказываю'],['mixed','Комбинирую']", "['home','Готовлю дома'],['family','Готовит семья'],['out','Ем вне дома'],['delivery','Заказываю'],['mixed','Комбинирую']"),
+              ("['fish','Рыба'],['meat','Мясо'],['dairy','Молочные продукты'],['legumes','Бобовые'],['spicy','Острое'],['other','Другое']", "['fish','Рыба'],['meat','Мясо'],['dairy','Молочные продукты'],['legumes','Бобовые'],['spicy','Острое'],['liver','Печень'],['curd','Творог'],['broccoli','Брокколи'],['buckwheat','Гречка'],['other','Другое']")
+          ]
+          for old,new in replacements:
+              assert old in text or new in text, 'Unexpected questionnaire choices'
+              text = text.replace(old,new)
           p.write_text(text,encoding='utf-8')
-          p = Path('goals-habits.js')
-          text = p.read_text(encoding='utf-8')
-          old = 'list.map((t,i)=>row(g,i,t,items))'
-          new = "list.map((t,i)=>key(g,i)===g+':'+i?row(g,i,t,items):'')"
-          assert old in text or new in text
-          text = text.replace(old,new)
-          p.write_text(text,encoding='utf-8')
-          names = ('goals-questionnaire.js','goals-preferences.js','goals-habits.js','goals-sport.js')
+          names = ('goals-questionnaire.js','goals-preferences.js','goals-habits.js','goals-sport.js','goals-nutrition.js')
           for name in names:
               subprocess.run(['node','--check',name],check=True)
           p = Path('index.html')
           s = p.read_text(encoding='utf-8')
           assert s.count('</body>') == 1
           for name in names:
-              s = re.sub(r'<script\s+src="' + re.escape(name) + r'\?v=\d+"></script>\s*','',s)
-          tags = ''.join('<script src="'+name+'?v=3"></script>\n' for name in names)
+              s = re.sub(r'<script\s+src="'+re.escape(name)+r'\?v=\d+"></script>\s*','',s)
+          tags = ''.join('<script src="'+name+'?v=4"></script>\n' for name in names)
           s = s.replace('</body>',tags+'</body>',1)
-          for attrs, code in re.findall(r'<script\b([^>]*)>([\s\S]*?)</script>',s):
+          for attrs,code in re.findall(r'<script\b([^>]*)>([\s\S]*?)</script>',s):
               if 'src=' not in attrs and code.strip():
                   subprocess.run(['node','--check'],input=code,text=True,check=True)
           p.write_text(s,encoding='utf-8')
@@ -55,7 +53,7 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -- index.html goals-preferences.js goals-habits.js
+          git add -- index.html goals-preferences.js
           git diff --cached --quiet && exit 0
-          git commit -m "feat: integrate sport cards and deduplicate questionnaire"
+          git commit -m "feat: connect nutrition cards and shared preference fields"
           git push origin HEAD:feature/goals-questionnaire
