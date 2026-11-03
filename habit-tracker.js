@@ -36,7 +36,7 @@
     for(const d of list){
       if(seen.has(d.id))continue;seen.add(d.id);
       const c=settings[d.id];if(!c?.enabled)continue;
-      const key=Number(d.id.split(':')[0]),color=groupColors[key]||'#EDF2F6',accent=groupAccents[key]||'#526C80';
+      const key=Number.isInteger(d.group)?d.group:Number(d.id.split(':')[0]),color=groupColors[key]||'#EDF2F6',accent=groupAccents[key]||'#526C80';
       if(!groups.has(key))groups.set(key,{key,name:d.category,image:d.image,color,accent,added:0,doneCount:0,total:0,completed:0});
       const group=groups.get(key);group.added++;
       const marked=done(d.id,date);if(marked)group.doneCount++;
@@ -57,9 +57,9 @@
     if(!validDate(selected))selected=today();
     const list=active(),settings=config();
     return '<h1>Привычки</h1>'+progressCard(list,settings)+'<p class="mu">Выбор и параметры берутся из раздела «Мои цели → Привычки».</p>'+(list.length?'<div class="habit-tracker-grid">'+list.map(d=>{
-      const c=settings[d.id],marked=done(d.id,selected),scheduled=due(c,selected),uid='habit-done-'+d.id.replace(':','-'),group=Number(d.id.split(':')[0]);
+      const c=settings[d.id],marked=done(d.id,selected),scheduled=due(c,selected),uid='habit-done-'+d.id.replace(':','-'),group=Number.isInteger(d.group)?d.group:Number(d.id.split(':')[0]);
       const target=d.id==='0:0'?'Личная цель: '+(c.target||S.profile?.nutritionGoalSettings?.waterMl||S.waterGoal||'—')+' мл':d.id!=='13:4'&&c.target?'Сохранённый ориентир: '+c.target:'';
-      return '<section class="card habit-tracker-card" style="--habit-bg:'+(groupColors[group]||'#EDF2F6')+';--habit-accent:'+(groupAccents[group]||'#526C80')+'"><div class="eyebrow">'+esc(d.image+' '+d.category)+'</div><h2>'+esc(title(d,c))+'</h2><p class="subtle">'+esc(schedules[c.schedule]||'Расписание не указано')+(c.time?' · Удобное время: '+esc(c.time):'')+'</p>'+(target?'<p>'+esc(target)+'</p>':'')+'<p class="subtle">'+(scheduled?'Запланировано на выбранный день':c.schedule==='flexible'?'Необязательная отметка — по возможности':'Вне текущего расписания — можно отметить дополнительно')+'</p><label class="habit-tracker-check" for="'+uid+'"><input type="checkbox" id="'+uid+'" data-habit-done="'+d.id+'" data-date="'+selected+'" '+(marked?'checked':'')+'><span>'+(marked?'Выполнено':'Отметить выполнение')+'</span></label><div class="habit-track-history" aria-label="Отметки за семь дней">'+history(d.id)+'</div>'+(d.id==='0:0'?'<p class="subtle">Это ручная отметка привычки: она не добавляет воду в дневник и не проверяет выпитый объём.</p>':'')+'</section>';
+      return '<section class="card habit-tracker-card" style="--habit-bg:'+(groupColors[group]||'#EDF2F6')+';--habit-accent:'+(groupAccents[group]||'#526C80')+'"><div class="eyebrow">'+esc(d.image+' '+d.category)+'</div><h2>'+esc(title(d,c))+'</h2><p class="subtle">'+esc(schedules[c.schedule]||'Расписание не указано')+'</p>'+(target?'<p>'+esc(target)+'</p>':'')+'<p class="subtle">'+(scheduled?'Запланировано на выбранный день':c.schedule==='flexible'?'Необязательная отметка — по возможности':'Вне текущего расписания — можно отметить дополнительно')+'</p><label class="habit-tracker-check" for="'+uid+'"><input type="checkbox" id="'+uid+'" data-habit-done="'+d.id+'" data-date="'+selected+'" '+(marked?'checked':'')+'><span>'+(marked?'Выполнено':'Отметить выполнение')+'</span></label><div class="habit-track-history" aria-label="Отметки за семь дней">'+history(d.id)+'</div>'+(d.id==='0:0'?'<p class="subtle">Это ручная отметка привычки: она не добавляет воду в дневник и не проверяет выпитый объём.</p>':'')+'</section>';
     }).join('')+'</div>':'<section class="card"><h2>Пока нет выбранных привычек</h2><p>Поставьте галочки в «Мои цели → Привычки». После успешного сохранения здесь появятся трекеры.</p></section>')+'<p class="subtle">Отметки — ваш самоотчёт. Отсутствие отметки не означает невыполнение. История хранится в этом браузере; снятие галочки в анкете не удаляет прошлые отметки. Время не включает отправку уведомлений.</p><div class="habit-settings-footer"><button type="button" class="btn s" data-habit-settings>Настроить привычки</button></div>';
   };
   function nav(){
