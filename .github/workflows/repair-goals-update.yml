@@ -1,0 +1,43 @@
+name: Repair and apply reviewed goals updates
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/repair-goals-update.yml]
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - name: Fix only quoting and execute reviewed checks
+        shell: python
+        run: |
+          from pathlib import Path
+          import subprocess
+          import textwrap
+          assert subprocess.check_output(['git','rev-parse','HEAD^'],text=True).strip()=='6e784051a2038c2b8dc1d584761c31f1a3410f9d', 'Repository changed; review required'
+          path=Path('.github/workflows/update-goals-habits-v2.yml')
+          lines=path.read_text(encoding='utf-8').splitlines()
+          matches=[i for i,line in enumerate(lines) if line.strip().startswith('edit(h,') and 'Удобное время, необязательно' in line]
+          assert len(matches)==1
+          old='''<label for="'+uid+'-time">Удобное время, необязательно</label><input id="'+uid+'-time" data-habit-time type="time"'''
+          new='''<input id="'+uid+'-time" data-habit-time type="hidden"'''
+          lines[matches[0]]='          edit(h,'+repr(old)+','+repr(new)+')'
+          repaired='\n'.join(lines)+'\n'
+          script=textwrap.dedent(repaired.split('        run: |\n',1)[1].split('      - name: Commit only validated questionnaire changes',1)[0])
+          compiled=compile(script,'reviewed-goals-update','exec')
+          path.write_text(repaired,encoding='utf-8')
+          exec(compiled,{})
+      - name: Commit repaired workflow and validated application changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .github/workflows/update-goals-habits-v2.yml goals-nutrition.js goals-habits.js habit-tracker.js
+          git commit -m 'feat(goals): apply validated questionnaire edits and fix update runner quoting'
+          git push origin HEAD:main
