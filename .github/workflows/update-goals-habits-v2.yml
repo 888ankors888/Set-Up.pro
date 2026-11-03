@@ -1,0 +1,84 @@
+name: Apply reviewed goals and habits updates
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/update-goals-habits-v2.yml]
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - name: Apply exact reviewed edits and validate
+        shell: python
+        run: |
+          from pathlib import Path
+          import subprocess
+          expected={'goals-nutrition.js':'875981e05760a3c6b163f85754c5a6bb58998b24','goals-habits.js':'a9f591d8047b9a48f3a665c063524177f9e47b24','habit-tracker.js':'76dde708326bc08b676326b4a6f9b0648a1c2a5e'}
+          sources={}
+          for path,sha in expected.items():
+              assert subprocess.check_output(['git','hash-object',path],text=True).strip()==sha, 'Source changed: '+path
+              sources[path]=Path(path).read_text(encoding='utf-8')
+          def edit(path,old,new):
+              assert sources[path].count(old)==1, 'Unexpected edit match: '+path+' '+old[:80]
+              sources[path]=sources[path].replace(old,new)
+          n='goals-nutrition.js'
+          edit(n,'none:Не ем|1to2:1–2 раза в неделю|3plus:3 и больше раз в неделю|daily:Ежедневно','none:Почти никогда / Не ем|monthly:Редко (1–2 раза в месяц)|weekly:1 раз в неделю|2to3:2–3 раза в неделю|daily:Почти каждый день')
+          edit(n,",['life','workContext','Что влияет на питание на работе?','check','office:Обед в офисе|travel:Командировки|irregular:Ненормированный график|none:Ничего из перечисленного']",'')
+          edit(n,"fastfood:{none:'фастфуд почти отсутствует','1to2':'умеренное количество фастфуда','3plus':'частый фастфуд',daily:'ежедневный фастфуд'}","fastfood:{none:'фастфуд почти отсутствует',monthly:'фастфуд 1–2 раза в месяц',weekly:'фастфуд раз в неделю','2to3':'фастфуд 2–3 раза в неделю','1to2':'фастфуд 1–2 раза в неделю (предыдущая шкала)','3plus':'фастфуд 3 и больше раз в неделю (предыдущая шкала)',daily:'фастфуд почти каждый день'}")
+          edit(n,"['3plus','daily'].includes(a.fastfood)","['2to3','3plus','daily'].includes(a.fastfood)")
+          edit(n,"join('')+'</fieldset>';", "join('')+(key==='fastfood'&&['1to2','3plus'].includes(value)?'<p class=\"subtle\">Варианты частоты обновлены — выберите текущий ответ заново.</p>':'')+'</fieldset>';")
+          edit(n,'return {version:1,answers,requiresProfessionalReview:', 'return {version:1,answers,previousAnswers:{...profile.nutritionQuestionnaire?.previousAnswers,...profile.nutritionQuestionnaire?.answers},requiresProfessionalReview:')
+          h='goals-habits.js'
+          old="['Психическое и эмоциональное здоровье','🌿',['Медитировать 5–10 минут','Сделать дыхательное упражнение','Записать 3 вещи, за которые благодарен','Провести 15 минут без телефона','Отметить настроение','Сделать паузу/перерыв в работе']]"
+          new="['Психическое и эмоциональное здоровье','🌿',['Медитировать 5–10 минут','Сделать дыхательное упражнение','Записать 3 благодарности','Провести 15 минут без телефона','Сделать 5-минутную паузу в работе','Погулять 10 минут на свежем воздухе','Убрать телефон за 30 минут до сна','Час без соцсетей','Не работать во время еды']]"
+          edit(h,old,new)
+          edit(h,"const key = (g,i) => aliases[g+':'+i] || g+':'+i;", "const mentalSlots=[0,1,2,3,5,6,7,8,9];\n  const key = (g,i) => g===1?'1:'+mentalSlots[i]:aliases[g+':'+i] || g+':'+i;\n  const isCanonical=(g,i)=>g===1||(g===12&&i===3)||key(g,i)===g+':'+i;")
+          edit(h,"key(g,i)===g+':'+i?row(g,i,t,items)","isCanonical(g,i)?row(g,i,t,items)")
+          edit(h,"canonical:key(g,i)===g+':'+i","group:g,canonical:isCanonical(g,i)")
+          edit(h,"""<label for="'+uid+'-time">Удобное время, необязательно</label><input id="'+uid+'-time" data-habit-time type="time"""", """<input id="'+uid+'-time" data-habit-time type="hidden"""")
+          t='habit-tracker.js'
+          edit(t,"key=Number(d.id.split(':')[0]),color=", "key=Number.isInteger(d.group)?d.group:Number(d.id.split(':')[0]),color=")
+          edit(t,"group=Number(d.id.split(':')[0]);", "group=Number.isInteger(d.group)?d.group:Number(d.id.split(':')[0]);")
+          edit(t,"+(c.time?' · Удобное время: '+esc(c.time):'')",'')
+          for path,content in sources.items():
+              Path(path).write_text(content,encoding='utf-8')
+              subprocess.run(['node','--check',path],check=True)
+          tests=r'''
+          const fs=require('fs'),vm=require('vm'),assert=require('assert');
+          const source=fs.readFileSync('goals-habits.js','utf8');
+          const ctx={S:{profile:{}},formView:()=>'',render:()=>{},esc:String,document:{createElement:()=>({}),head:{appendChild:()=>{}},addEventListener:()=>{},querySelector:()=>({}),readyState:'complete'}};ctx.window=ctx;
+          const before=JSON.stringify(ctx.S);
+          vm.runInNewContext(source.replace('const legacy =','globalThis.testKeys=all;const legacy ='),ctx);
+          const defs=ctx.foodHabitDefinitions(),mental=defs.filter(d=>d.group===1);
+          assert.deepStrictEqual(Array.from(mental,d=>d.title),['Медитировать 5–10 минут','Сделать дыхательное упражнение','Записать 3 благодарности','Провести 15 минут без телефона','Сделать 5-минутную паузу в работе','Погулять 10 минут на свежем воздухе','Убрать телефон за 30 минут до сна','Час без соцсетей','Не работать во время еды']);
+          assert.equal(new Set(defs.map(d=>d.id)).size,defs.length);
+          assert.deepStrictEqual([...new Set(defs.map(d=>d.id))].sort(),Array.from(ctx.testKeys).sort());
+          assert.equal(defs.find(d=>d.id==='1:4').group,12);
+          assert.equal(defs.find(d=>d.id==='1:5').title,'Сделать 5-минутную паузу в работе');
+          assert.equal(defs.find(d=>d.id==='1:2').title,'Записать 3 благодарности');
+          assert.equal(JSON.stringify(ctx.S),before);
+          assert(!source.includes('Удобное время, необязательно'));
+          assert(source.includes('data-habit-time type="hidden"'));
+          const nutrition=fs.readFileSync('goals-nutrition.js','utf8');
+          const fields=vm.runInNewContext(nutrition.match(/const fields = (\[[\s\S]*?\n  \]);/)[1]);
+          const fastfood=fields.find(f=>f[1]==='fastfood');assert.equal(fastfood[3],'radio');
+          assert.deepStrictEqual(Array.from(fastfood[4].split('|'),s=>s.slice(s.indexOf(':')+1)),['Почти никогда / Не ем','Редко (1–2 раза в месяц)','1 раз в неделю','2–3 раза в неделю','Почти каждый день']);
+          assert(!fields.some(f=>f[1]==='workContext'));
+          assert(!fs.readFileSync('habit-tracker.js','utf8').includes('Удобное время:'));
+          console.log('Questionnaire labels, stable IDs, canonical rows, hidden time and data-preservation smoke tests passed');
+          '''
+          subprocess.run(['node','-e',tests],check=True)
+          subprocess.run(['git','diff','--check'],check=True)
+      - name: Commit only validated questionnaire changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add goals-nutrition.js goals-habits.js habit-tracker.js
+          git commit -m 'feat(goals): revise fastfood choices and mental habits without reassigning history'
+          git push origin HEAD:main
