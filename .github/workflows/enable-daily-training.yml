@@ -1,0 +1,95 @@
+name: Enable and validate daily training planner
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/enable-daily-training.yml]
+permissions:
+  contents: write
+  pages: write
+jobs:
+  integrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install test dependencies without calling AI
+        run: pip install -r backend/requirements.txt 'pydantic>=2,<3' httpx PyYAML
+      - name: Connect reviewed modules and improve day cards
+        shell: python
+        run: |
+          from pathlib import Path
+          import ast, subprocess
+          expected={'backend/sports_api.py':'8a26e12274e93b6ef2cbe443aec55056088187fe','backend/day_training_api.py':'cebe8270e17d529b4e8de88a6eb4219dce2c4a2a','today-sport-screens.js':'ac810df20ae5214dcb3174876fe1c37d5414dfd3','daily-training.js':'dd3ac9402701b3df5441091bf511b972ebe58cd9','daily-training-ai.js':'2c12c5fd2dfbf839e792e08ec6e591da1ff90f52','sports/sports-ui.js':'08b5702d839026a7c19dd71427a7c919783ada51','.github/workflows/connect-daily-training.yml':'85681d64d625710c32dbc7843c45d093d957da8f'}
+          for path,sha in expected.items():
+              assert subprocess.check_output(['git','hash-object',path],text=True).strip()==sha, 'Source changed: '+path
+          p=Path('backend/sports_api.py');s=p.read_text(encoding='utf-8')
+          assert 'install_day_training_routes' not in s
+          s=s.rstrip()+'\n\n    from day_training_api import install_day_training_routes\n    install_day_training_routes(app)\n'
+          ast.parse(s);p.write_text(s,encoding='utf-8')
+          p=Path('today-sport-screens.js');s=p.read_text(encoding='utf-8')
+          assert 'data-daily-planner' not in s
+          s+='\n(() => {const load=()=>{if(document.querySelector("script[data-daily-planner]"))return;const script=document.createElement("script");script.dataset.dailyPlanner="";script.src=new URL("daily-training.js?v=2",document.baseURI).href;script.onerror=()=>toast("Не удалось загрузить программу тренировок. Обновите страницу.");document.head.appendChild(script);};if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",load,{once:true});else load();})();\n'
+          p.write_text(s,encoding='utf-8')
+          p=Path('daily-training.js');s=p.read_text(encoding='utf-8')
+          def replace_once(old,new):
+              global s
+              assert s.count(old)==1, 'Unexpected daily planner match: '+old[:80]
+              s=s.replace(old,new)
+          replace_once('>Разработать с ИИ</button>','>Разработать с ИИ — этот день</button>')
+          lines=s.splitlines()
+          matches=[i for i,line in enumerate(lines) if line.startswith('  function details(')]
+          assert len(matches)==1
+          lines[matches[0]]="  function details(e,recorded=false){const groups={chest:'Грудь',back:'Спина',shoulders:'Плечи',biceps:'Бицепс',triceps:'Трицепс',legs:'Ноги',glutes:'Ягодицы',core:'Пресс и корпус',other:'Другое'},fields=[['Вид активности',TYPES[e.kind]],[recorded?'Фактически выполнено, минут':'Запланировано, минут',e.minutes],['Дистанция, км',e.distance],['Группа мышц',e.muscleGroup?(groups[e.muscleGroup]||e.muscleGroup):null],['Подходы',e.sets],['Повторения в подходе',e.reps],['Рабочий вес, кг',e.weight]];return fields.filter(([,v])=>v!==null&&v!==undefined&&v!=='').map(([label,value])=>esc(label)+': '+esc(value)).join('<br>');}"
+          matches=[i for i,line in enumerate(lines) if line.startswith('  function mount(')]
+          assert len(matches)==1
+          lines[matches[0]]="  function mount(){if(tab!=='training'||editing)return;const root=document.getElementById('training-sport-program');if(!root)return;document.getElementById('daily-training-week')?.remove();const previousNodes=[...root.childNodes],block=document.createElement('section');block.className='card';block.id='daily-training-week';try{block.innerHTML=view();}catch(e){block.textContent=e.message;}root.replaceChildren(block);if(S.sports?.plan){const legacy=document.createElement('details'),summary=document.createElement('summary');legacy.className='card';legacy.dataset.dpLegacy='';summary.textContent='Ранее созданная недельная программа';legacy.appendChild(summary);previousNodes.forEach(node=>legacy.appendChild(node));root.appendChild(legacy);}}"
+          s='\n'.join(lines)+'\n'
+          replace_once('details(e)', 'details(e,!!recorded)')
+          p.write_text(s,encoding='utf-8')
+          for name in ('daily-training.js','daily-training-ai.js','today-sport-screens.js'):
+              subprocess.run(['node','--check',name],check=True)
+          subprocess.run(['git','diff','--check'],check=True)
+      - name: Run existing reviewed integration tests with mocked AI and real sports validator
+        shell: python
+        run: |
+          from pathlib import Path
+          import subprocess, yaml
+          workflow=yaml.safe_load(Path('.github/workflows/connect-daily-training.yml').read_text(encoding='utf-8'))
+          names=['Check syntax and daily API with mocked provider','Check planning core against real sports validator']
+          steps={step.get('name'):step for step in workflow['jobs']['check']['steps']}
+          for name in names:
+              step=steps[name]
+              command=['python','-c',step['run']] if step.get('shell')=='python' else ['bash','-e','-o','pipefail','-c',step['run']]
+              subprocess.run(command,check=True)
+          daily=Path('daily-training.js').read_text(encoding='utf-8')
+          assert 'Разработать с ИИ — этот день' in daily
+          assert 'Фактически выполнено, минут' in daily
+          assert 'Ранее созданная недельная программа' in daily
+          assert 'details(e,!!recorded)' in daily
+      - name: Commit only validated application files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add backend/sports_api.py today-sport-screens.js daily-training.js
+          python - <<'PY'
+          import subprocess
+          files=subprocess.check_output(['git','diff','--cached','--name-only'],text=True).splitlines()
+          assert sorted(files)==['backend/sports_api.py','daily-training.js','today-sport-screens.js'], files
+          PY
+          git commit -m 'feat(sport): connect validated day-specific training planner and AI route'
+          git push origin HEAD:main
+      - name: Request GitHub Pages rebuild of updated source
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api --method POST 'repos/${{ github.repository }}/pages/builds'
