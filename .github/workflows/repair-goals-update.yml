@@ -19,7 +19,7 @@ jobs:
           from pathlib import Path
           import subprocess
           import textwrap
-          assert subprocess.check_output(['git','rev-parse','HEAD^'],text=True).strip()=='b735c765df396d757bd0a280e382041a7fdd6d88', 'Repository changed; review required'
+          assert subprocess.check_output(['git','rev-parse','HEAD^'],text=True).strip()=='8a3978883e5f6fe277a5f19db78b97b54bf3dd11', 'Repository changed; review required'
           path=Path('.github/workflows/update-goals-habits-v2.yml')
           lines=path.read_text(encoding='utf-8').splitlines()
           matches=[i for i,line in enumerate(lines) if line.strip().startswith('edit(h,') and 'Удобное время, необязательно' in line]
@@ -30,15 +30,19 @@ jobs:
           repaired='\n'.join(lines)+'\n'
           script=textwrap.dedent(repaired.split('        run: |\n',1)[1].split('      - name: Commit only validated questionnaire changes',1)[0])
           compiled=compile(script,'reviewed-goals-update','exec')
-          path.write_text(repaired,encoding='utf-8')
           exec(compiled,{})
-      - name: Commit repaired workflow and validated application changes
+      - name: Commit only validated application files
         shell: bash
         run: |
           set -euo pipefail
           git diff --check
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add .github/workflows/update-goals-habits-v2.yml goals-nutrition.js goals-habits.js habit-tracker.js
-          git commit -m 'feat(goals): apply validated questionnaire edits and fix update runner quoting'
+          git add goals-nutrition.js goals-habits.js habit-tracker.js
+          python - <<'PY'
+          import subprocess
+          files=subprocess.check_output(['git','diff','--cached','--name-only'],text=True).splitlines()
+          assert sorted(files)==['goals-habits.js','goals-nutrition.js','habit-tracker.js'], files
+          PY
+          git commit -m 'feat(goals): apply validated fastfood and mental habit updates'
           git push origin HEAD:main
