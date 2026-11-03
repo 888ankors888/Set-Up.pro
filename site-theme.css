@@ -20,3 +20,23 @@ body :is(button,input,select,textarea,summary,a):focus-visible{outline:3px solid
 body .goals-questionnaire-block .goals-compact-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:minmax(60px,auto);align-items:stretch;width:100%;gap:10px;margin-top:16px}
 body .goals-questionnaire-block .goals-compact-actions>.btn{display:flex;align-items:center;justify-content:center;justify-self:stretch;box-sizing:border-box;width:100%;min-width:0;height:100%;min-height:60px;margin:0!important;padding:10px 12px;font-size:13px;line-height:1.25;text-align:center;white-space:normal;overflow-wrap:anywhere}
 body .goals-questionnaire-block .goals-compact-actions>.btn:only-child{grid-column:1/-1;justify-self:stretch;width:100%}
+
+/* Habit category palette, scoped to the My Goals habit questionnaire. */
+#goals-questionnaire-habits .habit-categories>.habit-category:nth-child(1){--habit-bg:#EAF7EE;--habit-accent:#2E7D46}
+#goals-questionnaire-habits .habit-categories>.habit-category:nth-child(2){--habit-bg:#F2EDFC;--habit-accent:#7952B3}
+#goals-questionnaire-habits .habit-categories>.habit-category:nth-child(3){--habit-bg:#F2F7E5;--habit-accent:#637D25}
+#goals-questionnaire-habits .habit-categories>.habit-category:nth-child(4){--habit-bg:#FFF0E2;--habit-accent:#B85C16}
+#goals-questionnaire-habits .habit-categories>.habit-category:nth-child(5){--habit-bg:#ECEEFC;--habit-accent:#505BA6}
+#goals-questionnaire-habits .habit-categories>.habit-category:nth-child(6){--habit-bg:#E8F3FC;--habit-accent:#286DA8}
+#goals-questionnaire-habits .habit-categories>.habit-category:nth-child(7){--habit-bg:#EAF0FF;--habit-accent:#385CC4}
+#goals-questionnaire-habits .habit-categories>.habit-category:nth-child(8){--habit-bg:#E5F5F1;--habit-accent:#217A67}
+#goals-questionnaire-habits .habit-categories>.habit-category:nth-child(9){--habit-bg:#FCEBF2;--habit-accent:#B34373}
+#goals-questionnaire-habits .habit-categories>.habit-category:nth-child(10){--habit-bg:#F7F0E6;--habit-accent:#8C693D}
+#goals-questionnaire-habits .habit-categories>.habit-category:nth-child(11){--habit-bg:#EDF2F6;--habit-accent:#526C80}
+#goals-questionnaire-habits .habit-categories>.habit-category:nth-child(12){--habit-bg:#F7EAFB;--habit-accent:#9746AE}
+#goals-questionnaire-habits .habit-categories>.habit-category:nth-child(13){--habit-bg:#FFF0EB;--habit-accent:#AD6047}
+#goals-questionnaire-habits .habit-categories>.habit-category:nth-child(14){--habit-bg:#EFF3E5;--habit-accent:#677D3D}
+#goals-questionnaire-habits .habit-category{--tx:#1F2937;--mu:#4B5563;--ac:var(--habit-accent);--ac2:var(--habit-bg);--site-field:rgba(255,255,255,.72);--ln:rgba(31,41,55,.16);background:var(--habit-bg)!important;border-color:var(--habit-accent)!important;color:#1F2937;color-scheme:light}
+#goals-questionnaire-habits .habit-category>summary{color:#1F2937}
+#goals-questionnaire-habits .habit-category .habit-picture{background:rgba(255,255,255,.55);border:1px solid var(--habit-accent)}
+#goals-questionnaire-habits .habit-category input[type=checkbox]{accent-color:var(--habit-accent)}
