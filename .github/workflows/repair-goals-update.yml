@@ -12,13 +12,14 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.sha }}
+          fetch-depth: 2
       - name: Fix only quoting and execute reviewed checks
         shell: python
         run: |
           from pathlib import Path
           import subprocess
           import textwrap
-          assert subprocess.check_output(['git','rev-parse','HEAD^'],text=True).strip()=='6e784051a2038c2b8dc1d584761c31f1a3410f9d', 'Repository changed; review required'
+          assert subprocess.check_output(['git','rev-parse','HEAD^'],text=True).strip()=='b735c765df396d757bd0a280e382041a7fdd6d88', 'Repository changed; review required'
           path=Path('.github/workflows/update-goals-habits-v2.yml')
           lines=path.read_text(encoding='utf-8').splitlines()
           matches=[i for i,line in enumerate(lines) if line.strip().startswith('edit(h,') and 'Удобное время, необязательно' in line]
