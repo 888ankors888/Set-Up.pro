@@ -119,3 +119,10 @@
   document.head.appendChild(style);
   const previous=render;render=function(){previous();compactLayout()};compactLayout();
 })();
+
+(() => {
+  if(document.getElementById('goals-section-palette'))return;
+  const style=document.createElement('style');style.id='goals-section-palette';
+  style.textContent='#goals-questionnaire-sport .sport-category{--section-bg:#EAF7EE;--section-accent:#2E7D46}#goals-questionnaire-nutrition .nutrition-category{--section-bg:#F2F7E5;--section-accent:#637D25}#goals-questionnaire-sport .sport-category,#goals-questionnaire-nutrition .nutrition-category{--tx:#1F2937;--mu:#4B5563;--ac:var(--section-accent);--ac2:var(--section-bg);--site-field:rgba(255,255,255,.72);--ln:rgba(31,41,55,.16);background:var(--section-bg)!important;border-color:var(--section-accent)!important;color:#1F2937;color-scheme:light}#goals-questionnaire-sport .sport-category>summary,#goals-questionnaire-nutrition .nutrition-category>summary{color:#1F2937}#goals-questionnaire-sport .sport-category>summary>span:first-child,#goals-questionnaire-nutrition .nutrition-category>summary>span:first-child{background:rgba(255,255,255,.55);border:1px solid var(--section-accent)}#goals-questionnaire-sport .sport-category :is(input,select,textarea),#goals-questionnaire-nutrition .nutrition-category :is(input,select,textarea){background:rgba(255,255,255,.72);color:#1F2937}#goals-questionnaire-sport .sport-category :is(label,small,.subtle),#goals-questionnaire-nutrition .nutrition-category :is(label,small,.subtle){color:#4B5563}#goals-questionnaire-sport .sport-category :is(legend,.chk),#goals-questionnaire-nutrition .nutrition-category :is(legend,.chk){color:#1F2937}#goals-questionnaire-sport .sport-category :is(input[type=checkbox],input[type=radio]),#goals-questionnaire-nutrition .nutrition-category :is(input[type=checkbox],input[type=radio]){accent-color:var(--section-accent)}';
+  document.head.appendChild(style);
+})();
