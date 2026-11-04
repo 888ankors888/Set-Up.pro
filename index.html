@@ -1042,5 +1042,19 @@ setInterval(()=>{const b=$('#bn');if(b)b.innerHTML=bannerHtml()},60000);
 <script src="goals-habits.js?v=4"></script>
 <script src="goals-sport.js?v=4"></script>
 <script src="goals-nutrition.js?v=4"></script>
+
+<script id="today-sport-screens-loader">
+(() => {
+  const load=()=>{
+    if(document.querySelector('script[data-today-sport-screens],script[src*="today-sport-screens.js"]'))return;
+    if(typeof window.sportsGo!=='function'||typeof window.sportsValidateImport!=='function'){
+      console.error('Основной спортивный модуль не загружен; дополнительный экран не подключён.');return;
+    }
+    const script=document.createElement('script');script.dataset.todaySportScreens='';script.src=new URL('today-sport-screens.js?v=2',document.baseURI).href;
+    script.onerror=()=>{if(typeof toast==='function')toast('Не удалось загрузить экран спорта. Обновите страницу.');};document.head.appendChild(script);
+  };
+  if(document.readyState==='complete')load();else window.addEventListener('load',load,{once:true});
+})();
+</script>
 </body>
 </html>

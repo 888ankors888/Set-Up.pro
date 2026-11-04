@@ -54,3 +54,6 @@ def install_sports_routes(app):
         if len(set(days))!=len(days) or not set(days)<=set(payload.days) or any(s.minutes>payload.minutes or (payload.level=='beginner' and s.minutes>30) for s in plan.sessions) or (payload.level=='beginner' and len(days)>3) or len(strength)>3 or any((d+1)%7 in strength for d in strength):
             raise HTTPException(502,'План не прошёл проверку ограничений; повторите запрос')
         return plan.model_dump()
+
+    from day_training_api import install_day_training_routes
+    install_day_training_routes(app)
