@@ -1,0 +1,69 @@
+name: Diagnose daily training integration
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/diagnose-daily-training.yml]
+permissions:
+  contents: write
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: pip install -r backend/requirements.txt 'pydantic>=2,<3' httpx PyYAML
+      - name: Capture complete test diagnostics without real provider calls
+        shell: python
+        run: |
+          from pathlib import Path
+          import subprocess, yaml, traceback
+          from importlib.metadata import version
+          report=['Daily training integration diagnostics','Only mocked provider tests; application files will not be committed.']
+          passed=True
+          def run_step(name,command):
+              global passed
+              result=subprocess.run(command,text=True,capture_output=True)
+              report.extend(['\n=== '+name+' ===','exit_code: '+str(result.returncode),'--- stdout ---',result.stdout,'--- stderr ---',result.stderr])
+              passed=passed and result.returncode==0
+              return result.returncode==0
+          try:
+              report.append('Source commit: '+subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip())
+              for package in ('fastapi','starlette','pydantic','httpx'):
+                  report.append(package+': '+version(package))
+              source=Path('.github/workflows/enable-daily-training.yml')
+              assert subprocess.check_output(['git','hash-object',str(source)],text=True).strip()=='3d8266e4155837b9d5499310e7e57e3781183fe3', 'Integration workflow changed; diagnosis requires review'
+              integration=yaml.safe_load(source.read_text(encoding='utf-8'))
+              prepare=next(s for s in integration['jobs']['integrate']['steps'] if s.get('name')=='Connect existing training modules')
+              if run_step('Prepare integration in temporary runner checkout',['python','-c',prepare['run']]):
+                  tests=yaml.safe_load(Path('.github/workflows/connect-daily-training.yml').read_text(encoding='utf-8'))
+                  steps={s.get('name'):s for s in tests['jobs']['check']['steps']}
+                  for name in ('Check syntax and daily API with mocked provider','Check planning core against real sports validator'):
+                      step=steps[name]
+                      command=['python','-c',step['run']] if step.get('shell')=='python' else ['bash','-e','-o','pipefail','-c',step['run']]
+                      run_step(name,command)
+          except Exception:
+              passed=False
+              report.extend(['\n=== Diagnostic runner error ===',traceback.format_exc()])
+          report.append('\nRESULT: '+('PASS' if passed else 'FAIL'))
+          Path('diagnostics').mkdir(exist_ok=True)
+          Path('diagnostics/daily-training-ci.txt').write_text('\n'.join(report)+'\n',encoding='utf-8')
+          Path('.daily-training-diagnostic-status').write_text('0' if passed else '1')
+      - name: Publish only diagnostic text, never application changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add diagnostics/daily-training-ci.txt
+          test "$(git diff --cached --name-only)" = diagnostics/daily-training-ci.txt
+          git commit -m 'ci: publish complete mocked daily training test diagnostics'
+          git push origin HEAD:main
+          exit "$(cat .daily-training-diagnostic-status)"
