@@ -1,0 +1,79 @@
+name: Connect sports screen in index and validate training
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/connect-sports-index.yml]
+permissions:
+  contents: write
+  pages: write
+jobs:
+  integrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: pip install -r backend/requirements.txt 'pydantic>=2,<3' httpx PyYAML
+      - name: Insert dependency-ordered sports screen loader
+        shell: python
+        run: |
+          from pathlib import Path
+          import subprocess
+          p=Path('index.html')
+          assert subprocess.check_output(['git','hash-object',str(p)],text=True).strip()=='3be7b0c0956304dd9b413fa68d7b03fae62ef992', 'Index changed; review required'
+          html=p.read_text(encoding='utf-8')
+          assert 'today-sport-screens.js' not in html
+          assert html.count('</body>')==1
+          loader='''
+          <script id="today-sport-screens-loader">
+          (() => {
+            const load=()=>{
+              if(document.querySelector('script[data-today-sport-screens],script[src*="today-sport-screens.js"]'))return;
+              if(typeof window.sportsGo!=='function'||typeof window.sportsValidateImport!=='function'){
+                console.error('Основной спортивный модуль не загружен; дополнительный экран не подключён.');return;
+              }
+              const script=document.createElement('script');script.dataset.todaySportScreens='';script.src=new URL('today-sport-screens.js?v=2',document.baseURI).href;
+              script.onerror=()=>{if(typeof toast==='function')toast('Не удалось загрузить экран спорта. Обновите страницу.');};document.head.appendChild(script);
+            };
+            if(document.readyState==='complete')load();else window.addEventListener('load',load,{once:true});
+          })();
+          </script>
+          '''
+          subprocess.run(['node','--check','-'],input=loader.split('<script id="today-sport-screens-loader">',1)[1].split('</script>',1)[0],text=True,check=True)
+          p.write_text(html.replace('</body>',loader+'</body>'),encoding='utf-8')
+      - name: Repeat previously reviewed integration and tests
+        shell: python
+        run: |
+          from pathlib import Path
+          import subprocess,yaml
+          p=Path('.github/workflows/enable-daily-training.yml')
+          assert subprocess.check_output(['git','hash-object',str(p)],text=True).strip()=='3d8266e4155837b9d5499310e7e57e3781183fe3', 'Integration workflow changed; review required'
+          steps={s.get('name'):s for s in yaml.safe_load(p.read_text(encoding='utf-8'))['jobs']['integrate']['steps']}
+          for name in ('Connect existing training modules','Validate with mocked AI and real sports validator'):
+              subprocess.run(['python','-c',steps[name]['run']],check=True)
+          subprocess.run(['git','diff','--check'],check=True)
+      - name: Commit only index and validated integration files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html backend/sports_api.py today-sport-screens.js
+          python - <<'PY'
+          import subprocess
+          files=subprocess.check_output(['git','diff','--cached','--name-only'],text=True).splitlines()
+          assert sorted(files)==['backend/sports_api.py','index.html','today-sport-screens.js'],files
+          PY
+          git commit -m 'feat(sport): load sports screen in index and connect tested daily planner'
+          git push origin HEAD:main
+      - name: Request GitHub Pages rebuild
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api --method POST 'repos/${{ github.repository }}/pages/builds'
