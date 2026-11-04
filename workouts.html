@@ -5,22 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Тренировки — food.pro</title>
 <link rel="stylesheet" href="site-theme.css">
-<style>*{box-sizing:border-box}body{margin:0}main{max-width:1000px;margin:auto;padding:24px 16px}header,.actions{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.card{margin:18px 0}label{display:grid;gap:6px;margin:10px 0}input{width:100%}button{cursor:pointer}.exercise{border:1px solid var(--ln);border-radius:18px;padding:16px;margin:14px 0}.muted{color:var(--mu)}#status{min-height:28px}@media(max-width:600px){main{padding:16px 10px}.exercise{padding:10px}}</style>
+<style>*{box-sizing:border-box}body{margin:0}main{max-width:1000px;margin:auto;padding:24px 16px}header{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.card{margin:18px 0}button{cursor:pointer}.muted{color:var(--mu)}@media(max-width:600px){main{padding:16px 10px}}</style>
 </head>
 <body>
-<main><header><a href="index.html">← food.pro</a><h1>Тренировки</h1></header><p class="muted">Планируйте активности в блоке «Программа тренировок». Ниже сохранён архив отдельного журнала; он не объединён со спортивным дневником.</p><p id="status" role="status" aria-live="polite"></p><section class="card"><h2>История</h2><label>Фильтр по дате<input id="filter" type="date"></label><div class="actions"><button class="btn s" id="clearFilter" type="button">Все даты</button><button class="btn s" id="export" type="button">Экспорт JSON</button></div><p id="summary"></p><div id="history"></div></section></main>
-<script>
-'use strict';
-const KEY='food.pro.workouts.v1';
-const $=id=>document.getElementById(id);
-let records=[],storageReady=true;
-function status(text){$('status').textContent=text;}
-try{const raw=localStorage.getItem(KEY);records=raw?JSON.parse(raw):[];if(!Array.isArray(records)||records.some(r=>!r||typeof r.id!=='string'||typeof r.date!=='string'||typeof r.title!=='string'||!Array.isArray(r.exercises)||r.exercises.some(e=>!e||typeof e.name!=='string'||!Array.isArray(e.sets)||e.sets.some(s=>!s||typeof s.reps!=='number'||typeof s.weight!=='number'))))throw Error();}catch(e){storageReady=false;records=[];status('Не удалось прочитать архив. Изменение данных заблокировано, чтобы не затереть записи.');}
-function el(tag,text,cls){const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;}
-function persist(next){if(!storageReady)return false;try{localStorage.setItem(KEY,JSON.stringify(next));records=next;return true;}catch(e){status('Не удалось сохранить изменение. Записи не удалены из текущего списка.');return false;}}
-function render(){const list=records.filter(r=>!$('filter').value||r.date===$('filter').value).sort((a,b)=>b.date.localeCompare(a.date));$('history').replaceChildren();$('summary').textContent='Тренировок в архиве: '+list.length+' · Завершено: '+list.filter(r=>r.completed).length;if(!list.length)$('history').append(el('p','Архивных записей нет. Планирование доступно в блоке «Программа тренировок».'));for(const r of list){const card=el('article',undefined,'exercise');card.append(el('h3',r.title),el('p',r.date+' · '+(r.completed?'Завершена':'В процессе')+(r.duration!=null?' · '+r.duration+' мин':'')));let volume=0,done=0;for(const e of r.exercises){card.append(el('h4',e.name));const ul=el('ul');e.sets.forEach((s,i)=>{ul.append(el('li',(i+1)+'. '+s.reps+' повт. × '+s.weight+' кг'+(s.done?' — выполнен':'')));if(s.done){done++;volume+=s.reps*s.weight;}});card.append(ul);}card.append(el('p','Выполнено подходов: '+done+' · Объём по выполненным подходам: '+volume.toLocaleString('ru-RU')+' кг'));if(r.notes)card.append(el('p',r.notes));const remove=el('button','Удалить','btn d');remove.type='button';remove.disabled=!storageReady;remove.onclick=()=>{if(confirm('Удалить тренировку «'+r.title+'» за '+r.date+'?')&&persist(records.filter(x=>x.id!==r.id))){render();status('Тренировка удалена.');}};card.append(remove);$('history').append(card);}}
-$('filter').addEventListener('change',render);$('clearFilter').addEventListener('click',()=>{$('filter').value='';render();});$('export').addEventListener('click',()=>{if(!storageReady){status('Экспорт недоступен: исходные записи не прочитаны.');return;}const blob=new Blob([JSON.stringify({version:1,exportedAt:new Date().toISOString(),workouts:records},null,2)],{type:'application/json'});const url=URL.createObjectURL(blob),a=el('a');a.href=url;a.download='food-pro-workouts-archive.json';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);});
-render();
-</script>
+<main><header><a href="index.html">← food.pro</a><h1>Тренировки</h1></header><p class="muted">Планируйте активности и отмечайте фактическое выполнение в блоке «Программа тренировок».</p></main>
 <script src="workouts-program.js?v=2"></script>
 </body></html>
