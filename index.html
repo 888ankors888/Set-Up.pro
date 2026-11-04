@@ -1056,5 +1056,27 @@ setInterval(()=>{const b=$('#bn');if(b)b.innerHTML=bannerHtml()},60000);
   if(document.readyState==='complete')load();else window.addEventListener('load',load,{once:true});
 })();
 </script>
+<script id="workout-navigation-inline">
+(() => {
+  function install() {
+    const nav = document.getElementById('nav');
+    if (!nav || nav.querySelector('[data-workout-journal]')) return;
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.dataset.workoutJournal = 'true';
+    b.setAttribute('aria-label', 'Тренировки — журнал упражнений');
+    b.innerHTML = '<span aria-hidden="true">🏋</span><span>Тренировки</span>';
+    b.addEventListener('click', () => { location.href = new URL('workouts.html', document.baseURI).href; });
+    const before = nav.querySelector('button');
+    nav.insertBefore(b, before);
+  }
+  function start() {
+    install();
+    new MutationObserver(install).observe(document.body, {childList:true, subtree:true});
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, {once:true});
+  else start();
+})();
+</script>
 </body>
 </html>
