@@ -1,0 +1,59 @@
+name: Install workout navigation
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/install-workout-navigation.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Patch HTML and validate script
+        shell: python
+        run: |
+          from pathlib import Path
+          import subprocess
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          assert Path('workouts.html').is_file(), 'Workout page missing'
+          marker = 'id="workout-navigation-inline"'
+          js = '''(() => {
+            function install() {
+              const nav = document.getElementById('nav');
+              if (!nav || nav.querySelector('[data-workout-journal]')) return;
+              const b = document.createElement('button');
+              b.type = 'button';
+              b.dataset.workoutJournal = 'true';
+              b.setAttribute('aria-label', 'Тренировки — журнал упражнений');
+              b.innerHTML = '<span aria-hidden="true">🏋</span><span>Тренировки</span>';
+              b.addEventListener('click', () => { location.href = new URL('workouts.html', document.baseURI).href; });
+              const before = nav.querySelector('button');
+              nav.insertBefore(b, before);
+            }
+            function start() {
+              install();
+              new MutationObserver(install).observe(document.body, {childList:true, subtree:true});
+            }
+            if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, {once:true});
+            else start();
+          })();'''
+          subprocess.run(['node', '--check'], input=js, text=True, check=True)
+          if marker not in s:
+              assert s.lower().count('</body>') == 1, 'Unexpected HTML structure'
+              pos = s.lower().rfind('</body>')
+              s = s[:pos] + '<script ' + marker + '>\n' + js + '\n</script>\n' + s[pos:]
+              p.write_text(s, encoding='utf-8')
+          assert marker in p.read_text(encoding='utf-8')
+      - name: Commit HTML fix
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git diff --cached --quiet && exit 0
+          git commit -m 'fix: add persistent workout link to main navigation'
+          git push origin HEAD:main
