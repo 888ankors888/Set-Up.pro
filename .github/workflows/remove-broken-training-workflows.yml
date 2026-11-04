@@ -1,0 +1,64 @@
+name: Remove broken legacy training workflows
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/remove-broken-training-workflows.yml']
+permissions:
+  contents: write
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check dependencies and remove approved workflows
+        shell: python
+        run: |
+          from pathlib import Path
+          import subprocess
+          names=['connect-sports-index.yml','enable-daily-training.yml','diagnose-daily-training.yml','connect-daily-training.yml']
+          targets=['.github/workflows/'+name for name in names]
+          own='.github/workflows/remove-broken-training-workflows.yml'
+          assert all(Path(p).is_file() for p in targets), 'Expected workflow missing; review required'
+          assert Path('.github/workflows/workouts-store-tests.yml').is_file()
+          tracked=subprocess.check_output(['git','ls-files','-z']).decode().split('\0')
+          blocked=[]
+          for name in tracked:
+              if not name or name in targets or name==own:
+                  continue
+              p=Path(name)
+              if not p.is_file():
+                  continue
+              raw=p.read_bytes()
+              if b'\0' in raw:
+                  continue
+              refs=[target for target in names if target.encode() in raw]
+              if not refs:
+                  continue
+              if p.suffix in {'.yml','.yaml','.py','.js','.mjs','.cjs','.html','.sh'}:
+                  blocked.append(name+' -> '+', '.join(refs))
+              else:
+                  print('Historical/documentation reference retained:',name,refs)
+          assert not blocked, 'External dependencies remain; no deletions:\n'+'\n'.join(blocked)
+          subprocess.run(['node','--check','workouts/store.js'],check=True)
+          subprocess.run(['node','--check','workouts/page.js'],check=True)
+          subprocess.run(['node','--test','workouts/tests/store.test.cjs'],check=True)
+          subprocess.run(['git','rm','--',*targets,own],check=True)
+          subprocess.run(['git','diff','--check'],check=True)
+      - name: Commit only approved workflow deletions
+        shell: python
+        run: |
+          import subprocess
+          expected=sorted(['.github/workflows/'+name for name in ['connect-sports-index.yml','enable-daily-training.yml','diagnose-daily-training.yml','connect-daily-training.yml','remove-broken-training-workflows.yml']])
+          actual=sorted(subprocess.check_output(['git','diff','--cached','--name-only'],text=True).splitlines())
+          assert actual==expected,actual
+          status=subprocess.check_output(['git','diff','--cached','--name-status'],text=True)
+          assert all(line.startswith('D\t') for line in status.splitlines()),status
+          subprocess.run(['git','config','user.name','github-actions[bot]'],check=True)
+          subprocess.run(['git','config','user.email','41898282+github-actions[bot]@users.noreply.github.com'],check=True)
+          subprocess.run(['git','commit','-m','chore: delete four broken legacy training integration workflows'],check=True)
+          subprocess.run(['git','push','origin','HEAD:main'],check=True)
