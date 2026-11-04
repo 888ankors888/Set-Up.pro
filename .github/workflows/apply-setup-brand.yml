@@ -1,0 +1,85 @@
+name: Apply Set-Up branding
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/apply-setup-brand.yml']
+permissions:
+  contents: write
+  pages: write
+jobs:
+  brand:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Update visible branding and project links without migrating data
+        shell: python
+        run: |
+          from pathlib import Path
+          import ast,re,subprocess
+          tracked=subprocess.check_output(['git','ls-files','-z']).decode().split('\0')
+          changed=[]
+          for name in tracked:
+              if not name or name.startswith(('.github/','diagnostics/','tests/')) or '/tests/' in name:
+                  continue
+              p=Path(name)
+              if p.suffix not in {'.html','.js','.css','.md','.py'} or not p.is_file():
+                  continue
+              s=p.read_text(encoding='utf-8');original=s
+              storage_literals=re.findall(r'([\x22\x27])([^\x22\x27\n]*food\.pro[^\x22\x27\n]*)\1',s)
+              protected=[text for _,text in storage_literals if re.fullmatch(r'food\.pro\.[A-Za-z0-9_.:-]+',text)]
+              s=s.replace('https://github.com/888ankors888/food.pro','https://github.com/888ankors888/Set-Up.pro')
+              s=s.replace('https://888ankors888.github.io/food.pro','https://888ankors888.github.io/Set-Up.pro')
+              if p.suffix=='.md':
+                  s=s.replace('food.pro','Set-Up')
+              else:
+                  s=re.sub(r'(<title\b[^>]*>)([\s\S]*?)(</title>)',lambda m:m[1]+m[2].replace('food.pro','Set-Up')+m[3],s,flags=re.I)
+                  s=s.replace('>food.pro<','>Set-Up<').replace('← food.pro','← Set-Up')
+                  s=s.replace('alt="food.pro"','alt="Set-Up"').replace("alt='food.pro'","alt='Set-Up'")
+                  s=s.replace("title='food.pro API'","title='Set-Up API'").replace('title="food.pro API"','title="Set-Up API"')
+                  s=s.replace("content:'f.'","content:'S.'").replace('content:"f."','content:"S."')
+                  s=s.replace('/* food.pro ','/* Set-Up ')
+              for value in protected:
+                  assert s.count(value)==original.count(value), 'Storage identifier changed: '+name+' '+value
+              assert s.count('food-pro-api.onrender.com')==original.count('food-pro-api.onrender.com'), 'API address changed'
+              assert s.count('/tmp/food-pro-quota.sqlite3')==original.count('/tmp/food-pro-quota.sqlite3'), 'Quota storage changed'
+              if p.suffix=='.py':
+                  ast.parse(s)
+              if p.suffix=='.js':
+                  subprocess.run(['node','--check'],input=s,text=True,check=True)
+              if p.suffix=='.html':
+                  for m in re.finditer(r'<script\b([^>]*)>([\s\S]*?)</script>',s):
+                      attrs=m.group(1)
+                      if 'src=' not in attrs and 'application/ld+json' not in attrs and 'application/json' not in attrs and m.group(2).strip():
+                          subprocess.run(['node','--check'],input=m.group(2),text=True,check=True)
+              if s!=original:
+                  p.write_text(s,encoding='utf-8');changed.append(name)
+          assert '<title>Set-Up</title>' in Path('index.html').read_text(encoding='utf-8'), 'Unexpected app title; review required'
+          assert 'Тренировки — Set-Up' in Path('workouts.html').read_text(encoding='utf-8')
+          assert 'Set-Up API' in Path('backend/main.py').read_text(encoding='utf-8')
+          assert changed, 'No branding changes detected'
+          subprocess.run(['node','--test','workouts/tests/store.test.cjs'],check=True)
+          subprocess.run(['git','diff','--check'],check=True)
+          print('Updated files:',*changed,sep='\n')
+          for name in tracked:
+              if name and Path(name).is_file() and Path(name).suffix in {'.html','.js','.md','.py','.css'}:
+                  if 'food.pro' in Path(name).read_text(encoding='utf-8',errors='replace'):
+                      print('Retained old-name occurrence, possibly storage/history:',name)
+      - name: Commit branding and remove installer
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -u
+          git rm -- .github/workflows/apply-setup-brand.yml
+          git commit -m 'brand: rename application to Set-Up and update project URLs'
+          git push origin HEAD:main
+      - name: Request Pages rebuild at renamed repository
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api --method POST 'repos/${{ github.repository }}/pages/builds'
