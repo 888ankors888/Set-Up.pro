@@ -1,0 +1,99 @@
+name: Retire legacy sports screen
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/retire-legacy-sports-screen.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+  pages: write
+jobs:
+  retire:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Preserve questionnaire and remove legacy screen
+        shell: python
+        run: |
+          from pathlib import Path
+          import re, subprocess
+          p=Path('index.html')
+          html=p.read_text(encoding='utf-8')
+          source=Path('sports/sports-ui.js').read_text(encoding='utf-8')
+          def reduce_module(code):
+              assert code.count(' function sessionDate(')==1, 'Unexpected sports module'
+              assert code.count(' const STRENGTH_GROUPS=')==1
+              prefix=code.split(' function sessionDate(',1)[0]
+              start=code.index(' const STRENGTH_GROUPS=')
+              end=code.index(' function exerciseOptions(',start)
+              retained=code[start:end]
+              assert 'window.sportsValidateImport=' in prefix
+              assert 'saveForm=function' in prefix and 'function form()' in prefix
+              redirect="\n const go=()=>{window.location.href=new URL('workouts.html',document.baseURI).href};\n window.sportsGo=go;window.sportsOpen=go;window.sportsGenerate=go;\n render();\n})();\n"
+              result=prefix+retained+redirect
+              assert 'function diary()' not in result and 'function sport()' not in result
+              subprocess.run(['node','--check'],input=result,text=True,check=True)
+              return result
+          new_source=reduce_module(source)
+          matches=[m for m in re.finditer(r'<script\b([^>]*)>([\s\S]*?)</script>',html) if 'window.sportsValidateImport=' in m.group(2) and 'function sessionDate(' in m.group(2)]
+          assert len(matches)==1, 'Expected exactly one inline legacy sports module; stop for review'
+          m=matches[0]
+          reduced=reduce_module(m.group(2))
+          html=html[:m.start(2)]+reduced+html[m.end(2):]
+          html,n=re.subn(r'<script\b[^>]*id="today-sport-screens-loader"[^>]*>[\s\S]*?</script>','',html)
+          assert n==1, 'Expected known sports screen loader'
+          assert 'today-sport-screens.js' not in html, 'Another loader remains; review required'
+          navigation='''(() => {
+            const go=()=>{location.href=new URL('workouts.html',document.baseURI).href};
+            function clean(){
+              const nav=document.getElementById('nav');if(!nav)return;
+              nav.querySelectorAll('button').forEach(b=>{
+                if(b.dataset.workoutJournal!==undefined)return;
+                if(['sport','training'].includes(b.dataset.section)||['Спорт','Дневник тренировок','Тренировки'].includes(b.textContent.trim()))b.remove();
+              });
+              if(!nav.querySelector('[data-workout-journal]')){
+                const b=document.createElement('button');b.type='button';b.dataset.workoutJournal='true';b.innerHTML='<span aria-hidden="true">🏋</span><span>Тренировки</span>';b.addEventListener('click',go);nav.prepend(b);
+              }
+            }
+            window.sportsGo=go;window.sportsOpen=go;window.sportsGenerate=go;
+            const previous=render;render=function(){previous();clean()};render();
+          })();'''
+          assert html.lower().count('</body>')==1
+          pos=html.lower().rfind('</body>')
+          html=html[:pos]+'<script id="standalone-workouts-navigation">\n'+navigation+'\n</script>\n'+html[pos:]
+          for m in re.finditer(r'<script\b([^>]*)>([\s\S]*?)</script>',html):
+              if 'src=' not in m.group(1) and m.group(2).strip():
+                  subprocess.run(['node','--check'],input=m.group(2),text=True,check=True)
+          assert 'workouts/store.js' in Path('workouts.html').read_text(encoding='utf-8')
+          assert 'sportQuestionnaire' in Path('goals-sport.js').read_text(encoding='utf-8')
+          probe='''const vm=require('node:vm'),fs=require('node:fs'),assert=require('node:assert/strict');
+          const c={window:{},S:{profile:null},formView:()=>'<button class="btn" onclick="saveForm()">',saveForm(){},today:()=> '2026-11-04',render(){},esc:x=>String(x??'')};
+          vm.createContext(c);vm.runInContext(fs.readFileSync(0,'utf8'),c);
+          assert.equal(typeof c.window.sportsValidateImport,'function');
+          assert.equal(typeof c.window.sportsGo,'function');
+          assert.ok(c.formView().includes('sport-form'));
+          assert.ok(c.formView().includes('sp-goal'));
+          const data=c.window.sportsValidateImport({version:1,profile:null,entries:[],plan:null});assert.equal(data.entries.length,0);
+          '''
+          subprocess.run(['node','-e',probe],input=new_source,text=True,check=True)
+          p.write_text(html,encoding='utf-8')
+          Path('sports/sports-ui.js').write_text(new_source,encoding='utf-8')
+          subprocess.run(['node','--test','workouts/tests/store.test.cjs'],check=True)
+          subprocess.run(['git','diff','--check'],check=True)
+      - name: Commit reviewed screen retirement
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html sports/sports-ui.js
+          git diff --cached --quiet && exit 0
+          git commit -m 'refactor: remove legacy sports views and retain existing goals form'
+          git push origin HEAD:main
+      - name: Request GitHub Pages rebuild
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api --method POST 'repos/${{ github.repository }}/pages/builds'
