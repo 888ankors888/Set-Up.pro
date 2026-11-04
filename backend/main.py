@@ -17,7 +17,7 @@ from gigachat import GigaChat
 from pydantic import BaseModel, Field, model_validator
 from sports_normalization import safe_validation_fields
 
-app = FastAPI(title='food.pro API')
+app = FastAPI(title='Set-Up API')
 bearer = HTTPBearer(auto_error=False)
 logger = logging.getLogger('uvicorn.error')
 slots = threading.BoundedSemaphore(2)

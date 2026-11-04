@@ -1,5 +1,5 @@
 
-/* food.pro — GigaChat text input */
+/* Set-Up — GigaChat text input */
 const FOOD_API='https://food-pro-api.onrender.com';
 let aiAccess='',aiDraft='',aiRows=[],aiQuestions=[],aiRunning=false,aiError='',aiDate='',aiMeal='';
 function aiLauncher(){return `<section class="card" id="ai-input"><div class="eyebrow">GigaChat · текстовый ввод</div><h2>Что вы ели?</h2><p class="mu">Опишите продукты и порции. Перед записью проверьте вес и выберите соответствующие продукты из каталога.</p><label for="ai-description">Описание еды</label><textarea id="ai-description" rows="3" maxlength="2000" placeholder="Рис 150 г после варки и два варёных яйца" oninput="aiDraft=this.value">${esc(aiDraft)}</textarea><div class="row" style="margin-top:12px"><button class="btn" onclick="aiOpen()">Разобрать через ИИ</button><button class="btn s" onclick="aiOpenSettings()">Доступ к ИИ</button></div><p class="subtle">На сервер отправляется только описание еды, без анкеты и истории дневника.</p></section>`}
