@@ -1,0 +1,90 @@
+name: Restore main light styling in design branch
+on:
+  push:
+    branches: [design/setup-emerald-lime]
+    paths: ['.github/workflows/restore-main-light-theme.yml']
+permissions:
+  contents: write
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: design/setup-emerald-lime
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: python -m pip install tinycss2==1.4.0
+      - name: Restrict redesign to dark mode and restore original light styles
+        shell: python
+        run: |
+          from pathlib import Path
+          import subprocess,re,tinycss2
+          assert subprocess.check_output(['git','branch','--show-current'],text=True).strip()=='design/setup-emerald-lime'
+          main_css=subprocess.check_output(['git','show','origin/main:site-theme.css'])
+          assert Path('site-theme.css').read_bytes()==main_css, 'Base theme differs from main; review required'
+          gate='html:not([data-setup-theme="light"])'
+          p=Path('design/setup.css');source=p.read_text(encoding='utf-8')
+          assert gate not in source, 'Already scoped; review required'
+          def selectors(tokens):
+              groups=[[]]
+              for token in tokens:
+                  if token.type=='literal' and token.value==',':
+                      groups.append([])
+                  else:
+                      groups[-1].append(token)
+              return [tinycss2.serialize(g).strip() for g in groups]
+          def scope_selector(s):
+              if s.startswith(':root'):
+                  return re.sub(r'^:root(?:\[data-theme=[^\]]+\])?',gate,s)
+              if s=='html':
+                  return gate
+              if s.startswith('html '):
+                  return gate+s[4:]
+              return gate+' '+s
+          def transform(rules):
+              result=[]
+              for rule in rules:
+                  assert rule.type!='error',str(rule)
+                  if rule.type=='qualified-rule':
+                      sel=','.join(scope_selector(s) for s in selectors(rule.prelude))
+                      result.append(sel+'{'+tinycss2.serialize(rule.content)+'}')
+                  elif rule.type=='at-rule':
+                      assert rule.lower_at_keyword in {'media','supports'}, 'Unexpected CSS at-rule'
+                      result.append('@'+rule.at_keyword+' '+tinycss2.serialize(rule.prelude)+'{'+transform(tinycss2.parse_rule_list(rule.content,skip_whitespace=True,skip_comments=True))+'}')
+              return '\n'.join(result)
+          scoped=transform(tinycss2.parse_stylesheet(source,skip_whitespace=True,skip_comments=True))
+          assert scoped.count('--bg:')==source.count('--bg:')
+          p.write_text(scoped+'\n',encoding='utf-8')
+          p=Path('design/themes.css');old=p.read_text(encoding='utf-8')
+          assert 'html[data-setup-theme=light]' in old
+          common=old.split('html[data-setup-theme=light]',1)[0]
+          light='''html[data-setup-theme="light"]{color-scheme:light}
+          .setup-home{display:inline-flex;gap:12px;align-items:center;text-decoration:none;font-size:26px;font-weight:800;font-style:italic;margin-bottom:12px}.setup-home img{width:46px;height:46px}
+          html[data-setup-theme="light"] body .setup-home{color:var(--br)}
+          html[data-setup-theme="light"] body .setup-home img{background:var(--ac);border-radius:12px;padding:4px}
+          html[data-setup-theme="light"] body .brand:before{content:'';width:52px;height:52px;flex:none;background:var(--ac);mask:url('../assets/setup-mark.svg') center/contain no-repeat;-webkit-mask:url('../assets/setup-mark.svg') center/contain no-repeat;box-shadow:none;border-radius:0}
+          #nav .setup-icon{width:26px;height:26px;flex:none;stroke-width:1.8}
+          @media(max-width:700px){.setup-theme-toggle{right:12px;top:calc(12px + env(safe-area-inset-top))}}
+          '''
+          p.write_text(common+light,encoding='utf-8')
+          for name in ('index.html','workouts.html'):
+              html=Path(name).read_text(encoding='utf-8')
+              assert 'design/themes.css?v=1' in html and 'design/theme.js?v=1' in html
+          assert Path('site-theme.css').read_bytes()==main_css
+          subprocess.run(['node','--check','design/theme.js'],check=True)
+          subprocess.run(['node','--test','workouts/tests/store.test.cjs'],check=True)
+          subprocess.run(['git','diff','--check'],check=True)
+      - name: Commit theme correction only in design branch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add design/setup.css design/themes.css
+          git rm -- .github/workflows/restore-main-light-theme.yml
+          git commit -m 'design: preserve main light theme and use emerald styling only in dark mode'
+          git push origin HEAD:design/setup-emerald-lime
