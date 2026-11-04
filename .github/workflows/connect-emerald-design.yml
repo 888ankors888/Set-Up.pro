@@ -1,0 +1,51 @@
+name: Connect emerald lime design on design branch only
+on:
+  push:
+    branches: [design/setup-emerald-lime]
+    paths: ['.github/workflows/connect-emerald-design.yml']
+permissions:
+  contents: write
+jobs:
+  connect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: design/setup-emerald-lime
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Connect design and validate unchanged application logic
+        shell: python
+        run: |
+          from pathlib import Path
+          import subprocess,re,xml.etree.ElementTree as ET
+          assert subprocess.check_output(['git','branch','--show-current'],text=True).strip()=='design/setup-emerald-lime'
+          ET.parse('assets/setup-mark.svg')
+          subprocess.run(['node','--check','design/setup-ui.js'],check=True)
+          for name in ['index.html','workouts.html']:
+              p=Path(name);html=p.read_text(encoding='utf-8')
+              before=re.findall(r'<script\b[^>]*>[\s\S]*?</script>',html)
+              assert html.lower().count('</head>')==1
+              tags='<link rel="stylesheet" href="design/setup.css?v=1"><script src="design/setup-ui.js?v=1" defer></script>'
+              assert 'design/setup.css' not in html, 'Design already connected; review required'
+              pos=html.lower().index('</head>')
+              html=html[:pos]+tags+'\n'+html[pos:]
+              if name=='workouts.html':
+                  old='<a href="index.html">← Set-Up</a>'
+                  assert html.count(old)==1
+                  html=html.replace(old,'<a class="setup-home" href="index.html"><img src="assets/setup-mark.svg" alt="" width="46" height="46">Set-Up</a>',1)
+              after=re.findall(r'<script\b[^>]*>[\s\S]*?</script>',html)
+              assert [x for x in after if 'design/setup-ui.js' not in x]==before, 'Existing application scripts changed'
+              p.write_text(html,encoding='utf-8')
+          subprocess.run(['node','--check','workouts/page.js'],check=True)
+          subprocess.run(['node','--test','workouts/tests/store.test.cjs'],check=True)
+          subprocess.run(['git','diff','--check'],check=True)
+      - name: Commit design connections only to design branch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html workouts.html
+          git rm -- .github/workflows/connect-emerald-design.yml
+          git commit -m 'design: connect emerald lime theme to app and workout pages'
+          git push origin HEAD:design/setup-emerald-lime
