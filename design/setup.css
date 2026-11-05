@@ -61,9 +61,7 @@ html:not([data-setup-theme="light"]) body .today{border:2px solid var(--ac)!impo
 html:not([data-setup-theme="light"]) body .grid{gap:20px}
 html:not([data-setup-theme="light"]) body .item{background:transparent;box-shadow:none}
 html:not([data-setup-theme="light"]) body .check{color:var(--tx)}
-@media (min-width:1000px){html:not([data-setup-theme="light"]) body #nav{width:232px;padding:100px 16px 24px;gap:8px}
-html:not([data-setup-theme="light"]) body:has(#nav){padding-left:232px}
-html:not([data-setup-theme="light"]) body #nav button{min-height:56px;font-size:14px;padding:14px 16px;gap:14px}}
+
 @media (max-width:999px){html:not([data-setup-theme="light"]) body #nav{padding:8px 8px calc(8px + env(safe-area-inset-bottom));gap:4px;overflow-x:auto}
 html:not([data-setup-theme="light"]) body #nav button{min-height:64px;min-width:76px;padding:8px 10px;font-size:11px}
 html:not([data-setup-theme="light"]) body:has(#nav){padding-bottom:102px}}
