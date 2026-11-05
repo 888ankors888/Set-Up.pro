@@ -24,12 +24,13 @@ html[data-setup-theme="light"] body #toast{background:#20594c;color:#fcfefd}
 @media(max-width:700px){.setup-theme-toggle{right:12px;top:calc(12px + env(safe-area-inset-top))}}
 /* Keep dark navigation geometry consistent with the compact light menu. */
 html[data-setup-theme="dark"] body #nav{background:var(--site-pane)!important;box-shadow:none;overflow:visible}
-/* Light palette is local to the menu; the surrounding site stays dark. */
+/* Menu buttons use the exact light-theme palette and active gradient. */
 html[data-setup-theme="dark"] body #nav .setup-wordnav{--tx:#104b46;--mu:#6c9690;--ln:#d3e3dc;--card:#fcfefd;--site-pane:#eaf5ee;--ac2:#e7f3eb;--setup-lime-soft:#e3f8b5;color-scheme:light}
-html[data-setup-theme="dark"] body #nav .setup-wordnav button{color:var(--tx)!important;background:transparent!important;min-width:0;min-height:50px;padding:13px 16px;gap:0;border-radius:12px;font:600 20px/1.2 system-ui,sans-serif;letter-spacing:-.035em;box-shadow:none}
-html[data-setup-theme="dark"] body #nav .setup-wordnav button.on,html[data-setup-theme="dark"] body #nav .setup-wordnav .setup-up[aria-expanded="true"]{color:var(--tx)!important;background:color-mix(in srgb,var(--menu-lime) 12%,transparent)!important}
+html[data-setup-theme="dark"] body #nav .setup-wordnav button{color:#104b46!important;background:transparent!important;min-width:0;min-height:50px;padding:13px 16px;gap:0;border-radius:12px;font:600 20px/1.2 system-ui,sans-serif;letter-spacing:-.035em;box-shadow:none}
+html[data-setup-theme="dark"] body #nav .setup-wordnav button.on,html[data-setup-theme="dark"] body #nav .setup-wordnav .setup-up[aria-expanded="true"]{color:#104b46!important;background:linear-gradient(110deg,#e3f8b5,#def7a8)!important}
 html[data-setup-theme="dark"] body #nav .setup-wordnav .setup-initial{color:var(--menu-lime);background:#20594c;border-radius:5px;padding:1px 3px;margin-right:1px;font:inherit;font-weight:800;text-shadow:none;-webkit-text-stroke:0}
-html[data-setup-theme="dark"] body #nav .setup-wordnav .setup-up-panel button{min-height:46px;padding:12px;border-radius:10px;font:600 14px/1.4 system-ui,sans-serif;letter-spacing:-.01em}
+html[data-setup-theme="dark"] body #nav .setup-wordnav .setup-up-panel button{min-height:46px;padding:12px;border-radius:10px;font:600 14px/1.4 system-ui,sans-serif;letter-spacing:-.01em;color:#104b46!important;background:transparent!important}
+html[data-setup-theme="dark"] body #nav .setup-wordnav .setup-up-panel button.on{color:#104b46!important;background:linear-gradient(110deg,#e3f8b5,#def7a8)!important}
 @media(min-width:1000px){html[data-setup-theme="dark"] body #nav{width:220px;padding:120px 18px 24px}html[data-setup-theme="dark"] body:has(#nav){padding-left:220px}}
 @media(max-width:999px){html[data-setup-theme="dark"] body #nav{padding:0 0 env(safe-area-inset-bottom);gap:0}html[data-setup-theme="dark"] body #nav .setup-wordnav>button{min-width:0;min-height:48px;padding:10px 3px;font-size:clamp(15px,4.2vw,19px)}}
-@media(hover:hover){html[data-setup-theme="dark"] body #nav .setup-wordnav button:not(.on):not(:disabled):hover{background:color-mix(in srgb,var(--menu-lime) 8%,transparent)!important}}
+@media(hover:hover){html[data-setup-theme="dark"] body #nav .setup-wordnav button:not(.on):not(:disabled):hover{background:#e3f8b5!important}}
