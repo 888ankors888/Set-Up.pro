@@ -33,3 +33,13 @@ function schedule(){if(!queued){queued=true;requestAnimationFrame(render);}}
 function start(){const style=document.createElement('style');style.id='setup-wordnav-style';style.textContent=css;document.getElementById(style.id)?.remove();document.head.append(style);render();const observer=new MutationObserver(records=>{if(records.some(r=>!bar?.contains(r.target)))schedule();});observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class','disabled','aria-current']});document.addEventListener('pointerdown',e=>{if(!bar?.contains(e.target))close();});document.addEventListener('focusin',e=>{if(!bar?.contains(e.target))close();});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&panel&&!panel.hidden){close();up.focus();}});window.addEventListener('pagehide',()=>observer.disconnect(),{once:true});}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
+
+(() => {
+'use strict';
+const selector='.brand:not(.big),a.setup-home';
+const home=new URL('./',location.href);home.searchParams.set('setupDestination','eat');
+function prepare(){document.querySelectorAll(selector).forEach(brand=>{if(brand.dataset.setupHomeReady)return;brand.dataset.setupHomeReady='true';brand.setAttribute('aria-label','Set-Up — открыть Eat');brand.style.cursor='pointer';if(brand.tagName==='A')brand.href=home.href;else{brand.setAttribute('role','link');brand.tabIndex=0;}});}
+function go(){const eat=document.querySelector('#nav .setup-wordnav [data-setup-destination="eat"]');if(eat&&!eat.disabled&&!/\/workouts\.html$/.test(location.pathname)){eat.click();window.scrollTo({top:0});}else location.href=home.href;}
+function start(){prepare();document.addEventListener('click',event=>{if(event.defaultPrevented||event.button!==0||event.ctrlKey||event.metaKey||event.shiftKey||event.altKey)return;const brand=event.target instanceof Element?event.target.closest(selector):null;if(!brand)return;event.preventDefault();go();});document.addEventListener('keydown',event=>{if(event.key!=='Enter'||event.defaultPrevented||event.ctrlKey||event.metaKey||event.shiftKey||event.altKey)return;const brand=event.target instanceof Element?event.target.closest(selector):null;if(!brand||brand.tagName==='A')return;event.preventDefault();go();});const observer=new MutationObserver(prepare);observer.observe(document.body,{childList:true,subtree:true});window.addEventListener('pagehide',()=>observer.disconnect(),{once:true});}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
+})();
