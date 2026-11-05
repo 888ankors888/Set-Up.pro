@@ -7,9 +7,10 @@
  function group(){
   groupingQueued=false;if(tab!=='diary'||!S.profile||editing)return;
   const app=document.getElementById('app'),picker=app?.querySelector('#meal-picker'),diary=app?.querySelector('#food-diary-surface')||app?.querySelector('.food-fit-key')?.closest('.card');
-  if(!app||!picker||!diary||picker.contains(diary)||diary.contains(picker))return;
+  if(!app||!picker||!diary||picker.contains(diary))return;
   let block=app.querySelector('#unified-meals');
-  if(!block){block=document.createElement('section');block.id='unified-meals';block.className='card';block.setAttribute('aria-labelledby','unified-meals-heading');const header=document.createElement('header');header.className='unified-meals-header';const title=document.createElement('h2');title.id='unified-meals-heading';title.textContent='Приём пищи';const date=document.createElement('time');date.className='unified-meals-date';header.append(title,date);block.append(header);picker.before(block);}
+  if(!block){block=document.createElement('section');block.id='unified-meals';block.className='card';block.setAttribute('aria-labelledby','unified-meals-heading');const header=document.createElement('header');header.className='unified-meals-header';const title=document.createElement('h2');title.id='unified-meals-heading';title.textContent='Приём пищи';const date=document.createElement('time');date.className='unified-meals-date';header.append(title,date);block.append(header);const anchor=diary.contains(picker)?diary:picker;anchor.before(block);}
+  if(diary.contains(block))diary.before(block);
   const date=block.querySelector('time');date.dateTime=day;date.textContent=fmt(day);
   if(picker.parentNode!==block)block.append(picker);
   diary.id='food-diary-surface';diary.setAttribute('aria-label','Скушали сегодня');let heading=[...diary.children].find(n=>/^H[1-6]$/.test(n.tagName));if(!heading){heading=document.createElement('h3');diary.prepend(heading);}heading.textContent='Скушали сегодня';

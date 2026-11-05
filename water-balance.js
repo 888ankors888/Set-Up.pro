@@ -1,7 +1,7 @@
 (() => {
  let lastTab=null;
  const liters=value=>(value/1000).toLocaleString('ru-RU',{maximumFractionDigits:2});
- const wave='<img class="wb-ice" src="assets/water-wave.webp?v=hq1" alt="" style="object-fit:contain" decoding="async" width="130" height="120">';
+ const wave='<img class="wb-ice" src="water-wave.webp?v=hq2" alt="" style="object-fit:contain" decoding="async" width="130" height="120">';
  function glass(full,plus){const fill=full||plus?'#94c9b7':'#c5e5f3',stroke=full||plus?'#6aa58f':'#8aaebd';return '<svg viewBox="0 0 60 90" fill="none" aria-hidden="true"><path d="M8 12h44l-5 66c-1 6-33 6-34 0Z" fill="'+fill+'" fill-opacity="'+(full?'.85':'.35')+'" stroke="'+stroke+'" stroke-width="2"/><path d="m12 28 4 47c1 3 27 3 28 0l4-47Z" fill="'+fill+'" fill-opacity=".65"/><ellipse cx="30" cy="12" rx="22" ry="4" fill="white" fill-opacity=".6" stroke="'+stroke+'" stroke-width="2"/><ellipse cx="30" cy="28" rx="18" ry="3" stroke="'+stroke+'"/><path d="m16 19 4 49" stroke="white" stroke-width="3" stroke-linecap="round"/>'+(plus?'<path d="M30 40v18m-9-9h18" stroke="#52987d" stroke-width="3" stroke-linecap="round"/>':'')+'</svg>'}
  function draw(){
   if(tab!=='diary'||!S.profile||editing)return;
