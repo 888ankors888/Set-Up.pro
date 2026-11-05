@@ -40,9 +40,14 @@ html:root:root:root body #nav>button{flex:1 1 0;min-width:0;flex-direction:colum
 @media(min-width:1000px){
 html:root:root:root{scroll-padding-top:calc(100px + env(safe-area-inset-top,0px))}
 html:root:root:root body:has(#nav){padding-top:calc(88px + env(safe-area-inset-top,0px))!important;padding-bottom:24px!important}
-html:root:root:root body #nav{top:0!important;bottom:auto!important;padding:calc(12px + env(safe-area-inset-top,0px)) 140px 12px!important}
+html:root:root:root body #nav{top:0!important;bottom:auto!important;min-height:calc(72px + env(safe-area-inset-top,0px));align-items:center!important;padding:calc(12px + env(safe-area-inset-top,0px)) 220px 12px!important}
 html:root:root:root body #nav .setup-up-panel{top:calc(100% + 12px)!important;bottom:auto!important;max-height:calc(100dvh - 110px);overflow-y:auto}
 html:root:root:root body:has(#nav) #app{padding-top:0!important}
 html:root:root:root body:has(#nav) main{padding-top:24px!important}
 html:root:root:root body #toast{bottom:30px!important}
+html:root:root:root body:has(#nav) :is(.brand:not(.big),main>.setup-home){position:fixed!important;left:24px!important;top:calc(12px + env(safe-area-inset-top,0px))!important;z-index:75;display:flex!important;flex-direction:row!important;align-items:center!important;gap:10px!important;width:180px;height:48px;margin:0!important;padding:0!important;white-space:nowrap;font-size:26px!important;line-height:1.2!important}
+html:root:root:root body:has(#nav) .brand:not(.big):before{width:40px!important;height:40px!important;flex:none}
+html:root:root:root body:has(#nav) .brand:not(.big) span{font-size:26px!important;line-height:1.2!important}
+html:root:root:root body:has(#nav) main>.setup-home img{width:40px!important;height:40px!important;flex:none}
+html:root:root:root body:has(#nav) #setup-theme-toggle{top:calc(12px + env(safe-area-inset-top,0px))!important;height:48px!important;min-height:48px!important;box-sizing:border-box}
 }
