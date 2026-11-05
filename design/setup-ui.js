@@ -1,90 +1,34 @@
 (() => {
 'use strict';
-const STYLE=`
+const css=`
+html body:has(#nav){padding-left:0!important;padding-bottom:calc(110px + env(safe-area-inset-bottom,0px))!important}
+html body #nav{position:fixed!important;top:auto!important;bottom:0!important;left:0!important;right:0!important;width:100%!important;height:auto!important;display:flex!important;flex-direction:row!important;justify-content:center!important;padding:12px 16px calc(16px + env(safe-area-inset-bottom,0px))!important;gap:0!important;border:0!important;background:transparent!important;box-shadow:none!important;overflow:visible!important;z-index:60}
 #nav .setup-native-nav-item{display:none!important}
-#nav .setup-wordnav{--menu-lime:#c8f568;display:flex;flex-direction:column;gap:4px;width:100%;position:relative;padding:8px;border:1px solid var(--ln);border-radius:20px;background:var(--site-pane,var(--card));box-shadow:none;isolation:isolate}
-#nav .setup-wordnav button{appearance:none;position:relative;display:flex;flex:0 0 auto;flex-direction:row;align-items:center;justify-content:flex-start;gap:0;width:100%;min-width:0;min-height:50px;margin:0;padding:13px 16px;border:0;border-radius:12px;background:transparent;color:var(--tx);font:600 20px/1.2 system-ui,sans-serif;letter-spacing:-.035em;cursor:pointer;box-shadow:none;text-shadow:none;transform:none;transition:background .18s}
-#nav .setup-wordnav button.on{background:color-mix(in srgb,var(--menu-lime) 12%,transparent);color:var(--tx);box-shadow:none}
-#nav .setup-wordnav>button:after{content:'';position:absolute;left:0;top:13px;bottom:13px;width:3px;border-radius:3px;background:var(--menu-lime);opacity:0}
-#nav .setup-wordnav>button.on:after{opacity:1}
-#nav .setup-wordnav .setup-initial{color:var(--menu-lime);font:inherit;font-weight:800;text-shadow:none;-webkit-text-stroke:0}
-html[data-setup-theme=light] #nav .setup-wordnav .setup-initial{background:#20594c;border-radius:5px;padding:1px 3px;margin-right:1px}
-#nav .setup-wordnav .setup-plus{margin-left:5px;font:400 22px/1 system-ui,sans-serif;color:var(--mu);transition:transform .18s}
-#nav .setup-wordnav .setup-up[aria-expanded=true]{background:color-mix(in srgb,var(--menu-lime) 12%,transparent)}
-#nav .setup-wordnav .setup-up[aria-expanded=true] .setup-plus{transform:rotate(45deg);color:var(--tx)}
-#nav .setup-wordnav button:focus-visible{outline:2px solid #91b94d;outline-offset:2px}
-#nav .setup-up-panel{position:absolute;left:calc(100% + 12px);bottom:0;width:250px;padding:10px;border:1px solid var(--ln);border-radius:18px;background:var(--card);box-shadow:0 12px 32px #001b161a;z-index:60}
-#nav .setup-up-panel[hidden]{display:none!important}
-#nav .setup-wordnav .setup-up-panel button{min-height:46px;padding:12px;border-radius:10px;font:600 14px/1.4 system-ui,sans-serif;letter-spacing:-.01em}
-#nav .setup-up-panel .setup-panel-title{margin:4px 12px 8px;color:var(--mu);font:700 10px/1.5 system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase}
-@media(hover:hover){#nav .setup-wordnav button:not(.on):not(:disabled):hover{background:color-mix(in srgb,var(--menu-lime) 8%,transparent)}}
-@media(max-width:999px){#nav .setup-wordnav{flex-direction:row;gap:2px;padding:5px;border-radius:18px;align-items:stretch}#nav .setup-wordnav>button{flex:1 1 0;justify-content:center;min-height:48px;padding:10px 3px;font-size:clamp(15px,4.2vw,19px);border-radius:12px}#nav .setup-wordnav>button:after{left:24%;right:24%;top:auto;bottom:3px;height:2px;width:auto}#nav .setup-wordnav .setup-plus{font-size:20px;margin-left:3px}#nav .setup-up-panel{left:auto;right:0;bottom:calc(100% + 12px);width:min(270px,calc(100vw - 32px))}}
-@media(prefers-reduced-motion:reduce){#nav .setup-wordnav button,#nav .setup-wordnav .setup-plus{transition:none}}
+html body #nav .setup-wordnav{display:flex!important;flex-direction:row!important;position:relative;width:min(100%,560px)!important;gap:8px!important;padding:0!important;border:0!important;background:transparent!important;box-shadow:none!important;isolation:isolate}
+html body #nav .setup-wordnav>button{appearance:none;display:flex!important;align-items:center!important;justify-content:center!important;flex:1 1 0!important;width:auto!important;min-width:0!important;min-height:48px!important;margin:0!important;padding:12px 6px!important;border:1px solid transparent!important;border-radius:999px!important;background:#254c47!important;color:#c2dca1!important;font:500 clamp(13px,3.6vw,17px)/1.2 system-ui,sans-serif!important;letter-spacing:-.025em!important;box-shadow:0 4px 16px #062d2520!important;text-shadow:none!important;transform:none!important;cursor:pointer;transition:background .18s,color .18s,box-shadow .18s}
+html body #nav .setup-wordnav>button.on,html body #nav .setup-wordnav>button[aria-expanded=true]{background:#d5ff82!important;color:#163b32!important;box-shadow:0 0 22px #c8f56835!important}
+html body #nav .setup-wordnav>button:after{display:none!important}
+html body #nav .setup-up-panel{position:absolute;bottom:calc(100% + 12px);right:0;left:auto;width:min(280px,calc(100vw - 32px));padding:8px;border:1px solid #3a6256;border-radius:20px;background:#173e37;box-shadow:0 12px 32px #001b1640}
+html body #nav .setup-up-panel[hidden]{display:none!important}
+html body #nav .setup-wordnav .setup-up-panel button{display:block;width:100%;min-height:46px;padding:12px;border:0;border-radius:14px;background:transparent!important;color:#d8ebc0!important;text-align:left;font:500 15px/1.4 system-ui,sans-serif!important;cursor:pointer}
+html body #nav .setup-wordnav .setup-up-panel button.on{background:#d5ff82!important;color:#163b32!important}
+html body #nav .setup-wordnav button:focus-visible{outline:3px solid #9ac95e!important;outline-offset:3px}
+html body #nav .setup-wordnav button:disabled{opacity:.45;cursor:not-allowed}
+@media(hover:hover){html body #nav .setup-wordnav>button:not(.on):not(:disabled):hover,html body #nav .setup-wordnav .setup-up-panel button:not(.on):hover{background:#346257!important;color:#e2f6bc!important}}
+@media(prefers-reduced-motion:reduce){html body #nav .setup-wordnav button{transition:none!important}}
 `;
-let nav,bar,panel,up,signature='',queued=false,opened=false;
+let nav,bar,panel,up,queued=false;
 const targets=new Map();
-function kind(button){
-  if(button.dataset.setupNavKind)return button.dataset.setupNavKind;
-  const label=button.textContent.trim();
-  if(button.dataset.workoutJournal!==undefined||/Трениров|Спорт|^Sport$/.test(label))return 'sport';
-  if(/Привыч|^Tracker$/.test(label))return 'tracker';
-  if(/Питан|Дневник|^Eat$/.test(label))return 'eat';
-  if(/Отч|Прогресс/.test(label))return 'report';
-  if(/Настро|Профиль/.test(label))return 'settings';
-  if(/Цел|цели|[Аа]нкета/.test(label))return 'questionnaire';
-  return null;
-}
-function active(button){return !!button&&(button.classList.contains('on')||button.classList.contains('active')||button.getAttribute('aria-current')==='page');}
-function close(restore=false){opened=false;if(panel)panel.hidden=true;if(up)up.setAttribute('aria-expanded','false');if(restore&&up)up.focus();}
-function open(){opened=true;panel.hidden=false;up.setAttribute('aria-expanded','true');panel.querySelector('button')?.focus();}
-function choose(name){const target=targets.get(name);close();if(target?.isConnected){target.click();schedule();}}
-function proxy(name,label,initial){
-  const b=document.createElement('button');b.type='button';b.dataset.setupDestination=name;b.setAttribute('aria-label',label);
-  if(initial){const accent=document.createElement('span');accent.className='setup-initial';accent.textContent=initial;b.append(accent,document.createTextNode(label.slice(initial.length)));}
-  else b.textContent=label;
-  b.addEventListener('click',()=>choose(name));return b;
-}
-function mount(){
-  bar=document.createElement('div');bar.className='setup-wordnav';bar.dataset.setupWordnav='true';
-  bar.append(proxy('sport','Sport','S'),proxy('eat','Eat','E'),proxy('tracker','Tracker','T'));
-  up=document.createElement('button');up.type='button';up.className='setup-up';up.setAttribute('aria-expanded','false');up.setAttribute('aria-controls','setup-up-panel');up.setAttribute('aria-label','Up+: Моя анкета, Отчёты, Настройки');
-  const title=document.createElement('span');title.className='setup-initial';title.textContent='Up';
-  const plus=document.createElement('span');plus.className='setup-plus';plus.textContent='+';plus.setAttribute('aria-hidden','true');up.append(title,plus);
-  panel=document.createElement('div');panel.id='setup-up-panel';panel.className='setup-up-panel';panel.hidden=true;panel.setAttribute('role','group');panel.setAttribute('aria-label','Дополнительные страницы');
-  const heading=document.createElement('div');heading.className='setup-panel-title';heading.textContent='Up+ / Личное';panel.append(heading,proxy('questionnaire','Моя анкета'),proxy('report','Отчёты'),proxy('settings','Настройки'));
-  up.addEventListener('click',()=>opened?close():open());bar.append(up,panel);nav.append(bar);signature='';opened=false;
-}
-function renameHeading(){for(const h of document.querySelectorAll('h1,h2,h3')){if(h.textContent.trim()==='Мои цели')h.textContent='Моя анкета';}}
-function render(){
-  queued=false;
-  renameHeading();
-  const current=document.getElementById('nav');if(!current)return;
-  if(nav!==current||!bar?.isConnected){nav=current;targets.clear();mount();}
-  nav.setAttribute('aria-label','SETUP+ — главная навигация');
-  for(const b of nav.querySelectorAll('button')){
-    if(bar.contains(b))continue;
-    const name=kind(b);if(!name)continue;
-    b.dataset.setupNavKind=name;b.classList.add('setup-native-nav-item');targets.set(name,b);
-  }
-  const state=[...targets].map(([name,b])=>name+':'+Number(b.isConnected)+':'+Number(active(b))+':'+Number(b.disabled)).join('|');
-  if(state===signature)return;signature=state;
-  for(const b of bar.querySelectorAll('[data-setup-destination]')){
-    const target=targets.get(b.dataset.setupDestination),selected=active(target);
-    b.disabled=!target?.isConnected||!!target.disabled;b.classList.toggle('on',selected);
-    if(selected)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');
-  }
-  up.classList.toggle('on',['questionnaire','report','settings'].some(name=>active(targets.get(name))));
-}
-function schedule(){if(queued)return;queued=true;requestAnimationFrame(render);}
-function start(){
-  if(!document.getElementById('setup-wordnav-style')){const s=document.createElement('style');s.id='setup-wordnav-style';s.textContent=STYLE;document.head.append(s);}
-  render();
-  const observer=new MutationObserver(records=>{if(records.some(r=>!bar?.contains(r.target)))schedule();});
-  observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class','disabled','aria-current']});
-  document.addEventListener('pointerdown',event=>{if(opened&&!bar?.contains(event.target))close();});
-  document.addEventListener('keydown',event=>{if(event.key==='Escape'&&opened){event.preventDefault();close(true);}});
-  document.addEventListener('focusin',event=>{if(opened&&!bar?.contains(event.target))close();});
-  window.addEventListener('pagehide',()=>observer.disconnect(),{once:true});
-}
+const workout=/\/workouts\.html$/.test(location.pathname);
+function kind(b){if(b.dataset.setupNavKind)return b.dataset.setupNavKind;const t=b.textContent.trim();if(b.dataset.workoutJournal!==undefined||/Трениров|Спорт|^Sport$/.test(t))return 'sport';if(/Привыч|^Tracker$/.test(t))return 'tracker';if(/Питан|Дневник|^Eat$/.test(t))return 'eat';if(/Отч|Прогресс/.test(t))return 'report';if(/Настро|Профиль/.test(t))return 'settings';if(/Цел|цели|[Аа]нкета/.test(t))return 'questionnaire';return null;}
+function active(b){return !!b&&(b.classList.contains('on')||b.classList.contains('active')||b.getAttribute('aria-current')==='page');}
+function close(){if(panel)panel.hidden=true;if(up)up.setAttribute('aria-expanded','false');}
+function choose(name){close();if(workout){if(name==='sport')return;location.href='index.html?setupDestination='+encodeURIComponent(name);return;}const target=targets.get(name);if(target?.isConnected){target.click();schedule();}}
+function button(name,label){const b=document.createElement('button');b.type='button';b.textContent=label;b.dataset.setupDestination=name;b.addEventListener('click',()=>choose(name));return b;}
+function mount(){bar=document.createElement('div');bar.className='setup-wordnav';bar.append(button('sport','Sport'),button('eat','Eat'),button('tracker','Tracker'));up=document.createElement('button');up.type='button';up.textContent='Up+';up.setAttribute('aria-expanded','false');up.setAttribute('aria-controls','setup-up-panel');up.setAttribute('aria-label','Дополнительные разделы');panel=document.createElement('div');panel.id='setup-up-panel';panel.className='setup-up-panel';panel.hidden=true;panel.setAttribute('role','group');panel.setAttribute('aria-label','Дополнительные разделы');panel.append(button('questionnaire','Моя анкета'),button('report','Отчёты'),button('settings','Настройки'));up.addEventListener('click',()=>{const open=panel.hidden;panel.hidden=!open;up.setAttribute('aria-expanded',String(open));if(open)panel.querySelector('button')?.focus();});bar.append(up,panel);nav.append(bar);}
+let pending=new URLSearchParams(location.search).get('setupDestination');
+function render(){queued=false;let current=document.getElementById('nav');if(!current&&workout){current=document.createElement('nav');current.id='nav';document.body.append(current);}if(!current)return;if(nav!==current||!bar?.isConnected){nav=current;targets.clear();mount();}nav.setAttribute('aria-label','Основная навигация');for(const b of nav.querySelectorAll('button')){if(bar.contains(b))continue;const name=kind(b);if(name){b.dataset.setupNavKind=name;b.classList.add('setup-native-nav-item');targets.set(name,b);}}for(const b of bar.querySelectorAll('[data-setup-destination]')){const name=b.dataset.setupDestination,target=targets.get(name),on=workout?name==='sport':active(target);const disabled=!workout&&(!target?.isConnected||!!target.disabled);if(b.disabled!==disabled)b.disabled=disabled;if(b.classList.contains('on')!==on)b.classList.toggle('on',on);if(on)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');}const extra=!workout&&['questionnaire','report','settings'].some(n=>active(targets.get(n)));if(up.classList.contains('on')!==extra)up.classList.toggle('on',extra);if(pending&&targets.get(pending)?.isConnected&&!targets.get(pending).disabled){const name=pending;pending=null;choose(name);const url=new URL(location.href);url.searchParams.delete('setupDestination');history.replaceState(history.state,'',url);}}
+function schedule(){if(!queued){queued=true;requestAnimationFrame(render);}}
+function start(){const style=document.createElement('style');style.id='setup-wordnav-style';style.textContent=css;document.getElementById(style.id)?.remove();document.head.append(style);render();const observer=new MutationObserver(records=>{if(records.some(r=>!bar?.contains(r.target)))schedule();});observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class','disabled','aria-current']});document.addEventListener('pointerdown',e=>{if(!bar?.contains(e.target))close();});document.addEventListener('focusin',e=>{if(!bar?.contains(e.target))close();});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&panel&&!panel.hidden){close();up.focus();}});window.addEventListener('pagehide',()=>observer.disconnect(),{once:true});}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
