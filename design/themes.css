@@ -40,7 +40,7 @@ html:root:root:root body #nav>button{flex:1 1 0;min-width:0;flex-direction:colum
 @media(min-width:1000px){
 html:root:root:root{scroll-padding-top:calc(100px + env(safe-area-inset-top,0px))}
 html:root:root:root body:has(#nav){padding-top:calc(88px + env(safe-area-inset-top,0px))!important;padding-bottom:24px!important}
-html:root:root:root body #nav{top:0!important;bottom:auto!important;min-height:calc(72px + env(safe-area-inset-top,0px));align-items:center!important;padding:calc(12px + env(safe-area-inset-top,0px)) 220px 12px!important}
+html:root:root:root body #nav{top:0!important;bottom:auto!important;min-height:calc(72px + env(safe-area-inset-top,0px));align-items:center!important;padding:calc(12px + env(safe-area-inset-top,0px)) 220px 12px!important;background:var(--site-pane)!important;border-bottom:1px solid var(--ln)!important;box-shadow:0 5px 20px #001b160d!important}
 html:root:root:root body #nav .setup-up-panel{top:calc(100% + 12px)!important;bottom:auto!important;max-height:calc(100dvh - 110px);overflow-y:auto}
 html:root:root:root body:has(#nav) #app{padding-top:0!important}
 html:root:root:root body:has(#nav) main{padding-top:24px!important}
@@ -50,6 +50,10 @@ html:root:root:root body:has(#nav) .brand:not(.big):before{width:40px!important;
 html:root:root:root body:has(#nav) .brand:not(.big) span{font-size:26px!important;line-height:1.2!important}
 html:root:root:root body:has(#nav) main>.setup-home img{width:40px!important;height:40px!important;flex:none}
 html:root:root:root body:has(#nav) #setup-theme-toggle{top:calc(12px + env(safe-area-inset-top,0px))!important;height:48px!important;min-height:48px!important;box-sizing:border-box}
+@supports ((backdrop-filter:blur(10px)) or (-webkit-backdrop-filter:blur(10px))) and (background:color-mix(in srgb,white 94%,transparent)){
+html:root:root:root body #nav{background:color-mix(in srgb,var(--site-pane) 94%,transparent)!important;backdrop-filter:blur(10px) saturate(115%)!important;-webkit-backdrop-filter:blur(10px) saturate(115%)!important}
 }
+}
+@media(min-width:1000px) and (prefers-reduced-transparency:reduce){html:root:root:root body #nav{background:var(--site-pane)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}}
 /* Hide legacy navigation before the replacement script runs, including rerenders. */
 html:root:root:root body #nav>:not(.setup-wordnav){display:none!important}
