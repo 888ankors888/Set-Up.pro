@@ -1,0 +1,59 @@
+name: Clean legacy sidebar source
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/clean-sidebar-source.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: clean-sidebar-source
+  cancel-in-progress: false
+jobs:
+  clean:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Remove exact legacy sidebar rules
+        shell: python
+        run: |
+          from pathlib import Path
+          replacements = {
+              'index.html': ('@media(min-width:1000px){body{padding-left:220px;padding-bottom:20px}nav{top:0;right:auto;width:220px;bottom:0;flex-direction:column;padding:120px 18px 24px;border-right:1px solid var(--ln);border-top:0;gap:8px}nav button{flex:0;flex-direction:row;padding:14px 18px;font-size:14px;gap:14px;min-height:54px}.w{padding-top:26px}#toast{bottom:30px}}', '@media(min-width:1000px){.w{padding-top:26px}#toast{bottom:130px}}'),
+              'design/setup.css': ('@media (min-width:1000px){html:not([data-setup-theme="light"]) body #nav{width:232px;padding:100px 16px 24px;gap:8px}\nhtml:not([data-setup-theme="light"]) body:has(#nav){padding-left:232px}\nhtml:not([data-setup-theme="light"]) body #nav button{min-height:56px;font-size:14px;padding:14px 16px;gap:14px}}', '')
+          }
+          updates = {}
+          for name, (old, new) in replacements.items():
+              path = Path(name)
+              text = path.read_text(encoding='utf-8')
+              if old not in text:
+                  if name == 'index.html' and new in text:
+                      continue
+                  if name == 'design/setup.css' and 'padding-left:232px' not in text:
+                      continue
+                  raise RuntimeError('Unexpected source; refusing to edit ' + name)
+              assert text.count(old) == 1, name
+              updates[path] = text.replace(old, new, 1)
+          for path in Path('.').glob('*.html'):
+              text = updates.get(path, path.read_text(encoding='utf-8'))
+              updated = text.replace('design/setup.css?v=1', 'design/setup.css?v=no-sidebar-1').replace('design/themes.css?v=1', 'design/themes.css?v=no-sidebar-1')
+              if updated != text:
+                  updates[path] = updated
+          for path, text in updates.items():
+              path.write_text(text, encoding='utf-8')
+          assert 'padding-left:220px' not in Path('index.html').read_text(encoding='utf-8')
+          assert 'padding-left:232px' not in Path('design/setup.css').read_text(encoding='utf-8')
+      - name: Verify and commit cleanup
+        run: |
+          set -euo pipefail
+          git diff --check
+          if git diff --quiet; then exit 0; fi
+          git diff --stat
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- index.html workouts.html design/setup.css
+          git commit -m 'fix: remove legacy sidebar CSS before first paint'
+          git push origin HEAD:main
