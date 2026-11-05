@@ -1,5 +1,25 @@
 (() => {
 'use strict';
+if(/\/workouts\.html$/.test(location.pathname))return;
+const root=document.documentElement;
+const style=document.createElement('style');
+style.id='setup-initial-loading-style';
+style.textContent='html[data-setup-loading]::before{content:"Загрузка…";position:fixed;inset:0;z-index:2147483647;display:grid;place-items:center;background:var(--bg,#f4faf7);color:var(--tx,#104b46);font:500 16px/1.5 system-ui,sans-serif;cursor:progress}html[data-setup-loading] body{visibility:hidden!important}';
+document.head.append(style);
+root.setAttribute('data-setup-loading','');
+const previousBusy=root.getAttribute('aria-busy');root.setAttribute('aria-busy','true');
+let done=false,previousInert=false,inertBody=null;
+function lock(){if(done||!document.body)return;inertBody=document.body;previousInert=inertBody.inert;inertBody.inert=true;}
+function reveal(){if(done)return;done=true;clearTimeout(fallback);root.removeAttribute('data-setup-loading');if(previousBusy===null)root.removeAttribute('aria-busy');else root.setAttribute('aria-busy',previousBusy);if(inertBody)inertBody.inert=previousInert;window.removeEventListener('load',ready);}
+function ready(){requestAnimationFrame(()=>requestAnimationFrame(reveal));}
+const fallback=setTimeout(reveal,15000);
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',lock,{once:true});else lock();
+if(document.readyState==='complete')ready();else window.addEventListener('load',ready,{once:true});
+window.addEventListener('pageshow',event=>{if(event.persisted)reveal();});
+})();
+
+(() => {
+'use strict';
 const KEY='setup.theme.v1',root=document.documentElement;
 const valid=value=>value==='light'||value==='dark';
 const system=window.matchMedia('(prefers-color-scheme: dark)');
