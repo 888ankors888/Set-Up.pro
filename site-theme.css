@@ -44,7 +44,7 @@ body .goals-questionnaire-block .goals-compact-actions>.btn:only-child{grid-colu
 /* Mobile navigation gradient background. */
 @media (max-width: 700px) {
   body #nav {
-    background: linear-gradient(120deg, rgba(9, 110, 87, .96), rgba(11, 134, 104, .96));
+    background: linear-gradient(120deg, #096e57, #0b8668);
     border-color: rgba(255, 255, 255, .12);
   }
   body #nav button { color: rgba(255, 255, 255, .78); }
