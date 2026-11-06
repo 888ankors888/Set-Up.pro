@@ -32,3 +32,10 @@ html:root:root:root body #nav{background:color-mix(in srgb,var(--site-pane) 94%,
 }
 @media(min-width:1000px) and (prefers-reduced-transparency:reduce){html:root:root:root body #nav{background:var(--site-pane)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}}
 html:root:root:root body #nav>:not(.setup-wordnav){display:none!important}
+
+/* Final override: opaque white navigation on every viewport. */
+html:root:root:root body #nav{background:#fff!important;opacity:1!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;color:#104b46!important;color-scheme:light}
+html:root:root:root body #nav .setup-wordnav{background:#fff!important;color:#104b46!important}
+html:root:root:root body #nav .setup-wordnav button{color:#104b46!important}
+html:root:root:root body #nav .setup-wordnav button.on,html:root:root:root body #nav .setup-wordnav>button[aria-expanded=true]{background:#e3f8b5!important;color:#104b46!important}
+@media(min-width:1000px){html:root:root:root body:has(#nav) .brand:not(.big) span,html:root:root:root body:has(#nav) main>.setup-home{color:#104b46!important}}
