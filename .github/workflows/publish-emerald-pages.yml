@@ -29,7 +29,8 @@ jobs:
         shell: python
         run: |
           from pathlib import Path
-          import shutil,json,os
+          import shutil,json,os,re
+          from urllib.parse import urlsplit,urlunsplit,parse_qsl,urlencode
           out=Path('_site');out.mkdir()
           files=[p for pattern in ('*.html','*.css','*.js','*.webp') for p in Path('.').glob(pattern)]
           files += [p for folder in ('sports','workouts','design') for pattern in ('*.css','*.js') for p in Path(folder).glob(pattern)]
@@ -40,11 +41,22 @@ jobs:
               if p.is_file():
                   dest=out/p;dest.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(p,dest)
           sha=os.environ['GITHUB_SHA']
+          def version_asset(match):
+              prefix,quote,url=match.group(1),match.group(2),match.group(3)
+              parts=urlsplit(url)
+              if parts.scheme or parts.netloc or not parts.path.lower().endswith(('.css','.js')):
+                  return match.group(0)
+              query=[(k,v) for k,v in parse_qsl(parts.query,keep_blank_values=True) if k!='v']
+              query.append(('v',sha))
+              updated=urlunsplit((parts.scheme,parts.netloc,parts.path,urlencode(query),parts.fragment))
+              return prefix+quote+updated+quote
           for p in out.glob('*.html'):
               text=p.read_text(encoding='utf-8')
               tags=f'<link rel="stylesheet" href="design/nav-brand.css?v={sha}"><script defer src="design/nav-brand.js?v={sha}"></script>'
               assert '</head>' in text,str(p)
-              p.write_text(text.replace('</head>',tags+'\n</head>'),encoding='utf-8')
+              text=text.replace('</head>',tags+'\n</head>')
+              text=re.sub(r"(\b(?:href|src)\s*=\s*)(['\"])([^'\"]+)\2",version_asset,text,flags=re.IGNORECASE)
+              p.write_text(text,encoding='utf-8')
           (out/'.nojekyll').touch()
           (out/'deployment-info.json').write_text(json.dumps({'branch':'main','commit':sha})+'\n',encoding='utf-8')
       - uses: actions/configure-pages@v5
