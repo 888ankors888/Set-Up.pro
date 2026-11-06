@@ -40,3 +40,34 @@ html:root:root:root body:has(#nav) time.setup-header-date{position:fixed!importa
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
+
+/* Enhance the original energy ring without replacing its data or labels. */
+(() => {
+'use strict';
+let serial=0,queued=false;
+const selector='#app .energy .ring';
+function enhance(){
+ queued=false;
+ document.querySelectorAll(selector).forEach(ring=>{
+  const raw=ring.style.getPropertyValue('--progress').trim()||getComputedStyle(ring).getPropertyValue('--progress').trim();
+  const value=parseFloat(raw);if(!Number.isFinite(value))return;
+  const progress=Math.max(0,Math.min(100,value));
+  if(ring.dataset.setupOrbitProgress===String(progress)&&ring.querySelector('.setup-energy-svg'))return;
+  ring.dataset.setupOrbitProgress=String(progress);ring.classList.add('setup-energy-ring');
+  ring.querySelector('.setup-energy-svg')?.remove();
+  const id='setup-energy-'+(++serial),svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.classList.add('setup-energy-svg');svg.setAttribute('viewBox','0 0 260 260');svg.setAttribute('aria-hidden','true');svg.setAttribute('focusable','false');
+  svg.innerHTML=`<defs><pattern id="${id}-hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(-40)"><path d="M0 0V7" stroke="#9cb9ae" stroke-width="2.5"/></pattern><linearGradient id="${id}-lime" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#e5ff9b"/><stop offset="1" stop-color="#c6f66b"/></linearGradient><radialGradient id="${id}-core" cx="35%" cy="20%" r="85%"><stop stop-color="#3b5653"/><stop offset="1" stop-color="#173a34"/></radialGradient></defs><circle cx="130" cy="130" r="110" fill="none" stroke="#163d34" stroke-width="22"/><circle cx="130" cy="130" r="110" fill="none" stroke="url(#${id}-hatch)" stroke-width="22"/>${progress>0?`<circle cx="130" cy="130" r="110" fill="none" stroke="url(#${id}-lime)" stroke-width="22" stroke-linecap="round" pathLength="100" stroke-dasharray="${progress} 100" transform="rotate(-90 130 130)"/>`:''}<circle cx="130" cy="130" r="86" fill="url(#${id}-core)"/>`;
+  ring.prepend(svg);
+ });
+}
+function schedule(){if(!queued){queued=true;requestAnimationFrame(enhance);}}
+function start(){
+ const style=document.createElement('style');style.id='setup-original-energy-orbit';
+ style.textContent='html:root:root:root body #app .energy .ring.setup-energy-ring{position:relative!important;width:220px!important;height:220px!important;max-width:100%!important;background:none!important;filter:none!important;isolation:isolate}html:root:root:root body #app .energy .ring.setup-energy-ring::before{content:none!important;display:none!important}html:root:root:root body #app .energy .ring.setup-energy-ring>.setup-energy-svg{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;display:block!important;pointer-events:none!important;z-index:0}html:root:root:root body #app .energy .ring.setup-energy-ring>div{position:relative!important;z-index:1;max-width:68%;text-align:center;color:#f4faf4!important}html:root:root:root body #app .energy .ring.setup-energy-ring b{font-size:27px!important;line-height:1.2}html:root:root:root body #app .energy .ring.setup-energy-ring small{font-size:12px!important;color:#b2c9bd!important}@media(max-width:700px){html:root:root:root body #app .energy .ring.setup-energy-ring{width:180px!important;height:180px!important}html:root:root:root body #app .energy .ring.setup-energy-ring b{font-size:24px!important}}';
+ document.getElementById(style.id)?.remove();document.head.append(style);enhance();
+ new MutationObserver(schedule).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['style']});
+ window.addEventListener('pageshow',schedule);
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
+})();
