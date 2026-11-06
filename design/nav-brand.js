@@ -19,7 +19,16 @@ function updateHeaderDate(){
 function start(){
   const style=document.createElement('style');
   style.id='setup-header-date-style';
-  style.textContent='html:root:root:root body time.setup-header-date{display:none!important}@media(max-width:999px){html:root:root:root body:has(#nav) time.setup-header-date{display:block!important;flex:0 0 auto!important;margin-left:auto!important;color:#edf8f2!important;font:600 14px/1.3 system-ui,sans-serif!important;letter-spacing:0!important;white-space:nowrap!important;text-align:right!important}}';
+  style.textContent=`
+html:root:root:root body time.setup-header-date{display:none!important}
+@media(max-width:999px){html:root:root:root body:has(#nav) time.setup-header-date{display:block!important;flex:0 0 auto!important;margin-left:auto!important;color:#edf8f2!important;font:600 14px/1.3 system-ui,sans-serif!important;letter-spacing:0!important;white-space:nowrap!important;text-align:right!important}}
+@media(min-width:1000px){
+html:root:root:root body #nav{padding-left:220px!important;padding-right:220px!important;justify-content:center!important}
+html:root:root:root body #nav .setup-wordnav{flex:0 1 560px!important;width:100%!important;max-width:560px!important;gap:10px!important}
+html:root:root:root body #nav .setup-wordnav>button{min-height:44px!important;height:44px!important;padding:10px 12px!important;font-size:15px!important;gap:6px!important}
+html:root:root:root body:has(#nav) time.setup-header-date{position:fixed!important;top:calc(12px + env(safe-area-inset-top,0px))!important;right:24px!important;left:auto!important;bottom:auto!important;z-index:75!important;display:flex!important;align-items:center!important;justify-content:flex-end!important;width:180px!important;height:48px!important;margin:0!important;padding:0!important;box-sizing:border-box!important;color:#edf8f2!important;font:600 18px/1.2 system-ui,sans-serif!important;letter-spacing:0!important;white-space:nowrap!important;text-align:right!important;cursor:default!important;pointer-events:none!important}
+}
+`;
   document.getElementById(style.id)?.remove();document.head.append(style);
   decorate();updateHeaderDate();
   const observer=new MutationObserver(()=>{decorate();updateHeaderDate();});
