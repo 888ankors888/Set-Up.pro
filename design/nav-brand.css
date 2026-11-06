@@ -12,3 +12,10 @@ html body #nav .setup-wordnav button:focus-visible{outline:3px solid #c7ff60!imp
 /* Subtle opaque highlights for inactive navigation buttons. */
 html:root:root:root body #nav .setup-wordnav button:not(.on):not([aria-expanded=true]){background:linear-gradient(135deg,#2b5c4d,#214c40)!important;color:#edf8f2!important;border:1px solid #58826b!important;box-shadow:inset 0 1px 0 #b9e2c126,0 3px 10px #001c1826!important}
 @media(hover:hover){html:root:root:root body #nav .setup-wordnav button:not(.on):not([aria-expanded=true]):not(:disabled):hover{background:linear-gradient(135deg,#376e59,#2a5b49)!important;color:#fff!important;border-color:#91b88b!important}}
+
+/* Equal-width navigation buttons; the dropdown remains positioned separately. */
+html:root:root:root body #nav .setup-wordnav{display:flex!important;flex-direction:row!important;flex:1 1 auto!important;width:100%!important;max-width:none!important;min-width:0!important;gap:8px!important;box-sizing:border-box!important}
+html:root:root:root body #nav .setup-wordnav>button{display:flex!important;flex-direction:row!important;flex:1 1 0!important;width:0!important;min-width:0!important;max-width:none!important;min-height:52px!important;align-items:center!important;justify-content:center!important;text-align:center!important;padding:12px 6px!important;box-sizing:border-box!important}
+@media(max-width:999px){html:root:root:root body #nav{padding-left:max(8px,env(safe-area-inset-left,0px))!important;padding-right:max(8px,env(safe-area-inset-right,0px))!important}}
+@media(min-width:1000px){html:root:root:root body #nav{padding-left:220px!important;padding-right:max(24px,env(safe-area-inset-right,0px))!important}}
+@media(max-width:380px){html:root:root:root body #nav .setup-wordnav{gap:5px!important}html:root:root:root body #nav .setup-wordnav>button{padding:12px 3px!important;gap:4px!important}}
