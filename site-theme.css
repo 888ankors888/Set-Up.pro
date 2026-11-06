@@ -41,15 +41,18 @@ body .goals-questionnaire-block .goals-compact-actions>.btn:only-child{grid-colu
 #goals-questionnaire-habits .habit-category .habit-picture{background:rgba(255,255,255,.55);border:1px solid var(--habit-accent)}
 #goals-questionnaire-habits .habit-category input[type=checkbox]{accent-color:var(--habit-accent)}
 
-/* Mobile navigation gradient background. */
+/* Opaque white mobile navigation. */
 @media (max-width: 700px) {
   body #nav {
-    background: linear-gradient(120deg, #096e57, #0b8668) !important;
-    border-color: rgba(255, 255, 255, .12) !important;
+    background: #fff !important;
+    opacity: 1 !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    border-color: #dfe9e4 !important;
   }
-  body #nav button { color: rgba(255, 255, 255, .78) !important; }
+  body #nav button { color: #202c32 !important; }
   body #nav button.on {
-    background: rgba(255, 255, 255, .16) !important;
-    color: #fff !important;
+    background: #edf8f3 !important;
+    color: #08795e !important;
   }
 }
