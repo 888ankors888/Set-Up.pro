@@ -71,3 +71,42 @@ function start(){
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
+
+/* Macro glasses use the existing displayed gram totals; stored nutrition data is untouched. */
+(() => {
+'use strict';
+let queued=false;
+const palette=[['Белки','#75c9f1','#387fa8'],['Жиры','#efd078','#b28635'],['Углеводы','#c7a4ee','#8662ad']];
+function enhance(){
+ queued=false;
+ document.querySelectorAll('#app .card').forEach(card=>{
+  if(!card.querySelector('.energy .ring,.energy .energy-orbit'))return;
+  const grid=card.querySelector('.m3');if(!grid)return;
+  [...grid.children].forEach(cell=>{
+   const item=palette.find(([label])=>cell.textContent.includes(label));if(!item)return;
+   const match=cell.textContent.replace(/[\s\u00a0\u202f]/g,'').match(/(\d+(?:[.,]\d+)?)\/(\d+(?:[.,]\d+)?)/);
+   const bar=cell.querySelector('.bar');if(!match||!bar||!bar.querySelector('i'))return;
+   const current=Number(match[1].replace(',','.')),target=Number(match[2].replace(',','.'));
+   if(!Number.isFinite(current)||!Number.isFinite(target))return;
+   const key=[item[0],current,target].join(':');
+   if(cell.dataset.setupMacroGlass===key&&bar.classList.contains('setup-macro-glass'))return;
+   cell.dataset.setupMacroGlass=key;cell.classList.add('setup-macro-cell');grid.classList.add('setup-macro-grid');
+   bar.classList.add('setup-macro-glass');
+   bar.style.setProperty('--macro-fill',(target>0?Math.min(100,Math.max(0,current/target*100)):0)+'%');
+   bar.style.setProperty('--macro-top',item[1]);bar.style.setProperty('--macro-bottom',item[2]);
+   bar.setAttribute('role','img');bar.setAttribute('aria-label',`${item[0]}: ${current} из ${target} граммов`);
+   let over=cell.querySelector('.setup-macro-over');
+   if(target>0&&current>target){if(!over){over=document.createElement('small');over.className='setup-macro-over';cell.append(over);}over.textContent='+'+new Intl.NumberFormat('ru-RU',{maximumFractionDigits:1}).format(current-target)+' г сверх ориентира';}else over?.remove();
+  });
+ });
+}
+function schedule(){if(!queued){queued=true;requestAnimationFrame(enhance);}}
+function start(){
+ const style=document.createElement('style');style.id='setup-macro-glasses-style';
+ style.textContent='html:root:root:root body #app .setup-macro-grid{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:12px!important;margin-top:24px!important}html:root:root:root body #app .setup-macro-cell{display:flex!important;flex-direction:column!important;align-items:center!important;gap:6px!important;min-width:0!important;text-align:center!important}html:root:root:root body #app .setup-macro-cell>.setup-macro-glass{order:-1!important;position:relative!important;display:block!important;width:clamp(46px,10vw,68px)!important;height:100px!important;min-height:100px!important;margin:0 0 8px!important;border:2px solid #adcabb80!important;border-top:3px solid #dcece6b3!important;border-radius:8px 8px 18px 18px!important;box-sizing:border-box!important;background:linear-gradient(110deg,#effff30d,#ffffff03)!important;overflow:hidden!important;box-shadow:inset 3px 0 8px #ffffff0f,0 6px 16px #001c1826!important}html:root:root:root body #app .setup-macro-glass>i{position:absolute!important;left:0!important;right:0!important;bottom:0!important;width:100%!important;height:var(--macro-fill)!important;min-height:0!important;display:block!important;background:linear-gradient(160deg,var(--macro-top),var(--macro-bottom))!important;border-radius:5px 5px 12px 12px!important}html:root:root:root body #app .setup-macro-glass::after{content:"";position:absolute;top:8px;bottom:10px;left:7px;width:4px;border-radius:8px;background:#ffffff40;pointer-events:none}html:root:root:root body #app .setup-macro-cell>b{font-size:clamp(12px,2.8vw,16px)!important;line-height:1.35;white-space:normal!important}html:root:root:root body #app .setup-macro-over{font-size:11px!important;color:#ffe49b!important;line-height:1.3}';
+ document.getElementById(style.id)?.remove();document.head.append(style);enhance();
+ new MutationObserver(schedule).observe(document.body,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['style']});
+ window.addEventListener('pageshow',schedule);
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
+})();
