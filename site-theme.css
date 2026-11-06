@@ -44,12 +44,12 @@ body .goals-questionnaire-block .goals-compact-actions>.btn:only-child{grid-colu
 /* Mobile navigation gradient background. */
 @media (max-width: 700px) {
   body #nav {
-    background: linear-gradient(120deg, #096e57, #0b8668);
-    border-color: rgba(255, 255, 255, .12);
+    background: linear-gradient(120deg, #096e57, #0b8668) !important;
+    border-color: rgba(255, 255, 255, .12) !important;
   }
-  body #nav button { color: rgba(255, 255, 255, .78); }
+  body #nav button { color: rgba(255, 255, 255, .78) !important; }
   body #nav button.on {
-    background: rgba(255, 255, 255, .16);
-    color: #fff;
+    background: rgba(255, 255, 255, .16) !important;
+    color: #fff !important;
   }
 }
