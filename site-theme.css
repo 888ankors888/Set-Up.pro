@@ -56,3 +56,9 @@ body .goals-questionnaire-block .goals-compact-actions>.btn:only-child{grid-colu
     color: #08795e !important;
   }
 }
+
+/* Black text scoped to the My Goals sport questionnaire. */
+body #goals-questionnaire-sport,
+body #goals-questionnaire-sport *{color:#000!important}
+body #goals-questionnaire-sport input::placeholder,
+body #goals-questionnaire-sport textarea::placeholder{color:#000;opacity:1}
