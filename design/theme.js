@@ -34,3 +34,10 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 if(document.readyState==='complete')ready();else window.addEventListener('load',ready,{once:true});
 window.addEventListener('pageshow',event=>{if(event.persisted)reveal();});
 })();
+
+(() => {
+const source=document.currentScript?.src;
+if(!source||document.getElementById('sport-wellness-module'))return;
+const url=new URL('sport-wellness.js',source);url.search=new URL(source).search;
+const script=document.createElement('script');script.id='sport-wellness-module';script.src=url.href;script.defer=true;document.head.append(script);
+})();
