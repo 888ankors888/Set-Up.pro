@@ -62,3 +62,8 @@ body #goals-questionnaire-sport,
 body #goals-questionnaire-sport *{color:#000!important}
 body #goals-questionnaire-sport input::placeholder,
 body #goals-questionnaire-sport textarea::placeholder{color:#000;opacity:1}
+
+/* Peach sport cards with black headings and text in both themes. */
+body #goals-questionnaire-sport .sport-category{--tx:#000;--mu:#000;--site-field:#FFF5ED;--ac2:#FFD4B5;color-scheme:light;background:#FFE5D0!important;color:#000!important}
+body #goals-questionnaire-sport .sport-category *,
+body #goals-questionnaire-sport .sport-category>summary{color:#000!important;-webkit-text-fill-color:#000}
