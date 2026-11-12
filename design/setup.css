@@ -73,3 +73,16 @@ html:not([data-setup-theme="light"]) body .grid{gap:14px}}
 @media (hover:hover){html:not([data-setup-theme="light"]) body .btn:not(:disabled):hover{filter:brightness(1.06);transform:translateY(-1px)}
 html:not([data-setup-theme="light"]) body #nav button:hover{background:#174437!important}}
 @media (prefers-reduced-motion:reduce){html:not([data-setup-theme="light"]) body *,html:not([data-setup-theme="light"]) body *:before,html:not([data-setup-theme="light"]) body *:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+
+/* Sport cards: local light palette overrides the emerald theme. */
+html:root body #goals-questionnaire-sport .sport-category{--tx:#000!important;--mu:#000!important;--ac:#87401e!important;--ac2:#FFD4B5!important;--site-field:#FFF5ED!important;--ln:#D9AF91!important;background:#FFE5D0!important;color:#000!important;border-color:#D9AF91!important;color-scheme:light}
+html:root body #goals-questionnaire-sport .sport-category *{color:#000!important;-webkit-text-fill-color:#000!important}
+html:root body #goals-questionnaire-sport .sport-category>summary,
+html:root body #goals-questionnaire-sport .sport-category legend,
+html:root body #goals-questionnaire-sport .sport-category label{color:#000!important}
+html:root body #goals-questionnaire-sport .sport-category input,
+html:root body #goals-questionnaire-sport .sport-category select,
+html:root body #goals-questionnaire-sport .sport-category textarea{background:#FFF5ED!important;color:#000!important;border-color:#D9AF91!important;accent-color:#87401e}
+html:root body #goals-questionnaire-sport .sport-category input::placeholder,
+html:root body #goals-questionnaire-sport .sport-category textarea::placeholder{color:#000!important;-webkit-text-fill-color:#000!important;opacity:1}
+html:root body #goals-questionnaire-sport .sport-category>summary>span:first-child{background:#FFD4B5!important}
