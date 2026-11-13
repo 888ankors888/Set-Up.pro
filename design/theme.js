@@ -9,7 +9,7 @@ const css=document.createElement('style');css.id='setup-dark-only';
 const background=new URL('../wellness-background.jpg',document.currentScript.src).href;
 css.textContent='html:root body #setup-theme-toggle,html:root body .setup-theme-toggle,html:root body [data-theme-toggle]{display:none!important}html{color-scheme:dark}html:root:root:root body{background:#061F1A url('+JSON.stringify(background)+') center center / cover no-repeat fixed!important;min-height:100vh;min-height:100svh}@media(max-width:700px){html:root:root:root body{background-attachment:scroll!important;background-size:100% auto!important;background-repeat:repeat-y!important}}';document.head.append(css);
 const glass=document.createElement('style');glass.id='setup-glass-cards';
-const fill='background:rgba(6,31,26,.4)!important;';
+const fill='background:rgba(6,31,26,.45)!important;';
 const edge='border:1px solid rgba(67,201,154,.6)!important;box-shadow:inset 0 1px 0 rgba(220,255,240,.2),inset 0 -1px 0 rgba(8,124,101,.18),0 0 0 1px rgba(67,201,154,.08),0 0 20px rgba(67,201,154,.07),0 12px 32px rgba(0,20,16,.2)!important;';
 glass.textContent='html:root:root:root body :is(.card,.welcome,.goals-questionnaire-block,.habit-category,.sport-category,.nutrition-category,.nutrition-diary-premium,.tip,.ent,.food-fit,.me-summary,.nutrition-ai-result){'+fill+edge+'backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}';
 const sections='html:root:root:root body :is(#goals-questionnaire-about,#goals-questionnaire-nutrition,#goals-questionnaire-sport,#goals-questionnaire-habits):is(.goals-questionnaire-block,.sport-wellness)';
