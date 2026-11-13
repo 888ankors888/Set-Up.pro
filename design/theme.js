@@ -58,3 +58,14 @@ if(!source||document.getElementById('sport-wellness-module'))return;
 const url=new URL('sport-wellness.js',source);url.search=new URL(source).search;
 const script=document.createElement('script');script.id='sport-wellness-module';script.src=url.href;script.defer=true;document.head.append(script);
 })();
+
+(() => {
+const style=document.createElement('style');style.id='setup-week-calendar-contrast';
+style.textContent=`
+html:root:root:root:root body #app .week button,
+html:root:root:root:root body #app .week button *{color:#fff!important;-webkit-text-fill-color:#fff!important}
+html:root:root:root:root body #app .week button :is(small,b,span){opacity:1!important}
+html:root:root:root:root body #app .week button:is(.active,[aria-pressed="true"]){background:#c7ff60!important;border-color:#c7ff60!important;color:#000!important;-webkit-text-fill-color:#000!important}
+html:root:root:root:root body #app .week button:is(.active,[aria-pressed="true"]) *{color:#000!important;-webkit-text-fill-color:#000!important}
+`;document.head.append(style);
+})();
