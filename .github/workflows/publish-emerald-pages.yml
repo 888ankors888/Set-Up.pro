@@ -21,6 +21,7 @@ jobs:
       - name: Check frontend
         run: |
           node --check design/theme.js
+          node --check design/style-debug.js
           node --check design/setup-ui.js
           node --check design/nav-brand.js
           node --check workouts/page.js
@@ -55,7 +56,7 @@ jobs:
               return prefix+quote+updated+quote
           for p in out.glob('*.html'):
               text=p.read_text(encoding='utf-8')
-              tags=f'<link rel="stylesheet" href="design/nav-brand.css?v={sha}"><script defer src="design/nav-brand.js?v={sha}"></script>'
+              tags=f'<link rel="stylesheet" href="design/nav-brand.css?v={sha}"><script defer src="design/nav-brand.js?v={sha}"></script><script defer src="design/style-debug.js?v={sha}"></script>'
               assert '</head>' in text,str(p)
               text=text.replace('</head>',tags+'\n</head>')
               text=re.sub(r"(\b(?:href|src)\s*=\s*)(['\"])([^'\"]+)\2",version_asset,text,flags=re.IGNORECASE)
