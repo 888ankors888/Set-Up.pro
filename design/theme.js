@@ -18,6 +18,9 @@ const nested=sections+' :is(.card,.goals-questionnaire-fields,.nutrition-categor
 glass.textContent+=nested+'{background:transparent!important;'+edge+'backdrop-filter:none!important;-webkit-backdrop-filter:none!important;--tx:#f4faf4!important;--mu:#a9cbc0!important;--ac:#d0ff68!important;--ac2:#19483b!important;--site-field:#072d27!important;--ln:#31584b!important;color:#f4faf4!important;color-scheme:dark}';
 glass.textContent+=nested+' :is(summary,h2,h3,h4,p,legend,label,small,span,.chk,.subtle,.habit-check){color:#f4faf4!important;-webkit-text-fill-color:#f4faf4!important}';
 glass.textContent+=nested+' :is(input,select,textarea){background:#072d27!important;color:#f4faf4!important;-webkit-text-fill-color:#f4faf4!important;border-color:#31584b!important}';
+const selected=sections+' :is(label.chk,label.habit-check):has(input:checked)';
+glass.textContent+=selected+','+selected+' *{color:#000!important;-webkit-text-fill-color:#000!important}';
+glass.textContent+=sections+' .sw-selected .sw-count,'+sections+' .sw-selected .sw-count *{color:#000!important;-webkit-text-fill-color:#000!important}';
 glass.textContent+='html:root:root:root body #goals-questionnaire-about.goals-questionnaire-block>.goals-questionnaire-fields{border:0!important;box-shadow:none!important;outline:none!important;}';
 document.head.append(glass);
 const labels=new Set(['Тема','◐ Тема','Сменить тему','Изменить тему','Переключить тему','Переключить тему оформления','Светлая тема','Тёмная тема','Темная тема','Светлая','Тёмная','Темная','Системная тема']);
