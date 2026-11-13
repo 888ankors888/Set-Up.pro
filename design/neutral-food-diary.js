@@ -25,7 +25,7 @@ function clean(){
  app.querySelectorAll(unwanted).forEach(node=>node.remove());
  app.querySelectorAll('.ent.food-fit').forEach(row=>{for(const cls of ['food-fit-good','food-fit-neutral','food-fit-bad'])if(row.classList.contains(cls))row.classList.remove(cls);});
  app.querySelectorAll('h1,h2,h3,h4').forEach(node=>{if(node.closest('.meal-eaten'))return;if(['Скушали сегодня','Как определяется цвет','Разбор через ИИ'].includes(node.textContent.trim())&&!node.querySelector('button'))node.remove();});
- app.querySelectorAll('p').forEach(node=>{if(node.closest('#diary-day-ai')||node.querySelector('button,input,select,textarea'))return;const text=node.textContent.replace(/\s+/g,' ').trim();if(text==='Оценка приблизительная, не медицинская рекомендация. Дневник может быть неполным.'||text.startsWith('В GigaChat отправляются блюда, порции, КБЖУ, время записей')||text.includes('до 1000 символов на обе части вместе с заголовками. Текущий приём пищи'))node.remove();});
+ app.querySelectorAll('p').forEach(node=>{if(node.querySelector('button,input,select,textarea'))return;const text=node.textContent.replace(/\s+/g,' ').trim();if(text==='Условное распределение дневного ориентира, не обязательная норма и не медицинская рекомендация. Тарелки — иллюстрации, не персональное меню. Учитывайте ограничения из анкеты.'||text==='Оценка приблизительная, не медицинская рекомендация. Дневник может быть неполным.'||text.startsWith('В GigaChat отправляются блюда, порции, КБЖУ, время записей')||text.includes('до 1000 символов на обе части вместе с заголовками. Текущий приём пищи'))node.remove();});
  groupMeals(app);
 }
 function schedule(){if(!queued){queued=true;requestAnimationFrame(clean);}}
