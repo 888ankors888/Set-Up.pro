@@ -43,7 +43,7 @@ html:root:root:root body #app .energy:has(>.ring)>.ring,html:root:root:root body
 html:root:root:root body #app .energy:has(>.ring)>div:not(.ring),html:root:root:root body #diary-daily-energy .energy:has(>.energy-orbit)>div:not(.energy-orbit){width:100%!important;min-width:0!important;text-align:left!important;overflow-wrap:anywhere}
 html:root:root:root body #app .energy:has(>.ring)>div:not(.ring) .big,html:root:root:root body #diary-daily-energy .energy:has(>.energy-orbit)>div:not(.energy-orbit) .big{font-size:clamp(28px,5vw,44px)!important}
 
-/* Center only the daily energy diagram; keep its values and rendering unchanged. */
-html:root:root:root:root body #app #diary-daily-energy .energy{display:grid!important;grid-template-columns:minmax(0,1fr)!important;justify-items:center!important;text-align:center!important;gap:18px!important}
-html:root:root:root:root body #app #diary-daily-energy .energy>:is(.ring,.energy-orbit){grid-column:1!important;justify-self:center!important;margin-inline:auto!important}
-html:root:root:root:root body #app #diary-daily-energy .energy>div:not(.ring):not(.energy-orbit){grid-column:1!important;text-align:center!important}
+/* Daily energy: a centered horizontal pair on mobile and desktop. */
+html:root:root:root:root body #app #diary-daily-energy .energy{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;align-items:center!important;justify-items:center!important;align-content:center!important;gap:clamp(12px,3vw,28px)!important;width:100%!important;max-width:560px!important;margin-inline:auto!important;text-align:center!important}
+html:root:root:root:root body #app #diary-daily-energy .energy>:is(.ring,.energy-orbit){grid-column:1!important;grid-row:1!important;align-self:center!important;justify-self:center!important;margin:0!important;width:min(220px,100%)!important;height:auto!important;aspect-ratio:1!important;min-width:0!important}
+html:root:root:root:root body #app #diary-daily-energy .energy>div:not(.ring):not(.energy-orbit){grid-column:2!important;grid-row:1!important;align-self:center!important;justify-self:center!important;width:100%!important;min-width:0!important;text-align:center!important}
