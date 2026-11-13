@@ -1,11 +1,21 @@
 (() => {
   const MEALS = ['Завтрак', 'Обед', 'Ужин', 'Перекус'];
-  let opened = false;
+  let opened = false, selectedMeal = null;
+  const automaticMeal = mealNow;
+  mealNow = function (...args) { return selectedMeal || automaticMeal.apply(this, args); };
+  document.addEventListener('change', event => {
+    const input = event.target;
+    if (!selectedMeal || !(input instanceof HTMLSelectElement) || !MEALS.includes(input.value)) return;
+    if (!input.closest('#meal-entry-dialog,dialog,#meal-estimate')) return;
+    selectedMeal = input.value;
+    ME.meal = input.value;
+    const heading = document.getElementById('meal-dialog-heading');
+    if (heading) heading.textContent = 'Добавить · ' + selectedMeal;
+  });
 
   function dialog() {
     let node = document.getElementById('meal-entry-dialog');
     if (node) return node;
-
     node = document.createElement('dialog');
     node.id = 'meal-entry-dialog';
     node.setAttribute('aria-label', 'Оценка приёма пищи');
@@ -13,6 +23,7 @@
     node.querySelector('button').onclick = () => node.close();
     node.addEventListener('close', () => {
       opened = false;
+      if (tab === 'diary') selectedMeal = null;
       document.documentElement.classList.remove('meal-entry-open');
       const index = MEALS.indexOf(ME.meal);
       document.querySelector('#meal-picker [data-meal-index="' + index + '"]')?.focus({ preventScroll: true });
@@ -28,7 +39,6 @@
       if (node.open) node.close();
       return;
     }
-
     const card = document.querySelector('#app #meal-estimate');
     if (card) {
       let anchor = document.getElementById('meal-entry-anchor');
@@ -40,7 +50,6 @@
       }
       node.querySelector('.meal-dialog-body').replaceChildren(card);
     }
-
     document.getElementById('meal-dialog-heading').textContent = 'Добавить · ' + (ME.meal || 'Приём пищи');
     if (opened && !node.open) {
       node.showModal();
@@ -50,6 +59,7 @@
 
   window.foodOpenMealWindow = function (meal) {
     if (ME.busy || !MEALS.includes(meal)) return;
+    selectedMeal = meal;
     ME.meal = meal;
     opened = true;
     render();
@@ -66,18 +76,15 @@
     previousRender();
     mount();
   };
-
   const previousRefresh = meRefresh;
-  meRefresh = function () {
-    previousRefresh();
-    mount();
-  };
+  meRefresh = function () { previousRefresh(); mount(); };
 
   function afterSave(fn) {
     return function (...args) {
       const count = S.entries.length;
       const result = fn.apply(this, args);
       if (S.entries.length > count) {
+        selectedMeal = null;
         opened = false;
         const node = dialog();
         if (node.open) node.close();
@@ -85,8 +92,9 @@
       return result;
     };
   }
-
   meSave = afterSave(meSave);
   manualSave = afterSave(manualSave);
+  jPut = afterSave(jPut);
+  if (typeof aiSave === 'function') aiSave = afterSave(aiSave);
   render();
 })();
