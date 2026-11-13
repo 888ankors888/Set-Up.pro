@@ -15,3 +15,6 @@
 @media(hover:hover){#meal-picker .meal-pick:not(:disabled):hover .meal-pick-action{filter:brightness(1.06)}}
 @media(max-width:650px){#meal-picker .meal-pick{min-height:280px;border-radius:28px}#meal-picker .meal-pick-copy{width:100%;padding:20px 24px 12px}#meal-picker .meal-pick-copy::after{width:65%;margin-top:12px}#meal-picker .meal-pick-hint{font-size:13px}#meal-picker .meal-pick-action{left:18px;bottom:20px;width:48%;min-height:52px;padding:10px 8px;gap:7px}#meal-picker .meal-pick-action::after{font-size:15px}#meal-picker .meal-pick-action::before{font-size:24px}#meal-picker .meal-pick::after{width:49%!important;right:-8px!important;bottom:-8px!important}}
 @media(prefers-reduced-motion:reduce){#meal-picker .meal-pick{transition:none}}
+
+#meal-picker .meal-pick-action{transform:scale(.75);transform-origin:left bottom;bottom:12px}
+@media(max-width:650px){#meal-picker .meal-pick-action{bottom:10px}}
