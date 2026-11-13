@@ -11,7 +11,7 @@ css.textContent='html:root body #setup-theme-toggle,html:root body .setup-theme-
 const glass=document.createElement('style');glass.id='setup-glass-cards';
 const edge='border:1px solid rgba(67,201,154,.6)!important;box-shadow:inset 0 1px 0 rgba(220,255,240,.2),inset 0 -1px 0 rgba(8,124,101,.18),0 0 0 1px rgba(67,201,154,.08),0 0 20px rgba(67,201,154,.07),0 12px 32px rgba(0,20,16,.2)!important;';
 glass.textContent='html:root:root:root body :is(.card,.welcome,.goals-questionnaire-block,.habit-category,.sport-category,.nutrition-category){background:rgba(6,31,26,.3)!important;'+edge+'backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}';
-const sections='html:root:root:root body :is(#goals-questionnaire-about,#goals-questionnaire-nutrition,#goals-questionnaire-sport,#goals-questionnaire-habits)';
+const sections='html:root:root:root body :is(#goals-questionnaire-about,#goals-questionnaire-nutrition,#goals-questionnaire-sport,#goals-questionnaire-habits):is(.goals-questionnaire-block,.sport-wellness)';
 glass.textContent+=sections+'{background:rgba(6,31,26,.3)!important;'+edge+'}';
 const nested=sections+' :is(.card,.goals-questionnaire-fields,.nutrition-category,.sport-category,.habit-category)';
 glass.textContent+=nested+'{background:transparent!important;'+edge+'backdrop-filter:none!important;-webkit-backdrop-filter:none!important;--tx:#f4faf4!important;--mu:#a9cbc0!important;--ac:#d0ff68!important;--ac2:#19483b!important;--site-field:#072d27!important;--ln:#31584b!important;color:#f4faf4!important;color-scheme:dark}';
