@@ -6,7 +6,7 @@ dark();
 new MutationObserver(dark).observe(root,{attributes:true,attributeFilter:['data-theme','data-setup-theme','style']});
 window.addEventListener('storage',event=>{if(event.key==='setup.theme.v1'||event.key===null)dark();});
 const css=document.createElement('style');css.id='setup-dark-only';
-const background=new URL('../assets/wellness-background.svg',document.currentScript.src).href;
+const background=new URL('../wellness-background.jpg',document.currentScript.src).href;
 css.textContent='html:root body #setup-theme-toggle,html:root body .setup-theme-toggle,html:root body [data-theme-toggle]{display:none!important}html{color-scheme:dark}html:root:root:root body{background:#061F1A url('+JSON.stringify(background)+') center center / cover no-repeat fixed!important;min-height:100vh;min-height:100svh}@media(max-width:700px){html:root:root:root body{background-attachment:scroll!important;background-size:100% auto!important;background-repeat:repeat-y!important}}';document.head.append(css);
 const labels=new Set(['Тема','◐ Тема','Сменить тему','Изменить тему','Переключить тему','Переключить тему оформления','Светлая тема','Тёмная тема','Темная тема','Светлая','Тёмная','Темная','Системная тема']);
 let queued=false;
