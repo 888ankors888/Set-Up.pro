@@ -33,6 +33,7 @@ jobs:
           from urllib.parse import urlsplit,urlunsplit,parse_qsl,urlencode
           out=Path('_site');out.mkdir()
           files=[p for pattern in ('*.html','*.css','*.js','*.webp') for p in Path('.').glob(pattern)]
+          files.append(Path('wellness-background.jpg'))
           files += [p for folder in ('sports','workouts','design') for pattern in ('*.css','*.js') for p in Path(folder).glob(pattern)]
           files += [p for p in Path('assets').rglob('*') if p.suffix.lower() in {'.png','.jpg','.jpeg','.webp','.svg','.ico','.avif','.woff','.woff2'}]
           root=Path('.').resolve()
@@ -40,6 +41,8 @@ jobs:
               assert not p.is_symlink() and p.resolve().is_relative_to(root),str(p)
               if p.is_file():
                   dest=out/p;dest.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(p,dest)
+          assert (out/'wellness-background.jpg').is_file(), 'Missing wellness background in Pages artifact'
+          assert (out/'wellness-background.jpg').stat().st_size > 0, 'Empty wellness background'
           sha=os.environ['GITHUB_SHA']
           def version_asset(match):
               prefix,quote,url=match.group(1),match.group(2),match.group(3)
