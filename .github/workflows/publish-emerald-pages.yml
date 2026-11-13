@@ -20,6 +20,7 @@ jobs:
           node-version: '22'
       - name: Check frontend
         run: |
+          node --check diary-energy.js
           node --check design/theme.js
           node --check design/style-debug.js
           node --check design/neutral-food-diary.js
@@ -60,6 +61,13 @@ jobs:
               tags=f'<link rel="stylesheet" href="design/nav-brand.css?v={sha}"><script defer src="design/nav-brand.js?v={sha}"></script><script defer src="design/style-debug.js?v={sha}"></script><script defer src="design/neutral-food-diary.js?v={sha}"></script>'
               assert '</head>' in text,str(p)
               text=text.replace('</head>',tags+'\n</head>')
+              if p.name == 'index.html':
+                  assert (out/'diary-energy.js').is_file(), 'Missing diary-energy.js'
+                  assert '</body>' in text, 'Missing closing body tag'
+                  pattern=r"<script\b[^>]*\bsrc\s*=\s*(['\"])(?:\./|/)?diary-energy\.js(?:[?#][^'\"]*)?\1[^>]*>\s*</script>"
+                  text=re.sub(pattern,'',text,flags=re.IGNORECASE)
+                  text=text.replace('</body>',f'<script src="diary-energy.js?v={sha}"></script>\n</body>')
+                  assert len(re.findall(pattern,text,flags=re.IGNORECASE)) == 1, 'Expected one diary-energy.js connection'
               text=re.sub(r"(\b(?:href|src)\s*=\s*)(['\"])([^'\"]+)\2",version_asset,text,flags=re.IGNORECASE)
               p.write_text(text,encoding='utf-8')
           (out/'.nojekyll').touch()
