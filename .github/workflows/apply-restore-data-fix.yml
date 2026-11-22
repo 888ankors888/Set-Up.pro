@@ -1,0 +1,40 @@
+name: Apply targeted restoreData fix
+on:
+  push:
+    branches: ['fix/restore-data']
+    paths:
+      - '.github/workflows/apply-restore-data-fix.yml'
+      - 'scripts/apply-restore-data-fix.py'
+      - 'patches/restore-data.js'
+      - 'tests/restore-data.test.cjs'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: apply-restore-data-fix
+  cancel-in-progress: false
+jobs:
+  apply:
+    if: github.ref == 'refs/heads/fix/restore-data'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/restore-data
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Replace only the reviewed function
+        run: python scripts/apply-restore-data-fix.py
+      - name: Check inline syntax and targeted restore tests
+        run: node --test tests/restore-data.test.cjs
+      - name: Check diff
+        run: git diff --check
+      - name: Commit only index.html to the fix branch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- index.html
+          git diff --cached --quiet && exit 0
+          git commit -m 'fix: preserve restored data and handle storage failures'
+          git push origin HEAD:refs/heads/fix/restore-data
