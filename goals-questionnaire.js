@@ -92,6 +92,58 @@
   function removeRequestedNotes(){document.querySelectorAll('#app .goals-questionnaire-block p').forEach(node=>{if(removedNotes.has(node.textContent.trim()))node.remove();});}
   const previousRender=render;render=function(){previousRender();removeRequestedNotes()};
   render();
-  const loadOptions=()=>{const script=document.createElement('script');script.src=new URL('questionnaire-options.js?v=1',document.baseURI).href;script.onload=()=>{const blocks=document.createElement('script');blocks.src=new URL('questionnaire-blocks.js?v=1',document.baseURI).href;document.head.appendChild(blocks);};document.head.appendChild(script);};
+  /* about-data-layer-loader */
+  const aboutQuery = new URL(document.currentScript?.src || document.baseURI).search;
+  function aboutStatus(text) {
+    try { const node=document.getElementById('goals-questionnaire-about')?.querySelector('[data-block-save-status]'); if(node)node.textContent=text; } catch (_) {}
+    try { toast(text); } catch (_) {}
+  }
+  function loadAboutScript(name) {
+    return new Promise((resolve,reject)=>{
+      const script=document.createElement('script'),url=new URL(name,document.baseURI);
+      url.search=aboutQuery;script.src=url.href;script.onload=resolve;
+      script.onerror=()=>reject(Error('Не удалось загрузить '+name));
+      document.head.appendChild(script);
+    });
+  }
+  function guardAbout(previous) {
+    if(typeof previous!=='function')return;
+    window.foodSaveQuestionnaireBlock=function(id){
+      if(id!=='about')return previous.apply(this,arguments);
+      aboutStatus('Сохранение «О вас» пока недоступно. Дождитесь загрузки или обновите страницу');return false;
+    };
+  }
+  async function connectAbout() {
+    if(window.foodAboutAdapterInstalled){window.foodAboutLoadState='ready';return;}
+    if(window.foodAboutLoadState==='loading')return;
+    const previous=window.foodSaveQuestionnaireBlock;
+    if(typeof previous!=='function'){window.foodAboutLoadState='failed';aboutStatus('Не удалось подключить блок «О вас». Обновите страницу');return;}
+    window.foodAboutLoadState='loading';
+    guardAbout(previous);
+    try {
+      if(!window.SetUpDataStore)await loadAboutScript('data-store.js');
+      if(!window.SetUpDataStore)throw Error('Не загружен общий модуль хранения');
+      await loadAboutScript('about-store.js');
+      if(!window.SetUpAboutStore)throw Error('Не загружен модуль «О вас»');
+      await loadAboutScript('about-block-adapter.js');
+      if(!window.foodAboutAdapterInstalled)throw Error('Не подключён обработчик «О вас»');
+      window.foodAboutLoadState='ready';
+    } catch(error) {
+      window.foodAboutLoadState='failed';
+      aboutStatus('Не удалось подключить сохранение «О вас». Обновите страницу');
+    }
+  }
+  const loadOptions=()=>{
+    if(!window.foodAboutAdapterInstalled)guardAbout(window.foodSaveQuestionnaireBlock);
+    const script=document.createElement('script');script.src=new URL('questionnaire-options.js?v=1',document.baseURI).href;
+    script.onload=()=>{
+      const blocks=document.createElement('script');blocks.src=new URL('questionnaire-blocks.js?v=1',document.baseURI).href;
+      blocks.onload=()=>{void connectAbout();};
+      blocks.onerror=()=>{window.foodAboutLoadState='failed';aboutStatus('Не удалось загрузить блоки анкеты. Обновите страницу');};
+      document.head.appendChild(blocks);
+    };
+    script.onerror=()=>{window.foodAboutLoadState='failed';aboutStatus('Не удалось загрузить варианты анкеты. Обновите страницу');};
+    document.head.appendChild(script);
+  };
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',loadOptions,{once:true});else loadOptions();
 })();
