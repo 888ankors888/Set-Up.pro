@@ -481,7 +481,71 @@ function waterAdd(n){S.water=S.water||{};S.water[today()]=Math.max(0,(S.water[to
 function downloadData(name,text,type){const u=URL.createObjectURL(new Blob([text],{type}));const a=document.createElement('a');a.href=u;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)}
 function backup(){downloadData('food-pro-backup.json',JSON.stringify({version:2,exportedAt:new Date().toISOString(),data:S},null,2),'application/json')}
 function csvExport(){const cols=['date','time','meal','name','g','k','p','f','c'];const cell=v=>'"'+String(v??'').replace(/"/g,'""').replace(/^[=+@-]/,"'$&")+'"';downloadData('food-pro-diary.csv','\uFEFF'+[cols.join(';'),...S.entries.map(e=>cols.map(k=>cell(e[k])).join(';'))].join('\r\n'),'text/csv;charset=utf-8')}
-async function restoreData(input){try{const raw=JSON.parse(await input.files[0].text());const d=raw.data||raw;const date=/^\d{4}-\d{2}-\d{2}$/;if(!Array.isArray(d.entries)||d.entries.some(e=>!date.test(e.date)||typeof e.name!=='string'||!['g','k','p','f','c'].every(k=>Number.isFinite(e[k])&&e[k]>=0))||!d.profile||!['age','h','w','act'].every(k=>Number.isFinite(d.profile[k]))||!Array.isArray(d.profile.health))throw Error();if(!confirm('Заменить текущие данные данными из резервной копии? Сначала рекомендуем скачать текущую копию.'))return;S={profile:d.profile,entries:d.entries.map(e=>({...e,id:crypto.randomUUID(),thumb:typeof e.thumb==='string'&&e.thumb.startsWith('data:image/')?e.thumb:''})),weights:d.weights||{},reports:{},rem:defRem(),water:d.water||{},waterGoal:Number(d.waterGoal)||2000,sports:window.sportsValidateImport(d.sports),waterGoalsByDate:window.foodValidateWaterGoals(d.waterGoalsByDate)};save();tab='diary';render();toast('Данные восстановлены')}catch(e){toast('Неверный формат резервной копии')}finally{input.value=''}}
+async function restoreData(input) {
+  const file = input.files?.[0];
+  if (!file) return;
+  let next, serialized;
+  try {
+    const raw = JSON.parse(await file.text());
+    const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
+    if (!object(raw)) throw new Error('Ожидался объект JSON');
+    const wrapped = Object.prototype.hasOwnProperty.call(raw, 'data');
+    if (wrapped && raw.version !== 2) throw new Error('Неподдерживаемая версия копии');
+    const d = wrapped ? raw.data : raw;
+    if (!object(d) || !Array.isArray(d.entries)) throw new Error('Нет массива записей');
+    if (d.profile !== null && (!object(d.profile) ||
+        !['age', 'h', 'w', 'act'].every(k => Number.isFinite(d.profile[k])) ||
+        !Array.isArray(d.profile.health))) throw new Error('Некорректный профиль');
+    const validDate = value => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) &&
+      Number.isFinite(dt(value).getTime()) && dk(dt(value)) === value && value <= today();
+    if (d.entries.some(e => !object(e) || !validDate(e.date) || typeof e.name !== 'string' ||
+        !['g', 'k', 'p', 'f', 'c'].every(k => Number.isFinite(e[k]) && e[k] >= 0))) {
+      throw new Error('Некорректная запись питания');
+    }
+    next = JSON.parse(JSON.stringify(d));
+    const ids = new Set();
+    next.entries = next.entries.map(e => {
+      const id = e.id == null || e.id === '' ? crypto.randomUUID() : e.id;
+      if (typeof id !== 'string' || !/^[-\w]{1,100}$/.test(id) || ids.has(id)) {
+        throw new Error('Некорректный или повторный ID записи');
+      }
+      ids.add(id);
+      return {...e, id, thumb: typeof e.thumb === 'string' && e.thumb.startsWith('data:image/') ? e.thumb : ''};
+    });
+    next.sports = window.sportsValidateImport(d.sports);
+    next.waterGoalsByDate = window.foodValidateWaterGoals(d.waterGoalsByDate);
+    next.weights ??= {};
+    next.reports ??= {};
+    next.rem ??= defRem();
+    next.water ??= {};
+    next.waterGoal ??= 2000;
+    serialized = JSON.stringify(next);
+  } catch (error) {
+    input.value = '';
+    toast('Импорт отменён: ' + error.message);
+    return;
+  }
+  if (!confirm('Заменить текущие данные? Сначала сохраните текущую JSON-копию.')) {
+    input.value = '';
+    return;
+  }
+  try {
+    localStorage.setItem('nt1', serialized);
+  } catch (error) {
+    input.value = '';
+    toast('Не удалось записать копию. Текущие данные не изменены.');
+    return;
+  }
+  S = next;
+  tab = 'diary';
+  input.value = '';
+  try {
+    render();
+    toast('Данные восстановлены');
+  } catch (error) {
+    toast('Копия записана, но экран не обновился. Сохраните исходный файл для диагностики.');
+  }
+}
 const originalProfile=profileView;
 profileView=function(){return originalProfile()+`<div class="card"><h2>Оформление и привычки</h2><button class="btn s" onclick="toggleTheme()">Сменить светлую / тёмную тему</button><label>Личная цель по воде, мл</label><input type="number" min="250" max="10000" step="250" value="${S.waterGoal||2000}" onchange="const n=Number(this.value);if(n>=250&&n<=10000){S.waterGoal=n;save()}else toast('Укажите от 250 до 10000 мл')"></div><div class="card"><h2>Данные и интеграции</h2><p class="mu">Перенос между устройствами через резервную копию. CSV — для таблиц и аналитики. Автоматической облачной синхронизации нет.</p><div class="tools"><button class="btn s" onclick="backup()">Скачать JSON</button><button class="btn s" onclick="csvExport()">Экспорт CSV</button><label class="btn s" style="margin:0;cursor:pointer">Импорт JSON<input type="file" accept=".json,application/json" hidden onchange="restoreData(this)"></label></div><p class="subtle">Копия содержит персональные данные. Храните её в безопасном месте.</p><hr style="border:0;border-top:1px solid var(--ln)"><h2>ИИ-анализ</h2><p class="mu">${typeof claude!=='undefined'?'Доступен API среды Claude.':'В автономном HTML среда Claude не подключена. Фотоанализ и ИИ-отчёты недоступны; каталог и ручной ввод работают без ИИ.'}</p></div>`};
 function manualOpen(){let d=document.getElementById('manual');if(!d){d=document.createElement('dialog');d.id='manual';document.body.appendChild(d)}d.innerHTML=`<form onsubmit="manualSave(event)"><div class="topline"><h2>Своё блюдо</h2><button type="button" class="x" onclick="document.getElementById('manual').close()" aria-label="Закрыть">×</button></div><label>Название</label><input name="name" required maxlength="120" placeholder="Например, домашний омлет"><label>Дата</label><input name="date" type="date" value="${tab==='diary'?day:today()}" max="${today()}" required><label>Приём пищи</label><select name="meal">${['Завтрак','Обед','Ужин','Перекус'].map(m=>`<option ${mealNow()===m?'selected':''}>${m}</option>`).join('')}</select><div class="row">${[['g','Вес, г'],['k','Ккал']].map(([k,n])=>`<div><label>${n}</label><input name="${k}" type="number" min="${k==='g'?1:0}" max="100000" step="0.1" required></div>`).join('')}</div><div class="row">${[['p','Белки, г'],['f','Жиры, г'],['c','Углеводы, г']].map(([k,n])=>`<div><label>${n}</label><input name="${k}" type="number" min="0" max="10000" step="0.1" value="0" required></div>`).join('')}</div><p class="subtle">Введите КБЖУ всей порции, не на 100 г.</p><button class="btn">Добавить в дневник</button></form>`;d.showModal()}
