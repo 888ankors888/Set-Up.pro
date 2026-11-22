@@ -132,10 +132,13 @@ body :is(button,input,select,textarea,summary,a):focus-visible{outline:3px solid
 <div class="w" id="app"></div>
 <nav id="nav"></nav>
 <div id="toast"></div>
+<script src="data-store.js?v=1"></script>
+<script src="nutrition-store.js?v=1"></script>
 <script>
 const $=s=>document.querySelector(s);
 const esc=t=>String(t==null?'':t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const defRem=()=>({on:true,t:{'Завтрак':'08:30','Обед':'13:00','Ужин':'19:00','Перекус':''}});
+const foodNutritionRepo=()=>window.SetUpNutritionStore.createRepository({storage:localStorage,today});
 let S={profile:null,entries:[],reports:{},weights:{},rem:defRem()};
 try{const r=localStorage.getItem('nt1');if(r)S=Object.assign(S,JSON.parse(r))}catch(e){}
 S.weights=S.weights||{};S.rem=S.rem||defRem();
@@ -222,10 +225,11 @@ function rescale(v){
 }
 function addEntry(){
   const m=$('#meal').value,d=day===today()?day:day;
-  S.entries.push({id:Date.now()+''+(uid++),date:today(),time:new Date().toTimeString().slice(0,5),meal:m,name:pend.name,g:r0(pend.g),k:r0(pend.k),p:Math.round(pend.p*10)/10,f:Math.round(pend.f*10)/10,c:Math.round(pend.c*10)/10,thumb:pend.thumb});
-  save();pend=null;toast('Записано в дневник');render();
+  const entry={id:Date.now()+''+(uid++),date:today(),time:new Date().toTimeString().slice(0,5),meal:m,name:pend.name,g:r0(pend.g),k:r0(pend.k),p:Math.round(pend.p*10)/10,f:Math.round(pend.f*10)/10,c:Math.round(pend.c*10)/10,thumb:pend.thumb};
+  try{S=foodNutritionRepo().append([entry]).state}catch(e){toast('Не удалось сохранить; запись не добавлена');return}
+  pend=null;toast('Записано в дневник');render();
 }
-function delEntry(id){S.entries=S.entries.filter(e=>e.id!==id);save();render()}
+function delEntry(id){try{S=foodNutritionRepo().remove(id,S.entries.find(e=>e.id===id)).state}catch(e){toast('Не удалось удалить: '+e.message);return}render()}
 
 /* ---- экраны ---- */
 function bar(v,max,col){return `<div class="bar"><i style="width:${Math.min(100,max?v/max*100:0)}%;background:${v>max*1.05?'var(--bad)':col}"></i></div>`}
@@ -349,7 +353,7 @@ function jRows(){
 function jNums(x,g){const m=g/100;return `<div><b>${r0(x.k*m)}</b><span>ккал</span></div><div><b>${(x.p*m).toFixed(1)}</b><span>белки, г</span></div><div><b>${(x.f*m).toFixed(1)}</b><span>жиры, г</span></div><div><b>${(x.u*m).toFixed(1)}</b><span>углеводы, г</span></div>`}
 function jRow(x){const g=jg[x.i]==null?100:jg[x.i];return `<div class="card" style="padding:12px"><div class="row" style="align-items:center"><div style="flex:2"><b>${esc(x.n)}</b><br><small class="mu">${FC[x.c]} · на 100 г: ${x.k} ккал, Б ${x.p}, Ж ${x.f}, У ${x.u}</small></div><div style="flex:1"><label style="margin:0 0 2px">Вес, г</label><input type="number" min="1" value="${g}" oninput="jSet(${x.i},this.value)"></div></div><div class="m3" style="grid-template-columns:repeat(4,1fr)" id="jr${x.i}">${jNums(x,g)}</div><button class="btn s" style="margin-top:10px;padding:9px" onclick="jAdd(${x.i})">В дневник</button></div>`}
 function jSet(i,v){const g=parseFloat(v)||0;jg[i]=g;const e=$('#jr'+i);if(e)e.innerHTML=jNums(FD[i],g)}
-function jPut(o){S.entries.push({id:Date.now()+''+(uid++),date:today(),time:new Date().toTimeString().slice(0,5),meal:mealNow(),name:o.n,g:r0(o.g),k:r0(o.k),p:Math.round(o.p*10)/10,f:Math.round(o.f*10)/10,c:Math.round(o.c*10)/10,thumb:''});save();toast('Записано в дневник')}
+function jPut(o){const entry={id:Date.now()+''+(uid++),date:today(),time:new Date().toTimeString().slice(0,5),meal:mealNow(),name:o.n,g:r0(o.g),k:r0(o.k),p:Math.round(o.p*10)/10,f:Math.round(o.f*10)/10,c:Math.round(o.c*10)/10,thumb:''};try{S=foodNutritionRepo().append([entry]).state}catch(e){toast('Не удалось сохранить; запись не добавлена');return}toast('Записано в дневник')}
 function jAdd(i){const x=FD[i],g=jg[i]==null?100:jg[i];if(!(g>0)){toast('Укажите вес');return}const m=g/100;jPut({n:x.n,g,k:x.k*m,p:x.p*m,f:x.f*m,c:x.u*m})}
 function jList(){
   const l=jRows(),e=$('#jl');if(!e)return;
@@ -557,7 +561,7 @@ async function restoreData(input) {
 const originalProfile=profileView;
 profileView=function(){return originalProfile()+`<div class="card"><h2>Оформление и привычки</h2><button class="btn s" onclick="toggleTheme()">Сменить светлую / тёмную тему</button><label>Личная цель по воде, мл</label><input type="number" min="250" max="10000" step="250" value="${S.waterGoal||2000}" onchange="const n=Number(this.value);if(n>=250&&n<=10000){S.waterGoal=n;save()}else toast('Укажите от 250 до 10000 мл')"></div><div class="card"><h2>Данные и интеграции</h2><p class="mu">Перенос между устройствами через резервную копию. CSV — для таблиц и аналитики. Автоматической облачной синхронизации нет.</p><div class="tools"><button class="btn s" onclick="backup()">Скачать JSON</button><button class="btn s" onclick="csvExport()">Экспорт CSV</button><label class="btn s" style="margin:0;cursor:pointer">Импорт JSON<input type="file" accept=".json,application/json" hidden onchange="restoreData(this)"></label></div><p class="subtle">Копия содержит персональные данные. Храните её в безопасном месте.</p><hr style="border:0;border-top:1px solid var(--ln)"><h2>ИИ-анализ</h2><p class="mu">${typeof claude!=='undefined'?'Доступен API среды Claude.':'В автономном HTML среда Claude не подключена. Фотоанализ и ИИ-отчёты недоступны; каталог и ручной ввод работают без ИИ.'}</p></div>`};
 function manualOpen(){let d=document.getElementById('manual');if(!d){d=document.createElement('dialog');d.id='manual';document.body.appendChild(d)}d.innerHTML=`<form onsubmit="manualSave(event)"><div class="topline"><h2>Своё блюдо</h2><button type="button" class="x" onclick="document.getElementById('manual').close()" aria-label="Закрыть">×</button></div><label>Название</label><input name="name" required maxlength="120" placeholder="Например, домашний омлет"><label>Дата</label><input name="date" type="date" value="${tab==='diary'?day:today()}" max="${today()}" required><label>Приём пищи</label><select name="meal">${['Завтрак','Обед','Ужин','Перекус'].map(m=>`<option ${mealNow()===m?'selected':''}>${m}</option>`).join('')}</select><div class="row">${[['g','Вес, г'],['k','Ккал']].map(([k,n])=>`<div><label>${n}</label><input name="${k}" type="number" min="${k==='g'?1:0}" max="100000" step="0.1" required></div>`).join('')}</div><div class="row">${[['p','Белки, г'],['f','Жиры, г'],['c','Углеводы, г']].map(([k,n])=>`<div><label>${n}</label><input name="${k}" type="number" min="0" max="10000" step="0.1" value="0" required></div>`).join('')}</div><p class="subtle">Введите КБЖУ всей порции, не на 100 г.</p><button class="btn">Добавить в дневник</button></form>`;d.showModal()}
-function manualSave(event){event.preventDefault();const f=new FormData(event.target);S.entries.push({id:crypto.randomUUID(),date:f.get('date'),time:new Date().toTimeString().slice(0,5),meal:f.get('meal'),name:f.get('name').trim(),g:+f.get('g'),k:+f.get('k'),p:+f.get('p'),f:+f.get('f'),c:+f.get('c'),thumb:''});save();document.getElementById('manual').close();render();toast('Блюдо записано')}
+function manualSave(event){event.preventDefault();const f=new FormData(event.target);const entry={id:crypto.randomUUID(),date:f.get('date'),time:new Date().toTimeString().slice(0,5),meal:f.get('meal'),name:f.get('name').trim(),g:+f.get('g'),k:+f.get('k'),p:+f.get('p'),f:+f.get('f'),c:+f.get('c'),thumb:''};try{S=foodNutritionRepo().append([entry]).state}catch(e){toast('Не удалось сохранить; запись не добавлена');return}document.getElementById('manual').close();render();toast('Блюдо записано')}
 const originalPhoto=onPhoto;onPhoto=async function(input){if(typeof claude==='undefined'){input.value='';toast('Фотоанализ требует API среды Claude. Используйте ручной ввод.');return}return originalPhoto(input)};
 const originalAsk=jAsk;jAsk=async function(){if(typeof claude==='undefined'){toast('ИИ не подключён. Добавьте блюдо вручную.');return}return originalAsk()};
 const originalReport=aiReport;aiReport=async function(k,b){if(typeof claude==='undefined'){toast('ИИ-отчёты требуют API среды Claude');return}return originalReport(k,b)};
@@ -611,7 +615,7 @@ function meSave(){
  const checked=meNormalize({dishes:ME.dishes,questions:ME.questions});
  const group=crypto.randomUUID(),time=new Date().toTimeString().slice(0,5),t=meTotals(),mid=r=>meRound((r.min+r.max)/2);
  const added=checked.dishes.map((d,i)=>({id:crypto.randomUUID(),date:ME.date,time,meal:ME.meal,name:d.name,g:0,k:mid(d.nutrition.kcal),p:mid(d.nutrition.protein),f:mid(d.nutrition.fat),c:mid(d.nutrition.carbs),thumb:'',estimate:true,weight_unknown:true,meal_group:group,estimate_range:d.nutrition,estimate_ingredients:d.ingredients,estimate_assumptions:d.assumptions,estimate_scale:ME.dishes[i].scale,meal_total_range:t}));
- const next={...S,entries:[...S.entries,...added]};try{localStorage.setItem('nt1',JSON.stringify(next))}catch(e){toast('Не удалось сохранить. Записи не добавлены.');return}
+ let next;try{next=foodNutritionRepo().append(added).state}catch(e){toast('Не удалось сохранить. Записи не добавлены.');return}
  S=next;day=ME.date;tab='diary';Object.assign(ME,{dishes:[],questions:[],text:'',sourceText:'',confirmed:false,error:''});render();toast('Приём пищи записан как оценка ИИ');
 }
 const entriesBeforeEstimate=entries;
@@ -714,7 +718,7 @@ setInterval(()=>{const b=$('#bn');if(b)b.innerHTML=bannerHtml()},60000);
   if(!context||context.mode!=='catalog')return previousPut(o);
   const date=context.date;if(!validDate(date)||!['g','k','p','f','c'].every(k=>Number.isFinite(o[k])&&o[k]>=0)){toast('Проверьте дату и значения продукта');return}
   const entry={id:crypto.randomUUID(),date,time:new Date().toTimeString().slice(0,5),meal:mealNow(),name:o.n,g:r0(o.g),k:r0(o.k),p:Math.round(o.p*10)/10,f:Math.round(o.f*10)/10,c:Math.round(o.c*10)/10,thumb:''};
-  const next={...S,entries:[...S.entries,entry]};try{localStorage.setItem('nt1',JSON.stringify(next))}catch(e){toast('Не удалось сохранить; запись не добавлена');return}
+  let next;try{next=foodNutritionRepo().append([entry]).state}catch(e){toast('Не удалось сохранить; запись не добавлена');return}
   S=next;context=null;day=date;tab='diary';render();toast('Продукт записан за выбранный день');
  };
  const previousRender=render;render=function(){previousRender();drawDiaryActions()};
