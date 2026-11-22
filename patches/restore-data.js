@@ -15,10 +15,18 @@ async function restoreData(input) {
         !Array.isArray(d.profile.health))) throw new Error('Некорректный профиль');
     const validDate = value => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) &&
       Number.isFinite(dt(value).getTime()) && dk(dt(value)) === value && value <= today();
-    if (d.entries.some(e => !object(e) || !validDate(e.date) || typeof e.name !== 'string' ||
-        !['g', 'k', 'p', 'f', 'c'].every(k => Number.isFinite(e[k]) && e[k] >= 0))) {
-      throw new Error('Некорректная запись питания');
-    }
+    const meals = ['Завтрак', 'Обед', 'Ужин', 'Перекус'];
+    d.entries.forEach((e, index) => {
+      const fail = field => { throw new Error('Запись питания №' + (index + 1) + ': ' + field); };
+      if (!object(e)) fail('ожидался объект');
+      if (!validDate(e.date)) fail('некорректная дата');
+      if (typeof e.time !== 'string' || e.time.length !== 5 || !/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(e.time)) fail('время должно быть ЧЧ:ММ, от 00:00 до 23:59');
+      if (!meals.includes(e.meal)) fail('неизвестный приём пищи');
+      if (typeof e.name !== 'string' || !e.name.trim()) fail('название не должно быть пустым');
+      for (const key of ['g', 'k', 'p', 'f', 'c']) {
+        if (!Number.isFinite(e[key]) || e[key] < 0) fail('поле ' + key + ' должно быть неотрицательным числом');
+      }
+    });
     next = JSON.parse(JSON.stringify(d));
     const ids = new Set();
     next.entries = next.entries.map(e => {

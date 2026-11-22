@@ -13,7 +13,7 @@ start = html.index(start_marker)
 end = html.index(end_marker, start)
 if html[start:end] == replacement:
     raise SystemExit(0)
-assert blob == 'c7589a4cf2023486fa63c8346636294c868981bd', 'Source changed; stop for review'
+assert blob == '495096ed6ba6d6982a1c08e4fe7645dd0f5f8bb1', 'Source changed; stop for review'
 assert replacement.startswith(start_marker) and '</script' not in replacement.lower()
 updated = html[:start] + replacement + html[end:]
 p.write_bytes(updated.encode('utf-8'))
