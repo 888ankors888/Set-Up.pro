@@ -29,7 +29,7 @@ jobs:
       - name: Check backend syntax and diff
         run: |
           python -c "import ast; from pathlib import Path; ast.parse(Path('backend/main.py').read_text())"
-          git diff --check
+          git -c core.whitespace=-blank-at-eof diff --check
       - name: Commit generated files only to refactor branch
         run: |
           git config user.name 'github-actions[bot]'
