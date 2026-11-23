@@ -14,48 +14,24 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: feature/onboarding
-      - name: Connect onboarding files
+      - name: Add onboarding script
         shell: python
         run: |
           from pathlib import Path
 
           p = Path('index.html')
           s = open(p, encoding='utf-8', newline='').read()
+          TAG = '<script src="onboarding.js?v=1" defer></script>\n'
 
-          LINK = '<link rel="stylesheet" href="onboarding.css?v=1">\n'
-          SCRIPT = '<script src="onboarding.js?v=1" defer></script>\n'
-          SECTION = """<section class="setup-onboarding" data-setup-onboarding aria-labelledby="setup-welcome-title" hidden>
-            <div class="setup-onboarding__shell" data-onboarding-screen="welcome">
-              <header class="setup-onboarding__hero">
-                <p class="setup-onboarding__wordmark">Set-Up</p>
-                <h1 id="setup-welcome-title" tabindex="-1">Создай свою систему развития</h1>
-                <p class="setup-onboarding__lead">Set-Up объединяет спорт, питание и привычки в единую систему. Следи за прогрессом, получай рекомендации ИИ и двигайся к своим целям.</p>
-              </header>
-              <ul class="setup-onboarding__directions" aria-label="Направления Set-Up">
-                <li class="setup-onboarding__direction"><span class="setup-onboarding__direction-index" aria-hidden="true">01</span><h2 lang="en">SPORT</h2><p>Тренировки, спортивные цели и аналитика.</p></li>
-                <li class="setup-onboarding__direction"><span class="setup-onboarding__direction-index" aria-hidden="true">02</span><h2 lang="en">NUTRITION</h2><p>Питание, калории, БЖУ и рекомендации.</p></li>
-                <li class="setup-onboarding__direction"><span class="setup-onboarding__direction-index" aria-hidden="true">03</span><h2 lang="en">HABITS</h2><p>Полезные привычки, дисциплина и ежедневный прогресс.</p></li>
-              </ul>
-              <div class="setup-onboarding__actions">
-                <button class="setup-onboarding__button setup-onboarding__button--primary" type="button" data-onboarding-action="start">Создать свой Set-Up</button>
-                <button class="setup-onboarding__button setup-onboarding__button--secondary" type="button" data-onboarding-action="existing-account">У меня уже есть аккаунт</button>
-              </div>
-              <p class="setup-onboarding__status" role="status" data-onboarding-status></p>
-            </div>
-          </section>
-          """
-          APP = '<div class="w" id="app"></div>\n'
-
-          if 'data-setup-onboarding' in s or 'onboarding.css' in s or 'onboarding.js' in s:
-              print('Onboarding is already connected; nothing to change')
+          if 'onboarding.js' in s:
+              print('onboarding.js is already connected; nothing to change')
               raise SystemExit(0)
 
-          for marker in ('</head>', APP, '</body>'):
-              assert s.count(marker) == 1, 'Expected exactly one marker: ' + repr(marker)
+          assert 'data-setup-onboarding' in s, 'Welcome markup is missing'
+          assert 'onboarding.css' in s, 'onboarding.css link is missing'
+          assert s.count('</body>') == 1, 'Expected exactly one </body>'
 
-          s = s.replace('</head>', LINK + '</head>', 1)
-          s = s.replace(APP, APP + SECTION, 1)
-          s = s.replace('</body>', SCRIPT + '</body>', 1)
+          s = s.replace('</body>', TAG + '</body>', 1)
           open(p, 'w', encoding='utf-8', newline='').write(s)
       - name: Commit index.html
         run: |
@@ -63,5 +39,5 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html
           git diff --cached --quiet && exit 0
-          git commit -m "Connect onboarding to index.html"
+          git commit -m "Connect onboarding script to index.html"
           git push origin HEAD:feature/onboarding
