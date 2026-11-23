@@ -1,0 +1,84 @@
+name: Restore locked dependencies and build React nutrition
+on:
+  push:
+    branches: ['integration/react-nutrition']
+    paths: ['frontend/nutrition/**']
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: react-nutrition-build
+  cancel-in-progress: false
+jobs:
+  build:
+    if: github.ref == 'refs/heads/integration/react-nutrition'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: integration/react-nutrition
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Restore exact uploaded package-lock.json
+        shell: python
+        run: |
+          from pathlib import Path
+          import base64, hashlib, json, lzma
+          
+          EXPECTED_SHA = '58c5be1da2f6fb3e534e7c587a09f2e3b3dbb82065dbf519f094e1e0d8ad1e3c'
+          EXPECTED_BYTES = 58619
+          
+          def restore_lock(root):
+              root = Path(root).resolve()
+              project = root / 'frontend/nutrition'
+              target = project / 'package-lock.json'
+              assert not (root / 'frontend').is_symlink() and not project.is_symlink(), 'Refuse symlink directory'
+              assert not target.is_symlink(), 'Refuse symlink lockfile'
+              exists = target.exists()
+              if exists:
+                  data = target.read_bytes()
+              else:
+                  source = project / 'package-lock.original.xz.b64'
+                  encoded = source.read_text(encoding='ascii').strip()
+                  data = lzma.decompress(base64.b64decode(encoded, validate=True))
+              assert len(data) == EXPECTED_BYTES, 'Lockfile size mismatch'
+              assert hashlib.sha256(data).hexdigest() == EXPECTED_SHA, 'Lockfile hash mismatch'
+              lock = json.loads(data)
+              package = json.loads((project / 'package.json').read_text(encoding='utf-8'))
+              assert lock['name'] == package['name'] and lock['version'] == package['version'], 'Package identity mismatch'
+              for group in ('dependencies', 'devDependencies'):
+                  assert lock['packages'][''].get(group, {}) == package.get(group, {}), 'Root dependencies mismatch'
+              if not exists:
+                  target.write_bytes(data)
+              return not exists
+          
+          restore_lock(Path.cwd())
+      - name: Commit lockfile only to integration branch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- frontend/nutrition/package-lock.json
+          if ! git diff --cached --quiet; then
+            git commit -m 'chore: add exact uploaded React nutrition lockfile'
+            git push origin HEAD:refs/heads/integration/react-nutrition
+          fi
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/nutrition/package-lock.json
+      - name: Install locked dependencies
+        working-directory: frontend/nutrition
+        run: npm ci --no-audit --no-fund
+      - name: Typecheck and build
+        working-directory: frontend/nutrition
+        run: npm run build
+      - name: Verify build output
+        working-directory: frontend/nutrition
+        run: test -s dist/index.html
+      - uses: actions/upload-artifact@v4
+        with:
+          name: react-nutrition-candidate
+          path: frontend/nutrition/dist/
+          if-no-files-found: error

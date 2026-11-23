@@ -1,6 +1,7 @@
-(function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.FoodWorkoutsStore=api;})(typeof globalThis!=='undefined'?globalThis:this,function(){
+(function(root,factory){const node=typeof module==='object'&&module.exports;const shared=node?require('../data-store.js'):root.SetUpDataStore;const api=factory(shared);if(node)module.exports=api;else root.FoodWorkoutsStore=api;})(typeof globalThis!=='undefined'?globalThis:this,function(shared){
 'use strict';
-const KEY='nt1',VERSION=1;
+if(!shared||typeof shared.createStore!=='function')throw Error('Не загружен общий модуль хранения данных');
+const KEY=shared.KEY,VERSION=1;
 const copy=x=>JSON.parse(JSON.stringify(x));
 const object=x=>x!==null&&typeof x==='object'&&!Array.isArray(x);
 function dateOK(s){if(typeof s!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(s))return false;const d=new Date(s+'T12:00:00Z');return Number.isFinite(d.getTime())&&d.toISOString().slice(0,10)===s;}
@@ -15,9 +16,12 @@ function validate(w){
  const entryIds=new Set(),plannedIds=new Set();for(const e of w.entries){activity(e);if(!dateOK(e.date)||entryIds.has(e.id))throw Error('Некорректная фактическая запись');entryIds.add(e.id);if(e.plannedItemId!=null){if(typeof e.plannedItemId!=='string'||!e.plannedItemId||plannedIds.has(e.plannedItemId))throw Error('Повтор фактического выполнения');plannedIds.add(e.plannedItemId);}}
  return w;
 }
-function read(storage){const raw=storage.getItem(KEY);if(raw===null)throw Error('Сначала сохраните профиль в основном приложении');const s=JSON.parse(raw);if(!object(s))throw Error('Некорректное состояние приложения');if(s.workouts!==undefined)validate(s.workouts);return s;}
+function sharedStore(storage){return shared.createStore({storage,validate:s=>{if(!object(s))throw Error('Некорректное состояние приложения');if(s.workouts!==undefined)validate(s.workouts);}});}
+function storageAction(action){try{return action();}catch(error){const messages={READ_FAILED:'Не удалось прочитать данные браузера',CORRUPT_JSON:'Повреждены сохранённые данные. Сохранение отменено',INVALID_STATE:'Некорректное состояние приложения',VALIDATION_FAILED:'Некорректные данные или версия тренировок',INVALID_JSON:'Данные содержат неподдерживаемые значения',CONFLICT:'Данные изменились в другой вкладке. Повторите действие',WRITE_FAILED:'Не удалось сохранить данные в браузере'};if(messages[error.code]){const translated=new Error(messages[error.code]);translated.code=error.code;throw translated;}throw error;}}
+function snapshot(store){const value=store.read();if(value.state===null)throw Error('Сначала сохраните профиль в основном приложении');return value;}
+function read(storage){return storageAction(()=>snapshot(sharedStore(storage)).state);}
 function settings(state){return copy({profile:state.profile||{},sportsProfile:state.sports?.profile||null,answers:state.profile?.sportQuestionnaire?.answers||{}});}
-function write(storage,change){const latest=read(storage),next=copy(latest);change(next);validate(next.workouts);storage.setItem(KEY,JSON.stringify(next));return next;}
+function write(storage,change){return storageAction(()=>{const store=sharedStore(storage),before=snapshot(store),next=before.state;change(next);validate(next.workouts);return store.commit(next,before).state;});}
 function prepareLegacyReset(state){
  if(!object(state))throw Error('Некорректное состояние приложения');const next=copy(state);
  if(next.workouts!==undefined){validate(next.workouts);if(next.workouts.legacyResetVersion===1)return next;if(next.workouts.entries.length||Object.keys(next.workouts.plansByDate).length)throw Error('Новые тренировки уже существуют; автоматическая очистка остановлена');}
@@ -25,7 +29,7 @@ function prepareLegacyReset(state){
  delete next.sportsDayPlans;
  next.workouts={...empty(),legacyResetVersion:1};return next;
 }
-function activateLegacyReset(storage){const latest=read(storage),next=prepareLegacyReset(latest);storage.setItem(KEY,JSON.stringify(next));storage.removeItem('food.pro.workouts.v1');return next;}
+function activateLegacyReset(storage){return storageAction(()=>{const store=sharedStore(storage),before=snapshot(store),next=prepareLegacyReset(before.state);const saved=store.commit(next,before).state;storage.removeItem('food.pro.workouts.v1');return saved;});}
 function commitDay(storage,date,selectedIds,actualValues,today){
  if(!dateOK(date)||!dateOK(today)||date>today)throw Error('Будущую тренировку нельзя записать выполненной');
  if(!Array.isArray(selectedIds)||!selectedIds.length||new Set(selectedIds).size!==selectedIds.length||!Array.isArray(actualValues)||actualValues.length!==selectedIds.length)throw Error('Выберите выполненные активности');

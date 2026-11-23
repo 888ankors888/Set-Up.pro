@@ -1,0 +1,45 @@
+name: Check and apply nutrition data layer without deployment
+on:
+  push:
+    branches: ['refactor/data-layer']
+permissions:
+  contents: write
+concurrency:
+  group: data-layer-check
+  cancel-in-progress: false
+jobs:
+  check:
+    if: github.ref == 'refs/heads/refactor/data-layer'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: refactor/data-layer
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Prepare hash-guarded source changes
+        run: python scripts/migrate-nutrition.py
+      - name: Syntax and regression tests
+        run: |
+          node --check data-store.js
+          node --check nutrition-store.js
+          node --check workouts/store.js
+          node --test tests/data-store.test.cjs workouts/tests/store.test.cjs tests/workouts-data-layer.test.cjs tests/restore-data.test.cjs tests/nutrition-data-layer.test.cjs
+          python -m unittest discover -s tests -p 'test_frontend_build.py' -v
+      - name: Build without publication
+        run: |
+          python scripts/build-frontend.py
+          python -c "from pathlib import Path; assert all(Path('_site', p).is_file() for p in ('data-store.js', 'nutrition-store.js', 'workouts/store.js'))"
+          git -c core.whitespace=-blank-at-eof diff --check
+      - name: Commit verified source only to data-layer branch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- index.html
+          git diff --cached --quiet && exit 0
+          git commit -m 'refactor: route food diary writes through shared store for #6'
+          git push origin HEAD:refs/heads/refactor/data-layer
