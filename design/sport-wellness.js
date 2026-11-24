@@ -18,9 +18,18 @@ if(!eyebrow?.classList.contains('eyebrow')){eyebrow=document.createElement('div'
 text(eyebrow,'Ваш спорт · ваша энергия');
 text(heading,'Сила в движении. Тонус в теле.');
 }
+function removeSportSettingsCard(){
+const app=document.getElementById('app');if(!app)return;
+for(const heading of app.querySelectorAll('h2')){
+if(heading.textContent.trim()!=='Цели и настройки')continue;
+const card=heading.closest('.card');
+if(card&&[...card.querySelectorAll('button,a')].some(button=>button.textContent.trim()==='Открыть мою анкету'))card.remove();
+}
+}
 function refresh(){
 queued=false;
 sportHeader();
+removeSportSettingsCard();
 for(const [kind,cardSelector,gridSelector,contentSelector,saveText] of sections){
 const block=document.getElementById('goals-questionnaire-'+kind);if(!block)continue;
 if(!block.classList.contains('sport-wellness'))block.classList.add('sport-wellness');
