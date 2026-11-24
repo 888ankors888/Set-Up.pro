@@ -40,3 +40,36 @@
  }
  const previousRender=render;render=function(){const result=previousRender.apply(this,arguments);decorate();return result};decorate();
 })();
+
+/* Transparent wordmark: preserve the complete artwork and its proportions. */
+(() => {
+ const style=document.createElement('style');
+ style.id='setup-header-wordmark';
+ style.textContent=`
+ body .brand.setup-wordmark,body .brand.big.setup-wordmark{display:flex;align-items:center;justify-content:center;flex-direction:row;gap:0;width:100%;max-width:640px;min-width:0;height:auto;padding:0;margin:8px auto 24px;background:transparent;border:0;border-radius:0;box-shadow:none;overflow:visible;line-height:normal;}
+ body .brand.setup-wordmark::before,body .brand.setup-wordmark::after{content:none!important;display:none!important;}
+ body .brand.setup-wordmark>img.setup-wordmark-image{display:block!important;position:static;width:100%!important;max-width:100%!important;height:auto!important;max-height:none!important;aspect-ratio:2460/593;object-fit:contain;object-position:center;margin:0;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;flex:none;}
+ body .setup-wordmark-row{flex-wrap:wrap;justify-content:center;column-gap:16px;row-gap:12px;}
+ body .setup-wordmark-row>.brand.setup-wordmark{flex:0 1 640px;margin:8px auto 12px;}
+ @media(max-width:700px){body .brand.setup-wordmark,body .brand.big.setup-wordmark{max-width:100%;margin:6px auto 20px;}body .setup-wordmark-row>.brand.setup-wordmark{flex:0 0 100%;width:100%;margin:6px 0 8px;}}
+ `;
+ document.head.appendChild(style);
+ function integrateWordmark(){
+ document.querySelectorAll('.brand').forEach(brand=>{
+ if(brand.querySelector(':scope > .setup-wordmark-image'))return;
+ const image=document.createElement('img');
+ image.className='setup-wordmark-image';
+ image.src=new URL('assets/logo-transparent.png',document.baseURI).href;
+ image.alt='Sport Eat Tracker UP';
+ image.width=2460;image.height=593;image.decoding='async';
+ image.setAttribute('fetchpriority','high');
+ brand.replaceChildren(image);
+ brand.classList.add('setup-wordmark');
+ if(brand.hasAttribute('aria-label'))brand.setAttribute('aria-label',image.alt);
+ if(brand.parentElement?.classList.contains('topline'))brand.parentElement.classList.add('setup-wordmark-row');
+ });
+ }
+ const previousRender=render;
+ render=function(){const result=previousRender.apply(this,arguments);integrateWordmark();return result;};
+ integrateWordmark();
+})();
