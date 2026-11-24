@@ -59,7 +59,7 @@ html:root:root:root body :is(.brand, main > .setup-home) img {
 
   html:root:root:root:root body:has(#nav)
     :is(.brand:not(.big), main > .setup-home) img {
-    transform: scale(1.25) !important;
+    transform: scale(1.5625) !important;
     transform-origin: left top !important;
     position: relative !important;
     z-index: 1 !important;
