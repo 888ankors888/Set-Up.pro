@@ -56,6 +56,7 @@ html:root:root:root body :is(.brand, main > .setup-home) img {
     :is(.brand:not(.big), main > .setup-home) {
     overflow: visible !important;
     height: calc(71px + env(safe-area-inset-top, 0px)) !important;
+    padding-top: env(safe-area-inset-top, 0px) !important;
     padding-bottom: 7px !important;
   }
 
