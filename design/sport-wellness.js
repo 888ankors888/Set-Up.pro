@@ -8,8 +8,19 @@ const descriptions={sport:{goal:'Направление и личные орие
 const sections=[['sport','.sport-category','.sport-categories','[data-sq-card]','Сохранить привычки'],['nutrition','.nutrition-category','.nutrition-categories','[data-nq-card]','Сохранить питание'],['habits','.habit-category','.habit-categories','.habit-list','Сохранить привычки']];
 let queued=false;
 function text(node,value){if(node&&node.textContent!==value)node.textContent=value;}
+function sportHeader(){
+if(typeof tab==='undefined'||tab!=='training')return;
+const app=document.getElementById('app');if(!app)return;
+let heading=app.querySelector('h1');
+if(!heading){const header=document.createElement('header');heading=document.createElement('h1');header.append(heading);app.prepend(header);}
+let eyebrow=heading.previousElementSibling;
+if(!eyebrow?.classList.contains('eyebrow')){eyebrow=document.createElement('div');eyebrow.className='eyebrow';heading.before(eyebrow);}
+text(eyebrow,'Ваш спорт · ваша энергия');
+text(heading,'Сила в движении. Тонус в теле.');
+}
 function refresh(){
 queued=false;
+sportHeader();
 for(const [kind,cardSelector,gridSelector,contentSelector,saveText] of sections){
 const block=document.getElementById('goals-questionnaire-'+kind);if(!block)continue;
 if(!block.classList.contains('sport-wellness'))block.classList.add('sport-wellness');
