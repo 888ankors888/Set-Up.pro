@@ -4,7 +4,8 @@
     {"tag": "link", "rel": "stylesheet", "href": "design/nav-brand.css"},
     {"tag": "script", "defer": true, "src": "design/nav-brand.js"},
     {"tag": "script", "defer": true, "src": "design/style-debug.js"},
-    {"tag": "script", "defer": true, "src": "design/neutral-food-diary.js"}
+    {"tag": "script", "defer": true, "src": "design/neutral-food-diary.js"},
+    {"tag": "script", "defer": true, "src": "design/header-wordmark.js"}
   ],
   "index_body": [{"tag": "script", "src": "diary-energy.js"}]
 }
