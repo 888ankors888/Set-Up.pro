@@ -1,36 +1,55 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="360" viewBox="0 0 1600 360" role="img" aria-labelledby="title desc">
-<title id="title">Sport Eat Tracker UP</title><desc id="desc">Sport Eat Tracker lettering with neon green initials, white italic lettering, an upward arrow and AI accent.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="260" viewBox="0 0 1500 260" role="img" aria-labelledby="title desc">
+<title id="title">Sport Eat Tracker UP</title>
+<desc id="desc">A clean transparent Sport Eat Tracker UP wordmark with neon green initials and an upward arrow.</desc>
 <defs>
- <linearGradient id="lime" x1="0" y1="0" x2="0.9" y2="1"><stop offset="0" stop-color="#c8ff18"/><stop offset=".48" stop-color="#65ed18"/><stop offset="1" stop-color="#00c98a"/></linearGradient>
- <linearGradient id="silver" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset=".55" stop-color="#e9edf0"/><stop offset="1" stop-color="#9daab0"/></linearGradient>
- <linearGradient id="aqua" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#13d7cf"/><stop offset="1" stop-color="#73ffb5"/></linearGradient>
- <filter id="glow" x="-50%" y="-80%" width="200%" height="260%"><feGaussianBlur stdDeviation="9" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
- <filter id="shadow" x="-30%" y="-30%" width="160%" height="180%"><feGaussianBlur in="SourceAlpha" stdDeviation="5"/><feOffset dy="7"/><feComponentTransfer><feFuncA type="linear" slope=".55"/></feComponentTransfer><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  <linearGradient id="green" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#C8FF32"/>
+    <stop offset="1" stop-color="#55D923"/>
+  </linearGradient>
+  <linearGradient id="silver" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#FFFFFF"/>
+    <stop offset="1" stop-color="#BFC9D2"/>
+  </linearGradient>
+  <linearGradient id="arrow" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#D6FF38"/>
+    <stop offset="1" stop-color="#20D99A"/>
+  </linearGradient>
+  <filter id="soft" x="-15%" y="-25%" width="130%" height="160%">
+    <feGaussianBlur stdDeviation="5" result="blur"/>
+    <feColorMatrix in="blur" type="matrix" values="0 0 0 0 0.18 0 0 0 0 0.95 0 0 0 0 0.24 0 0 0 .22 0" result="glow"/>
+    <feMerge><feMergeNode in="glow"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
 </defs>
-<!-- light trails -->
-<path d="M18 265H1120" stroke="url(#aqua)" stroke-width="5" opacity=".8" filter="url(#glow)"/>
-<path d="M45 282H1110" stroke="#31e8be" stroke-width="2" opacity=".5"/>
-<g font-family="Arial, Helvetica, sans-serif" font-style="italic" font-weight="900" filter="url(#shadow)">
- <text x="48" y="232" font-size="158" fill="url(#lime)" stroke="#43d71b" stroke-width="2">S</text>
- <text x="151" y="232" font-size="120" fill="#fff">port</text>
- <text x="374" y="232" font-size="158" fill="url(#lime)" stroke="#43d71b" stroke-width="2">E</text>
- <text x="484" y="232" font-size="120" fill="#fff">at</text>
- <text x="620" y="232" font-size="158" fill="url(#lime)" stroke="#43d71b" stroke-width="2">T</text>
- <text x="735" y="232" font-size="120" fill="#fff">racker</text>
+
+<!-- Main name: deliberately spaced for clear reading at header size -->
+<g font-family="Arial, Helvetica, sans-serif" font-style="italic" font-weight="800">
+  <text x="26" y="166" font-size="137" fill="url(#green)" letter-spacing="-7">S</text>
+  <text x="112" y="166" font-size="112" fill="#FFFFFF" letter-spacing="-4">port</text>
+  <text x="365" y="166" font-size="137" fill="url(#green)" letter-spacing="-7">E</text>
+  <text x="460" y="166" font-size="112" fill="#FFFFFF" letter-spacing="-4">at</text>
+  <text x="615" y="166" font-size="137" fill="url(#green)" letter-spacing="-7">T</text>
+  <text x="720" y="166" font-size="112" fill="#FFFFFF" letter-spacing="-4">racker</text>
 </g>
-<!-- UP mark -->
-<g filter="url(#shadow)">
- <path d="M1190 226 L1237 226 L1265 105 L1317 105 L1272 226 Q1254 286 1191 286 L1148 286 Q1084 286 1101 224 L1127 119 L1180 119 L1157 224 Q1151 247 1174 247 Q1185 247 1190 226Z" fill="url(#silver)" stroke="#d8e1e5" stroke-width="3"/>
- <path d="M1260 102 L1365 102 L1422 158 L1382 158 L1382 252 L1328 252 L1328 158 L1287 158Z" fill="url(#lime)" stroke="#28dca4" stroke-width="3" transform="translate(0,-48)"/>
- <path d="M1365 119 L1510 119 Q1570 119 1550 181 L1540 215 Q1529 252 1482 252 L1398 252 L1385 286 L1330 286 L1370 145 Q1377 119 1400 119Z" fill="url(#silver)" stroke="#d8e1e5" stroke-width="3"/>
- <path d="M1420 160 L1480 160 Q1500 160 1494 181 L1491 193 Q1488 204 1473 204 L1407 204Z" fill="#17242a"/>
+
+<!-- Slim separator -->
+<path d="M25 195 H1085" stroke="#54E9B0" stroke-width="3" stroke-linecap="round" opacity=".85"/>
+<path d="M25 195 H420" stroke="url(#green)" stroke-width="5" stroke-linecap="round" filter="url(#soft)"/>
+
+<!-- UP monogram: bold, clean and balanced -->
+<g font-family="Arial, Helvetica, sans-serif" font-style="italic" font-weight="900" filter="url(#soft)">
+  <text x="1110" y="177" font-size="205" fill="url(#silver)" letter-spacing="-15">UP</text>
 </g>
-<!-- upward arrow highlight / swoosh -->
-<path d="M1085 333 Q1280 258 1555 262 Q1335 281 1085 333Z" fill="url(#lime)" filter="url(#glow)"/>
-<path d="M1098 326 Q1302 269 1535 266" fill="none" stroke="#baff20" stroke-width="3"/>
-<!-- AI chip and sparkles -->
-<g fill="none" stroke="#54f4b5" stroke-width="3" opacity=".95">
- <rect x="1184" y="294" width="30" height="30" rx="6"/><path d="M1192 288v6m14-6v6m-20 36v-6m14 6v-6m-22-22h6m-6 14h6m36-14h-6m6 14h-6"/>
-</g><text x="1188" y="315" font-family="Arial,sans-serif" font-size="15" font-weight="700" fill="#54f4b5">AI</text>
-<g fill="#62f6bd"><path d="M1110 72l7 18 18 7-18 7-7 18-7-18-18-7 18-7Z"/><path d="M1160 42l5 13 13 5-13 5-5 13-5-13-13-5 13-5Z"/><path d="M1080 112l4 10 10 4-10 4-4 10-4-10-10-4 10-4Z"/></g>
+
+<!-- Upward motion mark, separated from the letterforms for legibility -->
+<path d="M1278 18 L1360 18 L1360 0 L1450 78 L1360 157 L1360 132 L1302 132"
+      fill="none" stroke="url(#arrow)" stroke-width="17" stroke-linecap="square" stroke-linejoin="miter"/>
+<path d="M1120 224 Q1290 198 1470 210" fill="none" stroke="url(#green)" stroke-width="7" stroke-linecap="round"/>
+<path d="M1120 224 Q1290 198 1470 210" fill="none" stroke="#BFFF42" stroke-width="2" stroke-linecap="round" opacity=".9"/>
+
+<!-- Small AI signature -->
+<g transform="translate(1160 218)" fill="none" stroke="#55E9B2" stroke-width="3" opacity=".95">
+  <rect x="0" y="0" width="34" height="28" rx="7"/>
+  <path d="M8 -5v5m18 -5v5M8 28v5m18 -5v5M-5 8h5m-5 12h5m34-12h5m-5 12h5"/>
+</g>
+<text x="1167" y="238" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="700" fill="#55E9B2">AI</text>
 </svg>
