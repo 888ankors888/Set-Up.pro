@@ -95,6 +95,11 @@ html:root:root:root:root:root body .brand.big::before{width:min(200px,60vw)!impo
 html:root:root:root:root:root body a.setup-home{font-size:0!important}
 html:root:root:root:root:root body a.setup-home::before{content:none!important;display:none!important}
 html:root:root:root:root:root body a.setup-home>img{display:block!important;width:96px!important;height:54px!important;object-fit:contain!important;flex:0 0 96px!important;border-radius:0!important}
+@media(min-width:1000px){
+html:root:root:root:root:root body .brand:not(.big)::before{width:160px!important;height:90px!important;flex:0 0 160px!important}
+html:root:root:root:root:root body a.setup-home>img{width:160px!important;height:90px!important;flex:0 0 160px!important}
+html:root:root:root:root:root body .brand.big::before{width:360px!important;height:auto!important}
+}
 `;document.head.append(style);
 function refresh(){
  document.querySelectorAll('.brand,a.setup-home').forEach(brand=>{
