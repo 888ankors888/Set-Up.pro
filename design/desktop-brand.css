@@ -55,6 +55,8 @@ html:root:root:root body :is(.brand, main > .setup-home) img {
   html:root:root:root:root body:has(#nav)
     :is(.brand:not(.big), main > .setup-home) {
     overflow: visible !important;
+    height: calc(71px + env(safe-area-inset-top, 0px)) !important;
+    padding-bottom: 7px !important;
   }
 
   html:root:root:root:root body:has(#nav)
@@ -66,6 +68,10 @@ html:root:root:root body :is(.brand, main > .setup-home) img {
   }
 
   html:root:root:root:root body:has(.brand:not(.big), main > .setup-home):has(#nav) {
-    padding-top: calc(81px + env(safe-area-inset-top, 0px)) !important;
+    padding-top: calc(76px + env(safe-area-inset-top, 0px)) !important;
+  }
+
+  html:root:root:root:root {
+    scroll-padding-top: calc(83px + env(safe-area-inset-top, 0px)) !important;
   }
 }
