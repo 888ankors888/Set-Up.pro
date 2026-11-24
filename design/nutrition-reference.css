@@ -1,0 +1,32 @@
+/* Nutrition reference layout. Data and progress values remain unchanged. */
+html:root:root:root:root:root body #app{--reference-border:#397665;--reference-text:#f4faf4;--reference-muted:#adc8bf;}
+html:root:root:root:root:root body #app .dashboard{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:20px!important;}
+html:root:root:root:root:root body #app .card:has(.energy){width:100%!important;max-width:none!important;background:rgba(3,30,25,.72)!important;border:1px solid var(--reference-border)!important;border-radius:28px!important;padding:28px!important;box-sizing:border-box!important;}
+html:root:root:root:root:root body #app .card:has(.energy) .energy{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;align-items:center!important;justify-items:center!important;gap:28px!important;width:100%!important;max-width:560px!important;margin:20px auto 28px!important;text-align:center!important;}
+html:root:root:root:root:root body #app .energy>:is(.ring,.energy-orbit){grid-column:1!important;grid-row:1!important;justify-self:center!important;width:220px!important;max-width:100%!important;height:auto!important;aspect-ratio:1!important;margin:0!important;}
+html:root:root:root:root:root body #app .energy>div:not(.ring):not(.energy-orbit){grid-column:2!important;grid-row:1!important;min-width:0!important;text-align:center!important;}
+html:root:root:root:root:root body #app .energy .big{font-size:44px!important;line-height:1.1!important;color:var(--reference-text)!important;}
+html:root:root:root:root:root body #app .card:has(.energy) .m3{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:12px!important;margin-top:24px!important;}
+html:root:root:root:root:root body #app .card:has(.energy) .m3>div{display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:10px!important;min-width:0!important;width:100%!important;padding:20px!important;border:1px solid #376052!important;border-radius:22px!important;background:#153e35!important;text-align:left!important;box-sizing:border-box!important;}
+html:root:root:root:root:root body #app .card:has(.energy) .m3>div>b{display:block!important;order:0!important;font-size:20px!important;line-height:1.4!important;text-align:right!important;color:var(--reference-text)!important;}
+html:root:root:root:root:root body #app .card:has(.energy) .m3>div>span{display:block!important;order:-1!important;font-size:15px!important;font-weight:650!important;text-align:left!important;color:var(--reference-text)!important;}
+html:root:root:root:root:root body #app .card:has(.energy) .m3 .bar{display:block!important;order:1!important;position:relative!important;width:100%!important;height:10px!important;min-height:10px!important;margin:0!important;border:0!important;border-radius:999px!important;background:#2c5449!important;overflow:hidden!important;box-shadow:none!important;}
+html:root:root:root:root:root body #app .card:has(.energy) .m3 .bar::after{content:none!important;}
+html:root:root:root:root:root body #app .card:has(.energy) .m3 .bar>i{display:block!important;position:static!important;height:100%!important;min-height:0!important;border-radius:inherit!important;}
+html:root:root:root:root:root body #app .card:has(.energy) .m3>div:nth-child(1) .bar>i{background:linear-gradient(90deg,#39b9de,#8adcf0)!important;}
+html:root:root:root:root:root body #app .card:has(.energy) .m3>div:nth-child(2) .bar>i{background:linear-gradient(90deg,#e5aa38,#ffdc7d)!important;}
+html:root:root:root:root:root body #app .card:has(.energy) .m3>div:nth-child(3) .bar>i{background:linear-gradient(90deg,#9672d2,#c3a8f1)!important;}
+html:root:root:root:root:root body #meal-picker .meal-group{border:2px solid #d5f65a!important;border-radius:36px!important;background:rgba(6,31,26,.6)!important;overflow:hidden!important;}
+html:root:root:root:root:root body #meal-picker .meal-group>.meal-pick{border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;}
+html:root:root:root:root:root body #meal-picker .meal-eaten{width:66.666667%!important;margin-left:33.333333%!important;padding:16px 18px 20px 0!important;box-sizing:border-box!important;}
+html:root:root:root:root:root body #meal-picker .meal-eaten-heading{text-align:center!important;color:#f4faf4!important;font-size:14px!important;}
+html:root:root:root:root:root body #meal-picker .meal-record-list .ent{border-radius:20px!important;background:rgba(3,30,25,.7)!important;border:1px solid #397665!important;}
+@media(max-width:650px){
+html:root:root:root:root:root body #app .card:has(.energy){padding:18px!important;border-radius:24px!important;}
+html:root:root:root:root:root body #app .card:has(.energy) .energy{gap:12px!important;margin:16px auto 22px!important;}
+html:root:root:root:root:root body #app .energy>:is(.ring,.energy-orbit){width:180px!important;}
+html:root:root:root:root:root body #app .energy .big{font-size:34px!important;}
+html:root:root:root:root:root body #app .card:has(.energy) .m3>div{padding:16px!important;border-radius:18px!important;}
+html:root:root:root:root:root body #meal-picker .meal-group{border-radius:28px!important;}
+html:root:root:root:root:root body #meal-picker .meal-eaten{width:100%!important;margin-left:0!important;padding:12px!important;}
+}
