@@ -34,6 +34,12 @@ function sportHeader(){
  const owned=app.querySelector('[data-setup-sport-header],[data-setup-section-header]');
  if(!section){owned?.remove();return;}
  const copy=section==='sport'?['Ваш спорт · ваша энергия','Сила в движении. Тонус в теле.']:['Ваши привычки · ваш выбор','Маленькие шаги. К тому, что важно.'];
+ // The integrated sports section owns its heading and calendar.
+ const integratedHeading=section==='sport'?document.querySelector('#sport-section h1'):null;
+ if(integratedHeading&&integratedHeading.textContent.trim()===copy[1]){
+  app.querySelectorAll('[data-setup-sport-header],[data-setup-section-header]').forEach(header=>header.remove());
+  return;
+ }
  let heading=app.querySelector('h1');
  if(!heading){const header=document.createElement('header');header.dataset.setupSectionHeader=section;const eyebrow=document.createElement('div');eyebrow.className='eyebrow';eyebrow.textContent=copy[0];heading=document.createElement('h1');heading.textContent=copy[1];header.append(eyebrow,heading);app.prepend(header);return;}
  if(owned&&owned.dataset.setupSectionHeader!==section)owned.dataset.setupSectionHeader=section;
