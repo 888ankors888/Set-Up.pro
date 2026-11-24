@@ -1,0 +1,68 @@
+{
+  "inline_javascript_syntax": {
+    "scripts": 22,
+    "errors": 0
+  },
+  "isolated_chromium_tests": [
+    {
+      "test": "render seven days",
+      "passed": true
+    },
+    {
+      "test": "settings read from shared profile",
+      "passed": true
+    },
+    {
+      "test": "add walking plan",
+      "passed": true
+    },
+    {
+      "test": "record fact and synchronize main state",
+      "passed": true
+    },
+    {
+      "test": "delete fact, keep plan",
+      "passed": true
+    },
+    {
+      "test": "edit strength exercise",
+      "passed": true
+    },
+    {
+      "test": "hide section on navigation",
+      "passed": true
+    },
+    {
+      "test": "reopen without navigation and keep data",
+      "passed": true
+    },
+    {
+      "test": "next week",
+      "passed": true
+    },
+    {
+      "test": "current week",
+      "passed": true
+    },
+    {
+      "test": "remove plan",
+      "passed": true
+    },
+    {
+      "test": "open questionnaire inside index",
+      "passed": true
+    },
+    {
+      "test": "no browser runtime errors",
+      "passed": true
+    }
+  ],
+  "browser_errors": [],
+  "limitations": [
+    "Browser tests used a mock shared store, not the complete live site.",
+    "External CSS and JS modules were not end-to-end tested.",
+    "GitHub repository has not been modified."
+  ],
+  "original_index_blob": "8c65550e799495a4fbe0b5e7f652d457ee38ae84",
+  "new_index_sha256": "54326e0147de4230ead92b2734ba46d33ee51fc82e878d47a592c4611a41e4ba"
+}
