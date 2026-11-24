@@ -76,3 +76,21 @@ html:root:root:root body :is(.brand, main > .setup-home) img {
     scroll-padding-top: calc(83px + env(safe-area-inset-top, 0px)) !important;
   }
 }
+
+/* Stretch the existing mobile background across the entire document. */
+@media (max-width: 999px) {
+  html:root:root:root:root {
+    min-height: 100% !important;
+    background-color: var(--bg) !important;
+  }
+
+  html:root:root:root:root body {
+    min-height: 100vh !important;
+    min-height: 100svh !important;
+    box-sizing: border-box !important;
+    background-size: 100% 100% !important;
+    background-position: center top !important;
+    background-repeat: no-repeat !important;
+    background-attachment: scroll !important;
+  }
+}
