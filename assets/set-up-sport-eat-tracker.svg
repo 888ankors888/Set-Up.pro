@@ -37,19 +37,12 @@
 
 <!-- UP monogram: bold, clean and balanced -->
 <g font-family="Arial, Helvetica, sans-serif" font-style="italic" font-weight="900" filter="url(#soft)">
-  <text x="1110" y="177" font-size="205" fill="url(#silver)" letter-spacing="-15">UP</text>
+  <text x="1110" y="218" font-size="190" fill="url(#silver)" letter-spacing="-14">UP</text>
 </g>
 
 <!-- Upward motion mark, separated from the letterforms for legibility -->
-<path d="M1278 18 L1360 18 L1360 0 L1450 78 L1360 157 L1360 132 L1302 132"
-      fill="none" stroke="url(#arrow)" stroke-width="17" stroke-linecap="square" stroke-linejoin="miter"/>
-<path d="M1120 224 Q1290 198 1470 210" fill="none" stroke="url(#green)" stroke-width="7" stroke-linecap="round"/>
-<path d="M1120 224 Q1290 198 1470 210" fill="none" stroke="#BFFF42" stroke-width="2" stroke-linecap="round" opacity=".9"/>
-
-<!-- Small AI signature -->
-<g transform="translate(1160 218)" fill="none" stroke="#55E9B2" stroke-width="3" opacity=".95">
-  <rect x="0" y="0" width="34" height="28" rx="7"/>
-  <path d="M8 -5v5m18 -5v5M8 28v5m18 -5v5M-5 8h5m-5 12h5m34-12h5m-5 12h5"/>
-</g>
-<text x="1167" y="238" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="700" fill="#55E9B2">AI</text>
+<path d="M1308 70 L1308 40 L1372 40 L1372 15 L1445 77 L1372 77 L1372 70"
+      fill="none" stroke="url(#arrow)" stroke-width="15" stroke-linecap="square" stroke-linejoin="miter"/>
+<path d="M1125 244 Q1290 220 1470 232" fill="none" stroke="url(#green)" stroke-width="7" stroke-linecap="round"/>
+<path d="M1125 244 Q1290 220 1470 232" fill="none" stroke="#BFFF42" stroke-width="2" stroke-linecap="round" opacity=".9"/>
 </svg>
