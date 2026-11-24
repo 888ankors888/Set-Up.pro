@@ -57,7 +57,7 @@ html:root:root:root body #nav .setup-wordnav .setup-up-panel{z-index:80!importan
     text-align: left !important;
   }
   html:root:root:root body:has(#nav) :is(.brand:not(.big), main > .setup-home) img {
-    margin-left: 10px !important;
+    margin-left: 4px !important;
     margin-right: 0 !important;
     object-position: left center !important;
   }
