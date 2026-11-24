@@ -1,0 +1,65 @@
+(() => {
+'use strict';
+const css=`
+html body:has(#nav){padding-left:0!important;padding-bottom:calc(110px + env(safe-area-inset-bottom,0px))!important}
+html body #nav{position:fixed!important;top:auto!important;bottom:0!important;left:0!important;right:0!important;width:100%!important;height:auto!important;display:flex!important;flex-direction:row!important;justify-content:center!important;padding:12px 16px calc(16px + env(safe-area-inset-bottom,0px))!important;gap:0!important;border:0!important;background:transparent!important;box-shadow:none!important;overflow:visible!important;z-index:60}
+#nav .setup-native-nav-item{display:none!important}
+html body #nav .setup-wordnav{display:flex!important;flex-direction:row!important;position:relative;width:min(100%,560px)!important;gap:8px!important;padding:0!important;border:0!important;background:transparent!important;box-shadow:none!important;isolation:isolate}
+html body #nav .setup-wordnav>button{appearance:none;display:flex!important;align-items:center!important;justify-content:center!important;flex:1 1 0!important;width:auto!important;min-width:0!important;min-height:48px!important;margin:0!important;padding:12px 6px!important;border:1px solid transparent!important;border-radius:999px!important;background:#254c47!important;color:#c2dca1!important;font:500 clamp(13px,3.6vw,17px)/1.2 system-ui,sans-serif!important;letter-spacing:-.025em!important;box-shadow:0 4px 16px #062d2520!important;text-shadow:none!important;transform:none!important;cursor:pointer;transition:background .18s,color .18s,box-shadow .18s}
+html body #nav .setup-wordnav>button.on,html body #nav .setup-wordnav>button[aria-expanded=true]{background:#d5ff82!important;color:#163b32!important;box-shadow:0 0 22px #c8f56835!important}
+html body #nav .setup-wordnav>button:after{display:none!important}
+html body #nav .setup-up-panel{position:absolute;bottom:calc(100% + 12px);right:0;left:auto;width:min(280px,calc(100vw - 32px));padding:8px;border:1px solid #3a6256;border-radius:20px;background:#173e37;box-shadow:0 12px 32px #001b1640}
+html body #nav .setup-up-panel[hidden]{display:none!important}
+html body #nav .setup-wordnav .setup-up-panel button{display:block;width:100%;min-height:46px;padding:12px;border:0;border-radius:14px;background:transparent!important;color:#d8ebc0!important;text-align:left;font:500 15px/1.4 system-ui,sans-serif!important;cursor:pointer}
+html body #nav .setup-wordnav .setup-up-panel button.on{background:#d5ff82!important;color:#163b32!important}
+html body #nav .setup-wordnav button:focus-visible{outline:3px solid #9ac95e!important;outline-offset:3px}
+html body #nav .setup-wordnav button:disabled{opacity:.45;cursor:not-allowed}
+@media(hover:hover){html body #nav .setup-wordnav>button:not(.on):not(:disabled):hover,html body #nav .setup-wordnav .setup-up-panel button:not(.on):hover{background:#346257!important;color:#e2f6bc!important}}
+@media(prefers-reduced-motion:reduce){html body #nav .setup-wordnav button{transition:none!important}}
+`;
+let nav,bar,panel,up,queued=false;
+const targets=new Map();
+const workout=/\/workouts\.html$/.test(location.pathname);
+function kind(b){if(b.dataset.setupNavKind)return b.dataset.setupNavKind;const t=b.textContent.trim();if(b.dataset.workoutJournal!==undefined||/Трениров|Спорт|^Sport$/.test(t))return 'sport';if(/Привыч|^Tracker$/.test(t))return 'tracker';if(/Питан|Дневник|^Eat$/.test(t))return 'eat';if(/Отч|Прогресс/.test(t))return 'report';if(/Настро|Профиль/.test(t))return 'settings';if(/Цел|цели|[Аа]нкета/.test(t))return 'questionnaire';return null;}
+function active(b){return !!b&&(b.classList.contains('on')||b.classList.contains('active')||b.getAttribute('aria-current')==='page');}
+function close(){if(panel)panel.hidden=true;if(up)up.setAttribute('aria-expanded','false');}
+function choose(name){pending=null;close();if(workout){if(name==='sport')return;location.href='index.html?setupDestination='+encodeURIComponent(name);return;}const target=targets.get(name);if(target?.isConnected){target.click();schedule();}}
+function button(name,label){const b=document.createElement('button');b.type='button';b.textContent=label;b.dataset.setupDestination=name;b.dataset.setupLabel=label;b.setAttribute('role','menuitem');b.addEventListener('click',()=>choose(name));return b;}
+function mount(){bar=document.createElement('div');bar.className='setup-wordnav';bar.append(button('sport','Спорт'),button('eat','Питание'),button('tracker','Привычки'));up=document.createElement('button');up.type='button';up.className='setup-menu-trigger';up.setAttribute('aria-expanded','false');up.setAttribute('aria-controls','setup-up-panel');up.setAttribute('aria-label','Меню');up.title='Меню';panel=document.createElement('div');panel.id='setup-up-panel';panel.className='setup-up-panel';panel.hidden=true;panel.setAttribute('role','group');panel.setAttribute('aria-label','Дополнительные разделы');panel.setAttribute('role','menu');panel.append(button('questionnaire','Моя анкета'),button('report','Отчёты'),button('settings','Настройки'));up.addEventListener('click',()=>{const open=panel.hidden;panel.hidden=!open;up.setAttribute('aria-expanded',String(open));if(open)panel.querySelector('button')?.focus();});bar.append(up,panel);nav.append(bar);}
+const requestedDestination=new URLSearchParams(location.search).get('setupDestination');
+let pending=workout?null:(requestedDestination||'eat');
+function sportHeader(){
+ const app=document.getElementById('app');if(!app)return;
+ const section=!workout?(active(targets.get('sport'))?'sport':active(targets.get('tracker'))?'tracker':null):null;
+ const owned=app.querySelector('[data-setup-sport-header],[data-setup-section-header]');
+ if(!section){owned?.remove();return;}
+ const copy=section==='sport'?['Ваш спорт · ваша энергия','Сила в движении. Тонус в теле.']:['Ваши привычки · ваш выбор','Маленькие шаги. К тому, что важно.'];
+ // The integrated sports section owns its heading and calendar.
+ const integratedHeading=section==='sport'?document.querySelector('#sport-section h1'):null;
+ if(integratedHeading&&integratedHeading.textContent.trim()===copy[1]){
+  app.querySelectorAll('[data-setup-sport-header],[data-setup-section-header]').forEach(header=>header.remove());
+  return;
+ }
+ let heading=app.querySelector('h1');
+ if(!heading){const header=document.createElement('header');header.dataset.setupSectionHeader=section;const eyebrow=document.createElement('div');eyebrow.className='eyebrow';eyebrow.textContent=copy[0];heading=document.createElement('h1');heading.textContent=copy[1];header.append(eyebrow,heading);app.prepend(header);return;}
+ if(owned&&owned.dataset.setupSectionHeader!==section)owned.dataset.setupSectionHeader=section;
+ let eyebrow=heading.previousElementSibling;
+ if(!eyebrow?.classList.contains('eyebrow')){eyebrow=document.createElement('div');eyebrow.className='eyebrow';heading.before(eyebrow);}
+ if(eyebrow.textContent!==copy[0])eyebrow.textContent=copy[0];
+ if(heading.textContent!==copy[1])heading.textContent=copy[1];
+}
+function render(){queued=false;let current=document.getElementById('nav');if(!current&&workout){current=document.createElement('nav');current.id='nav';document.body.append(current);}if(!current)return;if(nav!==current||!bar?.isConnected){nav=current;targets.clear();mount();}nav.setAttribute('aria-label','Основная навигация');for(const b of nav.querySelectorAll('button')){if(bar.contains(b))continue;const name=kind(b);if(name){b.dataset.setupNavKind=name;b.classList.add('setup-native-nav-item');targets.set(name,b);}}for(const b of bar.querySelectorAll('[data-setup-destination]')){const name=b.dataset.setupDestination,target=targets.get(name),on=workout?name==='sport':active(target);const disabled=!workout&&(!target?.isConnected||!!target.disabled);if(b.disabled!==disabled)b.disabled=disabled;if(b.classList.contains('on')!==on)b.classList.toggle('on',on);if(on)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');}const extra=!workout&&['questionnaire','report','settings'].some(n=>active(targets.get(n)));if(up.classList.contains('on')!==extra)up.classList.toggle('on',extra);if(pending&&targets.get(pending)?.isConnected&&!targets.get(pending).disabled){const name=pending;pending=null;choose(name);if(requestedDestination){const url=new URL(location.href);url.searchParams.delete('setupDestination');history.replaceState(history.state,'',url);}}sportHeader();}
+function schedule(){if(!queued){queued=true;requestAnimationFrame(render);}}
+function start(){const style=document.createElement('style');style.id='setup-wordnav-style';style.textContent=css;document.getElementById(style.id)?.remove();document.head.append(style);render();const observer=new MutationObserver(records=>{if(records.some(r=>!bar?.contains(r.target)))schedule();});observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class','disabled','aria-current']});document.addEventListener('pointerdown',e=>{if(!bar?.contains(e.target))close();});document.addEventListener('focusin',e=>{if(!bar?.contains(e.target))close();});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&panel&&!panel.hidden){close();up.focus();}});window.addEventListener('pagehide',()=>observer.disconnect(),{once:true});}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
+})();
+
+(() => {
+'use strict';
+const selector='.brand:not(.big),a.setup-home';
+const home=new URL('./',location.href);home.searchParams.set('setupDestination','eat');
+function prepare(){document.querySelectorAll(selector).forEach(brand=>{if(brand.dataset.setupHomeReady)return;brand.dataset.setupHomeReady='true';brand.setAttribute('aria-label','Set-Up — открыть Eat');brand.style.cursor='pointer';if(brand.tagName==='A')brand.href=home.href;else{brand.setAttribute('role','link');brand.tabIndex=0;}});}
+function go(){const eat=document.querySelector('#nav .setup-wordnav [data-setup-destination="eat"]');if(eat&&!eat.disabled&&!/\/workouts\.html$/.test(location.pathname)){eat.click();window.scrollTo({top:0});}else location.href=home.href;}
+function start(){prepare();document.addEventListener('click',event=>{if(event.defaultPrevented||event.button!==0||event.ctrlKey||event.metaKey||event.shiftKey||event.altKey)return;const brand=event.target instanceof Element?event.target.closest(selector):null;if(!brand)return;event.preventDefault();go();});document.addEventListener('keydown',event=>{if(event.key!=='Enter'||event.defaultPrevented||event.ctrlKey||event.metaKey||event.shiftKey||event.altKey)return;const brand=event.target instanceof Element?event.target.closest(selector):null;if(!brand||brand.tagName==='A')return;event.preventDefault();go();});const observer=new MutationObserver(prepare);observer.observe(document.body,{childList:true,subtree:true});window.addEventListener('pagehide',()=>observer.disconnect(),{once:true});}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
+})();
