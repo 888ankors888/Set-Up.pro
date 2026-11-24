@@ -48,5 +48,5 @@
 
 /* Logo opacity on all screen sizes. */
 html:root:root:root body :is(.brand, main > .setup-home) img {
-  opacity: 0.7 !important;
+  opacity: 1 !important;
 }
