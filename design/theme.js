@@ -75,7 +75,7 @@ html:root:root:root:root body #app .week button:is(.active,[aria-pressed="true"]
 'use strict';
 const base=new URL('../',document.currentScript.src);
 const asset=name=>new URL('assets/'+name,base).href;
-const logo=asset('setup-logo.webp');
+const logo=asset('setup-logo.png');
 function link(rel,href,sizes){
  document.head.querySelectorAll('link').forEach(node=>{if(node.rel===rel)node.remove();});
  const node=document.createElement('link');node.rel=rel;node.href=href;
@@ -90,7 +90,8 @@ const style=document.createElement('style');style.id='setup-uploaded-brand';
 style.textContent=`
 html:root:root:root:root:root body .brand::before{content:''!important;display:block!important;width:96px!important;height:54px!important;flex:0 0 96px!important;background:transparent url(${JSON.stringify(logo)}) center/contain no-repeat!important;border:0!important;border-radius:0!important;box-shadow:none!important}
 html:root:root:root:root:root body .brand>img,html:root:root:root:root:root body .brand>span{display:none!important}
-html:root:root:root:root:root body .brand.big::before{width:min(280px,75vw)!important;height:auto!important;aspect-ratio:1935/1080!important;flex:none!important}
+html:root:root:root:root:root body .brand.big{gap:0!important;margin:8px 0 14px!important}
+html:root:root:root:root:root body .brand.big::before{width:min(200px,60vw)!important;height:auto!important;aspect-ratio:1935/1080!important;flex:none!important}
 html:root:root:root:root:root body a.setup-home{font-size:0!important}
 html:root:root:root:root:root body a.setup-home::before{content:none!important;display:none!important}
 html:root:root:root:root:root body a.setup-home>img{display:block!important;width:96px!important;height:54px!important;object-fit:contain!important;flex:0 0 96px!important;border-radius:0!important}
