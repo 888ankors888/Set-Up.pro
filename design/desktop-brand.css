@@ -27,7 +27,7 @@
     height: 85.8px !important;
     max-height: none !important;
     object-fit: contain !important;
-    transform: scale(1.35) !important;
+    transform: scale(1.377) !important;
     transform-origin: left top !important;
     position: relative !important;
     z-index: 1 !important;
@@ -48,5 +48,5 @@
 
 /* Logo opacity on all screen sizes. */
 html:root:root:root body :is(.brand, main > .setup-home) img {
-  opacity: 0.9 !important;
+  opacity: 0.85 !important;
 }
