@@ -27,7 +27,7 @@
     height: 85.8px !important;
     max-height: none !important;
     object-fit: contain !important;
-    transform: scale(1.377) !important;
+    transform: scale(1.397655) !important;
     transform-origin: left top !important;
     position: relative !important;
     z-index: 1 !important;
@@ -49,4 +49,23 @@
 /* Logo opacity on all screen sizes. */
 html:root:root:root body :is(.brand, main > .setup-home) img {
   opacity: 0.85 !important;
+}
+
+@media (max-width: 999px) {
+  html:root:root:root:root body:has(#nav)
+    :is(.brand:not(.big), main > .setup-home) {
+    overflow: visible !important;
+  }
+
+  html:root:root:root:root body:has(#nav)
+    :is(.brand:not(.big), main > .setup-home) img {
+    transform: scale(1.25) !important;
+    transform-origin: left top !important;
+    position: relative !important;
+    z-index: 1 !important;
+  }
+
+  html:root:root:root:root body:has(.brand:not(.big), main > .setup-home):has(#nav) {
+    padding-top: calc(81px + env(safe-area-inset-top, 0px)) !important;
+  }
 }
