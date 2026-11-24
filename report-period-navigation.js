@@ -1,0 +1,15 @@
+(() => {
+ const selected={month:null,week:null};
+ function period(kind,anchor){const d=dt(anchor);let from,to,label;if(kind==='month'){const f=new Date(d.getFullYear(),d.getMonth(),1,12),t=new Date(d.getFullYear(),d.getMonth()+1,0,12);from=dk(f);to=dk(t);label=f.toLocaleDateString('ru-RU',{month:'long',year:'numeric'})}else{d.setDate(d.getDate()-(d.getDay()+6)%7);const t=new Date(d);t.setDate(t.getDate()+6);from=dk(d);to=dk(t);label=fmt(from)+' – '+fmt(to)}return {key:kind==='month'?'m'+from.slice(0,7):'w'+from,type:kind==='month'?'Месяц':'Неделя',from,to,label}}
+ function adjacent(kind,direction){const p=period(kind,selected[kind]),d=dt(p.from);if(kind==='month')d.setMonth(d.getMonth()+direction);else d.setDate(d.getDate()+7*direction);return period(kind,dk(d))}
+ window.foodReportSectionMove=function(kind,direction){if(!['month','week'].includes(kind)||![-1,1].includes(direction)||!selected[kind])return;const next=adjacent(kind,direction);if(next.from>today())return;selected[kind]=next.from;render()};
+ function section(kind){const p=period(kind,selected[kind]),next=adjacent(kind,1),hasEntries=S.entries.some(e=>e.date>=p.from&&e.date<=p.to),name=kind==='month'?'месяц':'неделя';return `<div class="nv" role="group" aria-label="Выбор периода отчёта"><button type="button" onclick="foodReportSectionMove('${kind}',-1)" aria-label="Предыдущий период">←</button><span aria-live="polite" style="text-align:center;padding:0 10px">${esc(p.label)}</span><button type="button" onclick="foodReportSectionMove('${kind}',1)" ${next.from>today()?'disabled':''} aria-label="Следующий период">→</button></div>${hasEntries?repCard(p):`<section class="card"><h2>${p.type}: ${esc(p.label)}</h2><p class="mu">За этот период записей нет. Это не означает отсутствие питания.</p></section>`}` }
+ const previousReport=reportView;reportView=function(){
+  const markup=previousReport();if(!S.profile)return markup;const available=periods();if(!selected.month)selected.month=available.mo[0]?.from||period('month',today()).from;if(!selected.week)selected.week=available.wk[0]?.from||period('week',today()).from;
+  const template=document.createElement('template');template.innerHTML=markup;
+  template.content.querySelectorAll('.card.mu').forEach(node=>{if(node.textContent.includes('Отчёты появятся после первых записей'))node.remove()});
+  for(const kind of ['month','week']){const title=kind==='month'?'По месяцам':'По неделям';let heading=[...template.content.querySelectorAll('h2')].find(h=>h.textContent.trim()===title);if(!heading){heading=document.createElement('h2');heading.textContent=title;heading.style.marginTop='16px';template.content.appendChild(heading)}else{let node=heading.nextSibling;while(node&&!(node.nodeType===1&&node.matches('h2'))){const next=node.nextSibling;node.remove();node=next}}heading.insertAdjacentHTML('afterend',section(kind))}
+  return template.innerHTML;
+ };
+ render();
+})();
