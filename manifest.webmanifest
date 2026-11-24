@@ -1,0 +1,15 @@
+{
+  "name": "Set-Up — Sport Eat Tracker",
+  "short_name": "Set-Up",
+  "lang": "ru",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#061F1A",
+  "theme_color": "#061F1A",
+  "icons": [
+    {"src": "assets/setup-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "assets/setup-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"}
+  ]
+}

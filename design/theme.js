@@ -69,3 +69,38 @@ html:root:root:root:root body #app .week button:is(.active,[aria-pressed="true"]
 html:root:root:root:root body #app .week button:is(.active,[aria-pressed="true"]) *{color:#000!important;-webkit-text-fill-color:#000!important}
 `;document.head.append(style);
 })();
+
+/* Uploaded brand artwork only; navigation icons and application data are unchanged. */
+(() => {
+'use strict';
+const base=new URL('../',document.currentScript.src);
+const asset=name=>new URL('assets/'+name,base).href;
+const logo=asset('setup-logo.webp');
+function link(rel,href,sizes){
+ document.head.querySelectorAll('link').forEach(node=>{if(node.rel===rel)node.remove();});
+ const node=document.createElement('link');node.rel=rel;node.href=href;
+ if(sizes)node.sizes=sizes;
+ if(rel!=='manifest')node.type='image/png';
+ document.head.append(node);
+}
+link('icon',asset('setup-icon-192.png'),'192x192');
+link('apple-touch-icon',asset('setup-icon-180.png'),'180x180');
+link('manifest',new URL('manifest.webmanifest',base).href);
+const style=document.createElement('style');style.id='setup-uploaded-brand';
+style.textContent=`
+html:root:root:root:root:root body .brand::before{content:''!important;display:block!important;width:96px!important;height:54px!important;flex:0 0 96px!important;background:transparent url(${JSON.stringify(logo)}) center/contain no-repeat!important;border:0!important;border-radius:0!important;box-shadow:none!important}
+html:root:root:root:root:root body .brand>img,html:root:root:root:root:root body .brand>span{display:none!important}
+html:root:root:root:root:root body .brand.big::before{width:min(280px,75vw)!important;height:auto!important;aspect-ratio:1935/1080!important;flex:none!important}
+html:root:root:root:root:root body a.setup-home{font-size:0!important}
+html:root:root:root:root:root body a.setup-home::before{content:none!important;display:none!important}
+html:root:root:root:root:root body a.setup-home>img{display:block!important;width:96px!important;height:54px!important;object-fit:contain!important;flex:0 0 96px!important;border-radius:0!important}
+`;document.head.append(style);
+function refresh(){
+ document.querySelectorAll('.brand,a.setup-home').forEach(brand=>{
+  if(!brand.hasAttribute('aria-label'))brand.setAttribute('aria-label','Set-Up');
+  brand.querySelectorAll('img').forEach(img=>{if(img.src!==logo){img.removeAttribute('srcset');img.src=logo;img.alt='Sport Eat Tracker Up — Set-Up';}});
+ });
+}
+function start(){refresh();new MutationObserver(refresh).observe(document.body,{childList:true,subtree:true});}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
+})();
