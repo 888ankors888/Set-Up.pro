@@ -16,12 +16,21 @@
   }
 
   html:root:root:root body:has(#nav)
+    :is(.brand:not(.big), main > .setup-home) {
+    overflow: visible !important;
+  }
+
+  html:root:root:root body:has(#nav)
     :is(.brand:not(.big), main > .setup-home) img {
     width: 312px !important;
     max-width: 312px !important;
     height: 85.8px !important;
     max-height: none !important;
     object-fit: contain !important;
+    transform: scale(1.5) !important;
+    transform-origin: left top !important;
+    position: relative !important;
+    z-index: 1 !important;
   }
 }
 
