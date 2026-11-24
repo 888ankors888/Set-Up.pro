@@ -30,15 +30,17 @@ const requestedDestination=new URLSearchParams(location.search).get('setupDestin
 let pending=workout?null:(requestedDestination||'eat');
 function sportHeader(){
  const app=document.getElementById('app');if(!app)return;
- const on=!workout&&active(targets.get('sport'));
- const owned=app.querySelector('[data-setup-sport-header]');
- if(!on){owned?.remove();return;}
+ const section=!workout?(active(targets.get('sport'))?'sport':active(targets.get('tracker'))?'tracker':null):null;
+ const owned=app.querySelector('[data-setup-sport-header],[data-setup-section-header]');
+ if(!section){owned?.remove();return;}
+ const copy=section==='sport'?['Ваш спорт · ваша энергия','Сила в движении. Тонус в теле.']:['Ваши привычки · ваш выбор','Маленькие шаги. К тому, что важно.'];
  let heading=app.querySelector('h1');
- if(!heading){const header=document.createElement('header');header.dataset.setupSportHeader='true';const eyebrow=document.createElement('div');eyebrow.className='eyebrow';eyebrow.textContent='Ваш спорт · ваша энергия';heading=document.createElement('h1');heading.textContent='Сила в движении. Тонус в теле.';header.append(eyebrow,heading);app.prepend(header);return;}
+ if(!heading){const header=document.createElement('header');header.dataset.setupSectionHeader=section;const eyebrow=document.createElement('div');eyebrow.className='eyebrow';eyebrow.textContent=copy[0];heading=document.createElement('h1');heading.textContent=copy[1];header.append(eyebrow,heading);app.prepend(header);return;}
+ if(owned&&owned.dataset.setupSectionHeader!==section)owned.dataset.setupSectionHeader=section;
  let eyebrow=heading.previousElementSibling;
  if(!eyebrow?.classList.contains('eyebrow')){eyebrow=document.createElement('div');eyebrow.className='eyebrow';heading.before(eyebrow);}
- if(eyebrow.textContent!=='Ваш спорт · ваша энергия')eyebrow.textContent='Ваш спорт · ваша энергия';
- if(heading.textContent!=='Сила в движении. Тонус в теле.')heading.textContent='Сила в движении. Тонус в теле.';
+ if(eyebrow.textContent!==copy[0])eyebrow.textContent=copy[0];
+ if(heading.textContent!==copy[1])heading.textContent=copy[1];
 }
 function render(){queued=false;let current=document.getElementById('nav');if(!current&&workout){current=document.createElement('nav');current.id='nav';document.body.append(current);}if(!current)return;if(nav!==current||!bar?.isConnected){nav=current;targets.clear();mount();}nav.setAttribute('aria-label','Основная навигация');for(const b of nav.querySelectorAll('button')){if(bar.contains(b))continue;const name=kind(b);if(name){b.dataset.setupNavKind=name;b.classList.add('setup-native-nav-item');targets.set(name,b);}}for(const b of bar.querySelectorAll('[data-setup-destination]')){const name=b.dataset.setupDestination,target=targets.get(name),on=workout?name==='sport':active(target);const disabled=!workout&&(!target?.isConnected||!!target.disabled);if(b.disabled!==disabled)b.disabled=disabled;if(b.classList.contains('on')!==on)b.classList.toggle('on',on);if(on)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');}const extra=!workout&&['questionnaire','report','settings'].some(n=>active(targets.get(n)));if(up.classList.contains('on')!==extra)up.classList.toggle('on',extra);if(pending&&targets.get(pending)?.isConnected&&!targets.get(pending).disabled){const name=pending;pending=null;choose(name);if(requestedDestination){const url=new URL(location.href);url.searchParams.delete('setupDestination');history.replaceState(history.state,'',url);}}sportHeader();}
 function schedule(){if(!queued){queued=true;requestAnimationFrame(render);}}
