@@ -1,0 +1,26 @@
+@media (min-width: 1000px) {
+  html:root:root:root body #nav {
+    padding-left: 280px !important;
+    padding-right: 220px !important;
+  }
+
+  html:root:root:root body #nav .setup-wordnav {
+    justify-content: center !important;
+  }
+
+  html:root:root:root body #nav .setup-wordnav
+    > button:not(.setup-menu-trigger) {
+    flex: 0 1 clamp(96px, 10vw, 136px) !important;
+    width: auto !important;
+    padding-inline: 10px !important;
+  }
+
+  html:root:root:root body:has(#nav)
+    :is(.brand:not(.big), main > .setup-home) img {
+    width: 240px !important;
+    max-width: 240px !important;
+    height: 66px !important;
+    max-height: none !important;
+    object-fit: contain !important;
+  }
+}
