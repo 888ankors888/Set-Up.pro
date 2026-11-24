@@ -1,0 +1,71 @@
+@media (min-width: 1000px) {
+  html:root:root:root body #nav {
+    padding-left: 280px !important;
+    padding-right: 220px !important;
+  }
+
+  html:root:root:root body #nav .setup-wordnav {
+    justify-content: center !important;
+  }
+
+  html:root:root:root body #nav .setup-wordnav
+    > button:not(.setup-menu-trigger) {
+    flex: 0 1 clamp(96px, 10vw, 136px) !important;
+    width: auto !important;
+    padding-inline: 10px !important;
+  }
+
+  html:root:root:root body:has(#nav)
+    :is(.brand:not(.big), main > .setup-home) {
+    overflow: visible !important;
+  }
+
+  html:root:root:root body:has(#nav)
+    :is(.brand:not(.big), main > .setup-home) img {
+    width: 312px !important;
+    max-width: 312px !important;
+    height: 85.8px !important;
+    max-height: none !important;
+    object-fit: contain !important;
+    transform: scale(1.397655) !important;
+    transform-origin: left top !important;
+    position: relative !important;
+    z-index: 1 !important;
+  }
+}
+
+@media (min-width: 1000px) {
+  html {
+    zoom: 0.7;
+  }
+
+  body {
+    width: auto;
+    transform: none;
+    transform-origin: initial;
+  }
+}
+
+/* Logo opacity on all screen sizes. */
+html:root:root:root body :is(.brand, main > .setup-home) img {
+  opacity: 0.85 !important;
+}
+
+@media (max-width: 999px) {
+  html:root:root:root:root body:has(#nav)
+    :is(.brand:not(.big), main > .setup-home) {
+    overflow: visible !important;
+  }
+
+  html:root:root:root:root body:has(#nav)
+    :is(.brand:not(.big), main > .setup-home) img {
+    transform: scale(1.625) !important;
+    transform-origin: left top !important;
+    position: relative !important;
+    z-index: 1 !important;
+  }
+
+  html:root:root:root:root body:has(.brand:not(.big), main > .setup-home):has(#nav) {
+    padding-top: calc(81px + env(safe-area-inset-top, 0px)) !important;
+  }
+}
