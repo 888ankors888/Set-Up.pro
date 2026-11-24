@@ -1,0 +1,45 @@
+/* Dark-only navigation and shared page layout. Palette is defined in setup.css. */
+.setup-home{display:inline-flex;gap:12px;align-items:center;text-decoration:none;font-size:26px;font-weight:800;font-style:italic;margin-bottom:12px}.setup-home img{width:46px;height:46px}
+html:root body #setup-theme-toggle,html:root body .setup-theme-toggle,html:root body [data-theme-toggle]{display:none!important}
+#nav .setup-icon{width:26px;height:26px;flex:none;stroke-width:1.8}
+html[data-setup-theme="dark"] body #nav{background:var(--site-pane)!important;box-shadow:none;overflow:visible}
+html[data-setup-theme="dark"] body #nav .setup-wordnav{--tx:#104b46;--mu:#6c9690;--ln:#d3e3dc;--card:#fcfefd;--site-pane:#eaf5ee;--ac2:#e7f3eb;--setup-lime-soft:#e3f8b5}
+html[data-setup-theme="dark"] body #nav .setup-wordnav button{color:#104b46!important;background:transparent!important;min-width:0;min-height:50px;padding:13px 16px;gap:0;border-radius:12px;font:600 20px/1.2 system-ui,sans-serif;letter-spacing:-.035em;box-shadow:none}
+html[data-setup-theme="dark"] body #nav .setup-wordnav button.on,html[data-setup-theme="dark"] body #nav .setup-wordnav .setup-up[aria-expanded="true"]{color:#104b46!important;background:linear-gradient(110deg,#e3f8b5,#def7a8)!important}
+html[data-setup-theme="dark"] body #nav .setup-wordnav .setup-initial{color:var(--menu-lime);background:#20594c;border-radius:5px;padding:1px 3px;margin-right:1px;font:inherit;font-weight:800;text-shadow:none;-webkit-text-stroke:0}
+html[data-setup-theme="dark"] body #nav .setup-wordnav .setup-up-panel button{min-height:46px;padding:12px;border-radius:10px;font:600 14px/1.4 system-ui,sans-serif;letter-spacing:-.01em;color:#104b46!important;background:transparent!important}
+html[data-setup-theme="dark"] body #nav .setup-wordnav .setup-up-panel button.on{color:#104b46!important;background:linear-gradient(110deg,#e3f8b5,#def7a8)!important}
+@media(max-width:999px){html[data-setup-theme="dark"] body #nav{padding:0 0 env(safe-area-inset-bottom);gap:0}html[data-setup-theme="dark"] body #nav .setup-wordnav>button{min-width:0;min-height:48px;padding:10px 3px;font-size:clamp(15px,4.2vw,19px)}}
+@media(hover:hover){html[data-setup-theme="dark"] body #nav .setup-wordnav button:not(.on):not(:disabled):hover{background:#e3f8b5!important}}
+html:root:root:root body:has(#nav){padding-left:0!important;padding-inline-start:0!important;padding-bottom:calc(110px + env(safe-area-inset-bottom,0px))!important}
+html:root:root:root body #nav{position:fixed!important;top:auto!important;bottom:0!important;left:0!important;right:0!important;width:100%!important;height:auto!important;max-height:none!important;display:flex!important;flex-direction:row!important;justify-content:center!important;padding:12px 16px calc(16px + env(safe-area-inset-bottom,0px))!important;gap:0!important;border:0!important;background:transparent!important;box-shadow:none!important;backdrop-filter:none!important;overflow:visible!important;z-index:60}
+html:root:root:root body #nav>button{flex:1 1 0;min-width:0;flex-direction:column;justify-content:center;padding:9px 4px}
+@media(min-width:1000px){
+html:root:root:root{scroll-padding-top:calc(100px + env(safe-area-inset-top,0px))}
+html:root:root:root body:has(#nav){padding-top:calc(88px + env(safe-area-inset-top,0px))!important;padding-bottom:24px!important}
+html:root:root:root body #nav{top:0!important;bottom:auto!important;min-height:calc(72px + env(safe-area-inset-top,0px));align-items:center!important;padding:calc(12px + env(safe-area-inset-top,0px)) 220px 12px!important;background:var(--site-pane)!important;border-bottom:1px solid var(--ln)!important;box-shadow:0 5px 20px #001b160d!important}
+html:root:root:root body #nav .setup-up-panel{top:calc(100% + 12px)!important;bottom:auto!important;max-height:calc(100dvh - 110px);overflow-y:auto}
+html:root:root:root body:has(#nav) #app{padding-top:0!important}
+html:root:root:root body:has(#nav) main{padding-top:24px!important}
+html:root:root:root body #toast{bottom:30px!important}
+html:root:root:root body:has(#nav) :is(.brand:not(.big),main>.setup-home){position:fixed!important;left:24px!important;top:calc(12px + env(safe-area-inset-top,0px))!important;z-index:75;display:flex!important;flex-direction:row!important;align-items:center!important;gap:10px!important;width:180px;height:48px;margin:0!important;padding:0!important;white-space:nowrap;font-size:26px!important;line-height:1.2!important}
+html:root:root:root body:has(#nav) .brand:not(.big):before{width:40px!important;height:40px!important;flex:none}
+html:root:root:root body:has(#nav) .brand:not(.big) span{font-size:26px!important;line-height:1.2!important}
+html:root:root:root body:has(#nav) main>.setup-home img{width:40px!important;height:40px!important;flex:none}
+@supports ((backdrop-filter:blur(10px)) or (-webkit-backdrop-filter:blur(10px))) and (background:color-mix(in srgb,white 94%,transparent)){
+html:root:root:root body #nav{background:color-mix(in srgb,var(--site-pane) 94%,transparent)!important;backdrop-filter:blur(10px) saturate(115%)!important;-webkit-backdrop-filter:blur(10px) saturate(115%)!important}
+}
+}
+@media(min-width:1000px) and (prefers-reduced-transparency:reduce){html:root:root:root body #nav{background:var(--site-pane)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}}
+html:root:root:root body #nav>:not(.setup-wordnav){display:none!important}
+
+/* Opaque emerald navigation, shared by desktop and mobile. */
+html:root:root:root body #nav{background:linear-gradient(115deg,#0b302a 0%,#155345 55%,#206451 100%)!important;opacity:1!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;color:#edf8f2!important;color-scheme:dark;border-top:1px solid #80b58c!important;box-shadow:0 -8px 28px #001c1840,inset 0 1px 0 #b8dfb326!important}
+html:root:root:root body #nav .setup-wordnav{background:transparent!important;color:#edf8f2!important}
+html:root:root:root body #nav .setup-wordnav button{background:transparent!important;color:#edf8f2!important;border-color:transparent!important}
+html:root:root:root body #nav .setup-wordnav button.on,html:root:root:root body #nav .setup-wordnav>button[aria-expanded=true]{background:linear-gradient(115deg,#ddff91,#c7f567)!important;color:#103a2d!important;border-color:#dcff93!important;box-shadow:0 4px 16px #061f2540,inset 0 1px 0 #f0ffcf!important}
+html:root:root:root body #nav .setup-wordnav .setup-up-panel{background:#103d33!important;border:1px solid #80b58c!important;box-shadow:0 12px 32px #001c1859}
+html:root:root:root body #nav .setup-wordnav .setup-initial{color:#d0ff68!important;background:#20594c!important}
+html:root:root:root body #nav .setup-wordnav button:focus-visible{outline:3px solid #d0ff68!important;outline-offset:3px!important}
+@media(hover:hover){html:root:root:root body #nav .setup-wordnav button:not(.on):not([aria-expanded=true]):not(:disabled):hover{background:#2a6652!important;color:#fff!important}}
+@media(min-width:1000px){html:root:root:root body #nav{border-top:0!important;border-bottom:1px solid #80b58c!important;box-shadow:0 8px 28px #001c1840,inset 0 -1px 0 #b8dfb326!important}html:root:root:root body:has(#nav) .brand:not(.big) span,html:root:root:root body:has(#nav) main>.setup-home{color:#f4faf4!important}}
