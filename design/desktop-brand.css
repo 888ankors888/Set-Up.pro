@@ -68,7 +68,7 @@ html:root:root:root body :is(.brand, main > .setup-home) img {
   }
 
   html:root:root:root:root body:has(.brand:not(.big), main > .setup-home):has(#nav) {
-    padding-top: calc(79px + env(safe-area-inset-top, 0px)) !important;
+    padding-top: calc(88px + env(safe-area-inset-top, 0px)) !important;
   }
 
   html:root:root:root:root {
