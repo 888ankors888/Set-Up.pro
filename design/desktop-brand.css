@@ -11,6 +11,7 @@ html:root:root:root:root body:has(#nav) :is(.brand:not(.big), main > .setup-home
   text-align: left !important;
 }
 html:root:root:root:root body:has(#nav) :is(.brand:not(.big), main > .setup-home) img {
+  content: url("../assets/set-up-header.webp") !important;
   display: block !important;
   width: 192px !important;
   max-width: 100% !important;
