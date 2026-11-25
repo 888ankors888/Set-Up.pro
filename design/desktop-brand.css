@@ -26,9 +26,14 @@ html:root:root:root:root body:has(#nav) :is(.brand:not(.big), main > .setup-home
   opacity: 1 !important;
 }
 @media (max-width: 999px) {
-  html:root:root:root:root body:has(#nav) :is(.brand:not(.big), main > .setup-home) { height: calc(76px + env(safe-area-inset-top, 0px)) !important; gap: 12px !important; }
+  html:root:root:root:root body:has(#nav) :is(.brand:not(.big), main > .setup-home) { height: calc(60.8px + env(safe-area-inset-top, 0px)) !important; gap: 12px !important; padding-block: calc(8px + env(safe-area-inset-top, 0px)) 8px !important; }
   html:root:root:root:root body:has(#nav) :is(.brand:not(.big), main > .setup-home) img { width: clamp(104px, 42vw, 168px) !important; max-height: 44px !important; }
-  html:root:root:root:root body:has(.brand:not(.big), main > .setup-home):has(#nav) { padding-top: calc(88px + env(safe-area-inset-top, 0px)) !important; }
-  html:root:root:root:root { scroll-padding-top: calc(83px + env(safe-area-inset-top, 0px)) !important; min-height: 100% !important; background-color: var(--bg) !important; }
+  html:root:root:root:root body:has(.brand:not(.big), main > .setup-home):has(#nav) { padding-top: calc(72.8px + env(safe-area-inset-top, 0px)) !important; }
+  html:root:root:root:root { scroll-padding-top: calc(67.8px + env(safe-area-inset-top, 0px)) !important; min-height: 100% !important; background-color: var(--bg) !important; }
   html:root:root:root:root body { min-height: 100vh !important; min-height: 100svh !important; box-sizing: border-box !important; background-size: 100% 100% !important; background-position: center top !important; background-repeat: no-repeat !important; background-attachment: scroll !important; }
+  html:root:root:root:root body #nav .setup-wordnav > button { height: 41.6px !important; min-height: 41.6px !important; padding-block: 4px !important; }
+}
+@media (max-width: 520px) {
+  html:root:root:root:root body #nav .setup-wordnav > button { height: 43.2px !important; min-height: 43.2px !important; gap: 3px !important; }
+  html:root:root:root:root body #nav .setup-wordnav > button.setup-menu-trigger { height: 43.2px !important; min-height: 43.2px !important; }
 }
