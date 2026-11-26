@@ -59,6 +59,7 @@ function createSvgIcon(name) {
 let nav, bar, panel, up, svgDoc, curvePath, orb, glow, orbIcon, queued = false;
 let currentCx = null;
 let currentTab = null;
+let isInitialized = false;
 const targets = new Map();
 const workout = /\/workouts\.html$/.test(location.pathname);
 
@@ -86,13 +87,17 @@ function close() {
 function choose(name) {
   pending = null;
   close();
+  try {
+    sessionStorage.setItem('setup_active_tab', name);
+  } catch (e) {}
+
   if (workout) {
     if (name === 'sport') return;
     location.href = 'index.html?setupDestination=' + encodeURIComponent(name);
     return;
   }
 
-  // Pre-update UI and trigger jump immediately directly from the previous button
+  // Pre-update UI and immediately slide orb directly from previous button
   const clickedBtn = bar?.querySelector(`[data-setup-destination="${name}"]`);
   if (clickedBtn && !clickedBtn.classList.contains('setup-menu-trigger')) {
     bar.querySelectorAll('[data-setup-destination]:not(.setup-menu-trigger)').forEach(btn => {
@@ -171,7 +176,7 @@ function mount() {
   svgDoc.appendChild(curvePath);
   bar.appendChild(svgDoc);
 
-  // Orb Glow & Orb (Keep initial default X at center so it never starts from left 0)
+  // Orb Glow & Orb
   glow = document.createElement('div');
   glow.className = 'setup-nav-glow';
   bar.appendChild(glow);
@@ -229,8 +234,16 @@ function updateNotch(animated = true) {
   // Find active button among main 3 buttons
   let activeBtn = bar.querySelector('[data-setup-destination].on:not(.setup-menu-trigger)');
   if (!activeBtn) {
-    // Fallback to Eat button so it stays anchored to a tab rather than resetting
-    activeBtn = bar.querySelector('[data-setup-destination="eat"]');
+    let saved = null;
+    try {
+      saved = sessionStorage.getItem('setup_active_tab');
+    } catch (e) {}
+    if (saved) {
+      activeBtn = bar.querySelector(`[data-setup-destination="${saved}"]`);
+    }
+    if (!activeBtn) {
+      activeBtn = bar.querySelector('[data-setup-destination="eat"]');
+    }
   }
 
   if (activeBtn) {
@@ -255,7 +268,12 @@ function updateNotch(animated = true) {
         currentTab = tabName;
       }
 
-      if (animated && isDifferent) {
+      if (!isInitialized) {
+        // First render: snap instantly without flying from left
+        isInitialized = true;
+        orb.classList.add('is-ready');
+        glow.classList.add('is-ready');
+      } else if (animated && isDifferent) {
         orb.classList.remove('is-jumping');
         void orb.offsetWidth;
         orb.classList.add('is-jumping');
@@ -267,7 +285,11 @@ function updateNotch(animated = true) {
 }
 
 const requestedDestination = new URLSearchParams(location.search).get('setupDestination');
-let pending = workout ? null : (requestedDestination || 'eat');
+let savedTab = null;
+try {
+  savedTab = sessionStorage.getItem('setup_active_tab');
+} catch (e) {}
+let pending = workout ? null : (requestedDestination || savedTab || 'eat');
 
 function sportHeader() {
   const app = document.getElementById('app');
@@ -353,7 +375,7 @@ function render() {
     }
   }
   sportHeader();
-  requestAnimationFrame(() => updateNotch(true));
+  requestAnimationFrame(() => updateNotch(isInitialized));
 }
 
 function schedule() {
