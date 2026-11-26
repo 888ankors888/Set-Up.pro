@@ -33,74 +33,85 @@ html body #nav .setup-wordnav {
 }
 `;
 
-// 3D Cyber Sphere SVG
+// 3D Cyber Sphere SVG without filter clipping issues
 const CYBER_SPHERE_SVG = `
-<svg class="setup-cyber-sphere" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+<svg class="setup-cyber-sphere" viewBox="0 0 512 512" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
   <defs>
-    <radialGradient id="sphereGrad" cx="38%" cy="28%" r="70%" fx="32%" fy="22%">
+    <radialGradient id="cyberSphereGrad" cx="38%" cy="28%" r="70%" fx="32%" fy="22%">
       <stop offset="0%" stop-color="#454a4e"/>
       <stop offset="25%" stop-color="#1b1e21"/>
       <stop offset="70%" stop-color="#090a0c"/>
       <stop offset="100%" stop-color="#000000"/>
     </radialGradient>
-    <radialGradient id="rimLight" cx="50%" cy="92%" r="45%">
+    <radialGradient id="cyberRimLight" cx="50%" cy="92%" r="45%">
       <stop offset="0%" stop-color="#2c3e35" stop-opacity="0.7"/>
       <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
     </radialGradient>
-    <linearGradient id="neonGrad" x1="20%" y1="15%" x2="80%" y2="85%">
+    <linearGradient id="cyberNeonGrad" x1="20%" y1="15%" x2="80%" y2="85%">
       <stop offset="0%" stop-color="#b4ff6b"/>
       <stop offset="45%" stop-color="#76e86c"/>
       <stop offset="100%" stop-color="#2ba859"/>
     </linearGradient>
-    <linearGradient id="glossTop" x1="0%" y1="0%" x2="0%" y2="100%">
+    <linearGradient id="cyberGlossTop" x1="0%" y1="0%" x2="0%" y2="100%">
       <stop offset="0%" stop-color="#ffffff" stop-opacity="0.55"/>
       <stop offset="100%" stop-color="#ffffff" stop-opacity="0.0"/>
     </linearGradient>
-    <linearGradient id="glossSide" x1="0%" y1="0%" x2="100%" y2="100%">
+    <linearGradient id="cyberGlossSide" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#ffffff" stop-opacity="0.35"/>
       <stop offset="100%" stop-color="#ffffff" stop-opacity="0.0"/>
     </linearGradient>
-    <filter id="neonGlow" x="-25%" y="-25%" width="150%" height="150%">
-      <feGaussianBlur stdDeviation="5" result="blur1"/>
-      <feGaussianBlur stdDeviation="12" result="blur2"/>
-      <feMerge>
-        <feMergeNode in="blur2"/>
-        <feMergeNode in="blur1"/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
-    </filter>
-    <clipPath id="sphereClip">
-      <circle cx="256" cy="256" r="236"/>
-    </clipPath>
   </defs>
-  <g clip-path="url(#sphereClip)">
-    <circle cx="256" cy="256" r="236" fill="url(#sphereGrad)"/>
-    <circle cx="256" cy="256" r="236" fill="url(#rimLight)"/>
-    <circle cx="256" cy="256" r="175" fill="#4ce66d" opacity="0.12" filter="url(#neonGlow)"/>
-    <g fill="none" stroke="url(#neonGrad)" stroke-linecap="round" stroke-linejoin="round" filter="url(#neonGlow)">
-      <path d="M 244 90 A 166 166 0 0 0 90 244 L 122 244" stroke-width="11"/>
-      <path d="M 268 90 A 166 166 0 0 1 422 244" stroke-width="11"/>
-      <path d="M 90 268 A 166 166 0 0 0 244 422 L 244 390" stroke-width="11"/>
-      <path d="M 422 268 A 166 166 0 0 1 268 422 L 268 390" stroke-width="11"/>
-      <path d="M 244 122 A 134 134 0 0 0 122 244" stroke-width="11"/>
-      <path d="M 268 122 A 134 134 0 0 1 390 244 L 358 244" stroke-width="11"/>
-      <path d="M 122 268 A 134 134 0 0 0 220 385" stroke-width="11"/>
-      <path d="M 390 268 A 134 134 0 0 1 292 385" stroke-width="11"/>
-      <path d="M 162 215 A 102 102 0 0 1 350 215" stroke-width="11"/>
-      <path d="M 154 268 A 102 102 0 0 0 358 268" stroke-width="11"/>
-      <path d="M 186 256 A 70 70 0 1 1 326 256 A 70 70 0 0 1 268 325 L 268 358" stroke-width="11"/>
-      <path d="M 186 256 A 70 70 0 0 0 244 325 L 244 358" stroke-width="11"/>
-      <path d="M 244 292 A 38 38 0 1 1 268 292" stroke-width="11"/>
-      <circle cx="145" cy="215" r="7" fill="#0d1210" stroke-width="4.5"/>
-      <circle cx="348" cy="188" r="7" fill="#0d1210" stroke-width="4.5"/>
-      <circle cx="404" cy="212" r="7" fill="#0d1210" stroke-width="4.5"/>
-      <circle cx="185" cy="340" r="7" fill="#0d1210" stroke-width="4.5"/>
-      <circle cx="332" cy="336" r="7" fill="#0d1210" stroke-width="4.5"/>
-    </g>
-    <path d="M 118 112 C 165 44, 347 44, 394 112 C 345 78, 167 78, 118 112 Z" fill="url(#glossTop)"/>
-    <path d="M 65 170 C 44 215, 44 275, 62 315 C 66 270, 68 215, 86 175 Z" fill="url(#glossSide)"/>
-    <circle cx="256" cy="256" r="235" fill="none" stroke="#ffffff" stroke-opacity="0.12" stroke-width="2"/>
+
+  <!-- База шара -->
+  <circle cx="256" cy="256" r="236" fill="url(#cyberSphereGrad)"/>
+  
+  <!-- Нижний рефлекс -->
+  <circle cx="256" cy="256" r="236" fill="url(#cyberRimLight)"/>
+
+  <!-- Внутреннее мягкое свечение узора -->
+  <circle cx="256" cy="256" r="175" fill="#4ce66d" opacity="0.16"/>
+
+  <!-- Неоновый лабиринт -->
+  <g fill="none" stroke="url(#cyberNeonGrad)" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Внешнее кольцо -->
+    <path d="M 244 90 A 166 166 0 0 0 90 244 L 122 244" stroke-width="12"/>
+    <path d="M 268 90 A 166 166 0 0 1 422 244" stroke-width="12"/>
+    <path d="M 90 268 A 166 166 0 0 0 244 422 L 244 390" stroke-width="12"/>
+    <path d="M 422 268 A 166 166 0 0 1 268 422 L 268 390" stroke-width="12"/>
+
+    <!-- 2-е кольцо -->
+    <path d="M 244 122 A 134 134 0 0 0 122 244" stroke-width="12"/>
+    <path d="M 268 122 A 134 134 0 0 1 390 244 L 358 244" stroke-width="12"/>
+    <path d="M 122 268 A 134 134 0 0 0 220 385" stroke-width="12"/>
+    <path d="M 390 268 A 134 134 0 0 1 292 385" stroke-width="12"/>
+
+    <!-- 3-е кольцо -->
+    <path d="M 162 215 A 102 102 0 0 1 350 215" stroke-width="12"/>
+    <path d="M 154 268 A 102 102 0 0 0 358 268" stroke-width="12"/>
+
+    <!-- 4-е кольцо -->
+    <path d="M 186 256 A 70 70 0 1 1 326 256 A 70 70 0 0 1 268 325 L 268 358" stroke-width="12"/>
+    <path d="M 186 256 A 70 70 0 0 0 244 325 L 244 358" stroke-width="12"/>
+
+    <!-- Центр -->
+    <path d="M 244 292 A 38 38 0 1 1 268 292" stroke-width="12"/>
+
+    <!-- Контакты -->
+    <circle cx="145" cy="215" r="8" fill="#0d1210" stroke="#b4ff6b" stroke-width="4.5"/>
+    <circle cx="348" cy="188" r="8" fill="#0d1210" stroke="#b4ff6b" stroke-width="4.5"/>
+    <circle cx="404" cy="212" r="8" fill="#0d1210" stroke="#b4ff6b" stroke-width="4.5"/>
+    <circle cx="185" cy="340" r="8" fill="#0d1210" stroke="#b4ff6b" stroke-width="4.5"/>
+    <circle cx="332" cy="336" r="8" fill="#0d1210" stroke="#b4ff6b" stroke-width="4.5"/>
   </g>
+
+  <!-- Верхний стеклянный блик -->
+  <path d="M 118 112 C 165 44, 347 44, 394 112 C 345 78, 167 78, 118 112 Z" fill="url(#cyberGlossTop)"/>
+
+  <!-- Левый боковой блик -->
+  <path d="M 65 170 C 44 215, 44 275, 62 315 C 66 270, 68 215, 86 175 Z" fill="url(#cyberGlossSide)"/>
+
+  <!-- Кант сферы -->
+  <circle cx="256" cy="256" r="235" fill="none" stroke="#ffffff" stroke-opacity="0.18" stroke-width="2.5"/>
 </svg>
 `;
 
@@ -130,7 +141,6 @@ function createSvgIcon(name) {
 let nav, bar, panel, up, svgDoc, curvePath, orb, glow, queued = false;
 let currentCx = null;
 let currentTab = null;
-let isInitialized = false;
 const targets = new Map();
 const workout = /\/workouts\.html$/.test(location.pathname);
 
@@ -334,11 +344,7 @@ function updateNotch(animated = true) {
         currentTab = tabName;
       }
 
-      if (!isInitialized) {
-        isInitialized = true;
-        orb.classList.add('is-ready');
-        glow.classList.add('is-ready');
-      } else if (animated && isDifferent) {
+      if (animated && isDifferent) {
         orb.classList.remove('is-jumping');
         void orb.offsetWidth;
         orb.classList.add('is-jumping');
@@ -440,7 +446,7 @@ function render() {
     }
   }
   sportHeader();
-  requestAnimationFrame(() => updateNotch(isInitialized));
+  requestAnimationFrame(() => updateNotch(false));
 }
 
 function schedule() {

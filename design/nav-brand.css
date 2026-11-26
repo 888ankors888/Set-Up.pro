@@ -1,4 +1,4 @@
-/* Updated nav-brand.css with continuous curved notch dock & 3D cyber neon sphere */
+/* Updated nav-brand.css with continuous curved notch dock & visible 3D cyber neon sphere */
 html body #nav .setup-wordnav {
   position: relative !important;
   display: flex !important;
@@ -30,27 +30,22 @@ html body #nav .setup-wordnav {
 /* Floating Orb Indicator with 3D Cyber Sphere */
 .setup-nav-orb {
   position: absolute !important;
-  top: -24px !important;
+  top: -22px !important;
   left: 0 !important;
-  width: 60px !important;
-  height: 60px !important;
+  width: 58px !important;
+  height: 58px !important;
   border-radius: 50% !important;
   background: transparent !important;
-  z-index: 15 !important;
+  z-index: 20 !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   pointer-events: none !important;
-  opacity: 0;
-  filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.65)) drop-shadow(0 4px 14px rgba(76, 230, 109, 0.35)) !important;
-  transform: translate3d(var(--orb-x, 150px), 0, 0) translate(-50%, 0);
-  transition: none !important;
-  will-change: transform;
-}
-
-.setup-nav-orb.is-ready {
   opacity: 1 !important;
-  transition: transform 0.48s cubic-bezier(0.34, 1.45, 0.7, 1), opacity 0.2s ease !important;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.65), 0 0 18px rgba(118, 232, 108, 0.4) !important;
+  transform: translate3d(var(--orb-x, 150px), 0, 0) translate(-50%, 0);
+  transition: transform 0.48s cubic-bezier(0.34, 1.45, 0.7, 1) !important;
+  will-change: transform;
 }
 
 .setup-nav-orb-inner {
@@ -91,15 +86,10 @@ html body #nav .setup-wordnav {
   background: radial-gradient(circle, rgba(118, 232, 108, 0.35) 0%, rgba(118, 232, 108, 0) 70%) !important;
   pointer-events: none !important;
   z-index: 2 !important;
-  opacity: 0;
-  transform: translate3d(var(--orb-x, 150px), 0, 0) translate(-50%, 0) !important;
-  transition: none !important;
-  will-change: transform;
-}
-
-.setup-nav-glow.is-ready {
   opacity: 1 !important;
-  transition: transform 0.48s cubic-bezier(0.34, 1.45, 0.7, 1), opacity 0.2s ease !important;
+  transform: translate3d(var(--orb-x, 150px), 0, 0) translate(-50%, 0) !important;
+  transition: transform 0.48s cubic-bezier(0.34, 1.45, 0.7, 1) !important;
+  will-change: transform;
 }
 
 /* Buttons in nav */
