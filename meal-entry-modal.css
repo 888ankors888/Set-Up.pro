@@ -99,3 +99,18 @@ html.meal-entry-open{overflow:hidden}
 #food-add-dialog input.fam-text:focus,
 #food-add-dialog input.fam-input:focus,
 #food-add-dialog input.fam-g:focus{box-shadow:none!important;outline:none!important}
+
+/* ===== One unified search field: the inner <input> must be fully transparent (site-wide input styles are neutralized) ===== */
+html body #food-add-dialog .fam-search input,
+html body #food-add-dialog .fam-gwrap input{
+  -webkit-appearance:none!important;appearance:none!important;
+  background:transparent!important;background-color:transparent!important;background-image:none!important;
+  border:0!important;border-radius:0!important;box-shadow:none!important;outline:none!important;
+  margin:0!important;padding:0!important;height:100%!important;width:100%!important;min-width:0!important;
+  color:#eef7f2!important;caret-color:#c6f85c;
+}
+html body #food-add-dialog .fam-search input:focus,
+html body #food-add-dialog .fam-search input:focus-visible,
+html body #food-add-dialog .fam-gwrap input:focus,
+html body #food-add-dialog .fam-gwrap input:focus-visible{background:transparent!important;border:0!important;box-shadow:none!important;outline:none!important}
+html body #food-add-dialog .fam-search{overflow:hidden}
