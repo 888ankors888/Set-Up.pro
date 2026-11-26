@@ -137,7 +137,7 @@ function createSvgIcon(name) {
   return svg;
 }
 
-let nav, bar, panel, up, svgDoc, curvePath, neonTopBorder, orb, orbInner, glow, queued = false;
+let nav, bar, panel, up, svgDoc, curvePath, neonTopBorder, clipRect, orb, orbInner, glow, queued = false;
 let currentCx = null;
 let currentTab = null;
 let notchTimer = null;
@@ -217,45 +217,50 @@ function shoulderFor(w, cx) {
   return Math.max(56, Math.min(150, cx - 16, w - 16 - cx));
 }
 
+// Same wave on every tab (the one used for "Habits"). Where it does not fit next to the panel edge
+// ("Sport"), the wave simply continues past the edge and is clipped by the rounded panel outline.
 function generateNotchPaths(w, h, cx, S) {
   const a = S * 0.63;
   const ls = cx - S, rs = cx + S;
+  const leftFits = ls >= 16, rightFits = rs <= w - 16;
+
+  const startD = leftFits ? `M 0 16 C 0 6 6 0 16 0 L ${ls} 0` : `M ${ls} 0`;
+  const endD = rightFits ? `L ${w - 16} 0 C ${w - 6} 0 ${w} 6 ${w} 16` : '';
 
   const topBorderD = `
-    M 0 16
-    C 0 6 6 0 16 0
-    L ${Math.max(16, ls)} 0
+    ${startD}
     C ${ls + a} 0, ${cx - BOWL_TIGHT} ${BOWL_DEPTH}, ${cx} ${BOWL_DEPTH}
     C ${cx + BOWL_TIGHT} ${BOWL_DEPTH}, ${rs - a} 0, ${rs} 0
-    L ${w - 16} 0
-    C ${w - 6} 0 ${w} 6 ${w} 16
+    ${endD}
   `;
 
   const fullFillD = `
-    ${topBorderD}
-    L ${w} ${h - 16}
-    C ${w} ${h - 6} ${w - 6} ${h} ${w - 16} ${h}
-    L 16 ${h}
-    C 6 ${h} 0 ${h - 6} 0 ${h - 16}
+    M -20 0
+    L ${ls} 0
+    C ${ls + a} 0, ${cx - BOWL_TIGHT} ${BOWL_DEPTH}, ${cx} ${BOWL_DEPTH}
+    C ${cx + BOWL_TIGHT} ${BOWL_DEPTH}, ${rs - a} 0, ${rs} 0
+    L ${w + 20} 0
+    L ${w + 20} ${h + 20}
+    L -20 ${h + 20}
     Z
   `;
 
   return { fullFillD, topBorderD };
 }
 
-// "Eat" uses exactly the same wave length as "Habits"; "Sport" keeps its own
 function drawNotch(w, h, cx) {
-  let S = shoulderFor(w, cx);
-  const eatBtn = bar.querySelector(':scope > [data-setup-destination="eat"]');
   const habitsBtn = bar.querySelector(':scope > [data-setup-destination="tracker"]');
-  if (eatBtn && habitsBtn) {
-    const eatCx = eatBtn.offsetLeft + eatBtn.offsetWidth / 2;
-    const habitsCx = habitsBtn.offsetLeft + habitsBtn.offsetWidth / 2;
-    if (Math.abs(cx - eatCx) < 3) S = shoulderFor(w, habitsCx);
-  }
+  const habitsCx = habitsBtn ? habitsBtn.offsetLeft + habitsBtn.offsetWidth / 2 : cx;
+  const S = shoulderFor(w, habitsCx);
   const { fullFillD, topBorderD } = generateNotchPaths(w, h, cx, S);
   curvePath.setAttribute('d', fullFillD);
   if (neonTopBorder) neonTopBorder.setAttribute('d', topBorderD);
+  if (clipRect) {
+    clipRect.setAttribute('x', '0');
+    clipRect.setAttribute('y', '-4');
+    clipRect.setAttribute('width', String(w));
+    clipRect.setAttribute('height', String(h + 4));
+  }
 }
 
 function mount() {
@@ -278,14 +283,17 @@ function mount() {
       <stop offset="50%" stop-color="#b4ff6b" stop-opacity="1"/>
       <stop offset="100%" stop-color="#76e86c" stop-opacity="0.4"/>
     </linearGradient>
+    <clipPath id="setupDockClip"><rect id="setupDockClipRect" x="0" y="-4" width="400" height="80" rx="16" ry="16"/></clipPath>
   `;
   svgDoc.appendChild(defs);
+  clipRect = defs.querySelector('#setupDockClipRect');
 
   curvePath = document.createElementNS(svgNs, 'path');
   curvePath.setAttribute('fill', 'url(#setupDockGrad)');
   curvePath.setAttribute('stroke', 'rgba(255, 255, 255, 0.08)');
   curvePath.setAttribute('stroke-width', '1');
   curvePath.setAttribute('stroke-linejoin', 'round');
+  curvePath.setAttribute('clip-path', 'url(#setupDockClip)');
   svgDoc.appendChild(curvePath);
 
   neonTopBorder = document.createElementNS(svgNs, 'path');
@@ -294,6 +302,7 @@ function mount() {
   neonTopBorder.setAttribute('stroke-width', '2.2');
   neonTopBorder.setAttribute('stroke-linecap', 'round');
   neonTopBorder.setAttribute('stroke-linejoin', 'round');
+  neonTopBorder.setAttribute('clip-path', 'url(#setupDockClip)');
   svgDoc.appendChild(neonTopBorder);
 
   bar.appendChild(svgDoc);
