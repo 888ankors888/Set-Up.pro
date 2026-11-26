@@ -153,4 +153,10 @@
   jPut = afterSave(jPut);
   if (typeof aiSave === 'function') aiSave = afterSave(aiSave);
   render();
+
+  // The new compact FOOD.PRO window replaces this dialog as the "Add food" entry point;
+  // this dialog stays only for the photo estimate result (window.foodOpenEstimateWindow).
+  const loader = document.createElement('script');
+  loader.src = 'food-add-modal.js?v=local';
+  document.head.appendChild(loader);
 })();
