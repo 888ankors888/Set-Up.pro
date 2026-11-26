@@ -130,7 +130,7 @@ html body #nav .setup-wordnav > button:not(.on):not(.setup-menu-trigger):hover {
   background: rgba(167, 228, 202, 0.08) !important;
 }
 
-/* Icons: 48px (twice the previous 24px) */
+/* Icons: 48px */
 html body #nav .setup-wordnav > button .setup-brand-icon {
   display: block !important;
   width: 48px !important;
@@ -278,12 +278,63 @@ html body #nav .setup-wordnav .setup-up-panel button .setup-brand-icon {
   flex: 0 0 20px !important;
 }
 
+/* ---- Mobile (<1000px): beat desktop-brand.css, which shrinks nav buttons to 33px and icons to 16px ---- */
+@media (max-width: 999px) {
+  html:root:root:root:root:root:root body #nav .setup-wordnav > button:not(.setup-menu-trigger) {
+    height: 100% !important;
+    min-height: 0 !important;
+    padding: 6px 4px !important;
+    gap: 0 !important;
+  }
+  html:root:root:root:root:root:root body #nav .setup-wordnav > button.setup-menu-trigger {
+    height: 100% !important;
+    min-height: 0 !important;
+    padding: 6px 4px !important;
+  }
+  html:root:root:root:root:root:root body #nav .setup-wordnav > button:not(.setup-menu-trigger) .setup-brand-icon {
+    width: 48px !important;
+    height: 48px !important;
+    flex: 0 0 48px !important;
+  }
+  html:root:root:root:root:root:root body #nav .setup-wordnav > button.setup-menu-trigger .setup-brand-icon {
+    width: 28px !important;
+    height: 28px !important;
+    flex: 0 0 28px !important;
+  }
+  html:root:root:root:root:root:root body #nav .setup-wordnav > button .setup-brand-label {
+    font-size: 10.5px !important;
+    line-height: 1.15 !important;
+  }
+  html:root:root:root:root:root:root body #nav .setup-wordnav .setup-up-panel button .setup-brand-icon {
+    width: 20px !important;
+    height: 20px !important;
+    flex: 0 0 20px !important;
+  }
+
+  /* ---- Pinned header with the logo ---- */
+  html:root:root:root:root:root body:has(#nav) :is(.brand:not(.big), main > .setup-home) {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+    padding-inline: 16px !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    z-index: 70 !important;
+    background: var(--bg, #042923) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35) !important;
+  }
+}
+
 @media (max-width: 480px) {
   html body #nav .setup-wordnav {
     width: 100% !important;
     height: 68px !important;
-  }
-  html body #nav .setup-wordnav > button .setup-brand-label {
-    font-size: 10px !important;
   }
 }
