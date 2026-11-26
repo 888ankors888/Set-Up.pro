@@ -208,24 +208,22 @@ function button(name, label) {
   return b;
 }
 
-// Socket: round bowl (radius 34, centre 8px below the top edge) with long, very soft S-curve shoulders
+// Socket: round bowl (radius 34, centre 8px below the top edge) with very long, gentle S-curve shoulders
 const SOCKET_R = 34;
 const SOCKET_CY = 8;
-const SHOULDER_Y = 10;
 
 function generateNotchPaths(w, h, cx) {
-  const dx = Math.round(Math.sqrt(SOCKET_R * SOCKET_R - (SHOULDER_Y - SOCKET_CY) * (SHOULDER_Y - SOCKET_CY)));
-  const l = cx - dx, r = cx + dx;
-  const sh = Math.max(16, Math.min(76, cx - dx - 18, w - 18 - cx - dx));
+  const l = cx - SOCKET_R, r = cx + SOCKET_R;
+  const sh = Math.max(16, Math.min(70, cx - SOCKET_R - 18, w - 18 - cx - SOCKET_R));
   const ls = l - sh, rs = r + sh;
 
   const topBorderD = `
     M 0 16
     Q 0 0 16 0
     L ${Math.max(16, ls)} 0
-    C ${ls + sh * 0.82} 0, ${l} 0, ${l} ${SHOULDER_Y}
-    A ${SOCKET_R} ${SOCKET_R} 0 1 0 ${r} ${SHOULDER_Y}
-    C ${r} 0, ${rs - sh * 0.82} 0, ${rs} 0
+    C ${ls + sh * 0.62} 0, ${l} ${SOCKET_CY * 0.12}, ${l} ${SOCKET_CY}
+    A ${SOCKET_R} ${SOCKET_R} 0 1 0 ${r} ${SOCKET_CY}
+    C ${r} ${SOCKET_CY * 0.12}, ${rs - sh * 0.62} 0, ${rs} 0
     L ${w - 16} 0
     Q ${w} 0 ${w} 16
   `;
