@@ -88,6 +88,11 @@ const SPHERE_SVGS = {
       <stop offset="45%" stop-color="#76e86c"/>
       <stop offset="100%" stop-color="#2ba859"/>
     </linearGradient>
+    <linearGradient id="checkWhiteGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="60%" stop-color="#f2f7f3"/>
+      <stop offset="100%" stop-color="#d2ded6"/>
+    </linearGradient>
     <linearGradient id="glossTop" x1="0%" y1="0%" x2="0%" y2="100%">
       <stop offset="0%" stop-color="#ffffff" stop-opacity="0.55"/>
       <stop offset="100%" stop-color="#ffffff" stop-opacity="0.0"/>
@@ -105,6 +110,15 @@ const SPHERE_SVGS = {
         <feMergeNode in="SourceGraphic"/>
       </feMerge>
     </filter>
+    <filter id="checkShadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#000000" flood-opacity="0.85"/>
+      <feDropShadow dx="0" dy="0" stdDeviation="6" flood-color="#b4ff6b" flood-opacity="0.3"/>
+    </filter>
+    <mask id="mazeCutout">
+      <rect x="0" y="0" width="512" height="512" fill="#ffffff"/>
+      <circle cx="256" cy="256" r="96" fill="#000000"/>
+      <path d="M 168 256 L 230 318 L 352 184" fill="none" stroke="#000000" stroke-width="64" stroke-linecap="round" stroke-linejoin="round"/>
+    </mask>
     <clipPath id="sphereClip">
       <circle cx="256" cy="256" r="236"/>
     </clipPath>
@@ -113,25 +127,27 @@ const SPHERE_SVGS = {
     <circle cx="256" cy="256" r="236" fill="url(#sphereGrad)"/>
     <circle cx="256" cy="256" r="236" fill="url(#rimLight)"/>
     <circle cx="256" cy="256" r="175" fill="#4ce66d" opacity="0.12" filter="url(#neonGlow)"/>
-    <g fill="none" stroke="url(#neonGrad)" stroke-linecap="round" stroke-linejoin="round" filter="url(#neonGlow)">
-      <path d="M 244 90 A 166 166 0 0 0 90 244 L 122 244" stroke-width="11"/>
-      <path d="M 268 90 A 166 166 0 0 1 422 244" stroke-width="11"/>
-      <path d="M 90 268 A 166 166 0 0 0 244 422 L 244 390" stroke-width="11"/>
-      <path d="M 422 268 A 166 166 0 0 1 268 422 L 268 390" stroke-width="11"/>
-      <path d="M 244 122 A 134 134 0 0 0 122 244" stroke-width="11"/>
-      <path d="M 268 122 A 134 134 0 0 1 390 244 L 358 244" stroke-width="11"/>
-      <path d="M 122 268 A 134 134 0 0 0 220 385" stroke-width="11"/>
-      <path d="M 390 268 A 134 134 0 0 1 292 385" stroke-width="11"/>
-      <path d="M 162 215 A 102 102 0 0 1 350 215" stroke-width="11"/>
-      <path d="M 154 268 A 102 102 0 0 0 358 268" stroke-width="11"/>
-      <path d="M 186 256 A 70 70 0 1 1 326 256 A 70 70 0 0 1 268 325 L 268 358" stroke-width="11"/>
-      <path d="M 186 256 A 70 70 0 0 0 244 325 L 244 358" stroke-width="11"/>
-      <path d="M 244 292 A 38 38 0 1 1 268 292" stroke-width="11"/>
-      <circle cx="145" cy="215" r="7" fill="#0d1210" stroke-width="4.5"/>
-      <circle cx="348" cy="188" r="7" fill="#0d1210" stroke-width="4.5"/>
-      <circle cx="404" cy="212" r="7" fill="#0d1210" stroke-width="4.5"/>
-      <circle cx="185" cy="340" r="7" fill="#0d1210" stroke-width="4.5"/>
-      <circle cx="332" cy="336" r="7" fill="#0d1210" stroke-width="4.5"/>
+    <g mask="url(#mazeCutout)">
+      <g fill="none" stroke="url(#neonGrad)" stroke-linecap="round" stroke-linejoin="round" filter="url(#neonGlow)">
+        <path d="M 244 90 A 166 166 0 0 0 90 244 L 122 244" stroke-width="11"/>
+        <path d="M 268 90 A 166 166 0 0 1 422 244" stroke-width="11"/>
+        <path d="M 90 268 A 166 166 0 0 0 244 422 L 244 390" stroke-width="11"/>
+        <path d="M 422 268 A 166 166 0 0 1 268 422 L 268 390" stroke-width="11"/>
+        <path d="M 244 122 A 134 134 0 0 0 122 244" stroke-width="11"/>
+        <path d="M 268 122 A 134 134 0 0 1 390 244 L 358 244" stroke-width="11"/>
+        <path d="M 122 268 A 134 134 0 0 0 220 385" stroke-width="11"/>
+        <path d="M 390 268 A 134 134 0 0 1 292 385" stroke-width="11"/>
+        <path d="M 162 215 A 104 104 0 0 1 350 215" stroke-width="11"/>
+        <path d="M 154 268 A 104 104 0 0 0 358 268" stroke-width="11"/>
+        <circle cx="145" cy="215" r="7" fill="#0d1210" stroke-width="4.5"/>
+        <circle cx="404" cy="212" r="7" fill="#0d1210" stroke-width="4.5"/>
+        <circle cx="185" cy="340" r="7" fill="#0d1210" stroke-width="4.5"/>
+        <circle cx="332" cy="336" r="7" fill="#0d1210" stroke-width="4.5"/>
+      </g>
+    </g>
+    <g filter="url(#checkShadow)">
+      <path d="M 168 256 L 230 318 L 352 184" fill="none" stroke="url(#checkWhiteGrad)" stroke-width="38" stroke-linecap="square" stroke-linejoin="miter"/>
+      <path d="M 170 248 L 230 308 L 348 178" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="square" stroke-linejoin="miter" opacity="0.85"/>
     </g>
     <path d="M 118 112 C 165 44, 347 44, 394 112 C 345 78, 167 78, 118 112 Z" fill="url(#glossTop)"/>
     <path d="M 65 170 C 44 215, 44 275, 62 315 C 66 270, 68 215, 86 175 Z" fill="url(#glossSide)"/>
@@ -295,9 +311,9 @@ const SPHERE_SVGS = {
 </svg>`
 };
 
-// Each inline SVG gets its own id namespace so the three spheres never share gradients/filters
+// Each inline SVG gets its own id namespace so the spheres never share gradients/filters/masks
 function uniqueSvg(svg, prefix) {
-  return svg.replace(/(id="|url\(#)(sphereGrad|rimLight|neonGrad|glossTop|glossSide|neonGlow|sphereClip)/g, `$1${prefix}-$2`);
+  return svg.replace(/(id="|url\(#)(sphereGrad|rimLight|neonGrad|checkWhiteGrad|glossTop|glossSide|neonGlow|checkShadow|mazeCutout|sphereClip)/g, `$1${prefix}-$2`);
 }
 
 const ICON_PATHS = {
@@ -335,22 +351,13 @@ const ICON_ART = {
       <line x1="298" y1="258" x2="298" y2="346" stroke-width="17"/>
     </g>`
   },
+  // Habits: a check mark inside a target (two concentric rings), like a completed goal
   tracker: {
     viewBox: '70 70 372 372',
-    body: `<g fill="none" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round" stroke-width="17">
-      <path d="M 244 90 A 166 166 0 0 0 90 244 L 122 244"/>
-      <path d="M 268 90 A 166 166 0 0 1 422 244"/>
-      <path d="M 90 268 A 166 166 0 0 0 244 422 L 244 390"/>
-      <path d="M 422 268 A 166 166 0 0 1 268 422 L 268 390"/>
-      <path d="M 244 122 A 134 134 0 0 0 122 244"/>
-      <path d="M 268 122 A 134 134 0 0 1 390 244 L 358 244"/>
-      <path d="M 122 268 A 134 134 0 0 0 220 385"/>
-      <path d="M 390 268 A 134 134 0 0 1 292 385"/>
-      <path d="M 162 215 A 102 102 0 0 1 350 215"/>
-      <path d="M 154 268 A 102 102 0 0 0 358 268"/>
-      <path d="M 186 256 A 70 70 0 1 1 326 256 A 70 70 0 0 1 268 325 L 268 358"/>
-      <path d="M 186 256 A 70 70 0 0 0 244 325 L 244 358"/>
-      <path d="M 244 292 A 38 38 0 1 1 268 292"/>
+    body: `<g fill="none" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="256" cy="256" r="170" stroke-width="17"/>
+      <circle cx="256" cy="256" r="124" stroke-width="17"/>
+      <path d="M 194 258 L 240 304 L 322 208" stroke-width="30"/>
     </g>`
   }
 };
