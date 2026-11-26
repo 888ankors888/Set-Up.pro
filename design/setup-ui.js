@@ -33,7 +33,32 @@ html body #nav .setup-wordnav {
 }
 `;
 
+const ICON_PATHS = {
+  sport: '<circle cx="5" cy="7" r="2"/><circle cx="19" cy="17" r="2"/><path d="m7 8 10 8M3 14l5-5m8 6 5-5"/>',
+  eat: '<path d="M4 3v6a3 3 0 0 0 6 0V3M7 3v18M20 21V3c-4 2-5 8 0 9"/>',
+  tracker: '<rect x="3" y="4" width="18" height="17" rx="3"/><path d="M8 2v4M16 2v4M3 10h18m4 5 3 3 5-5"/>',
+  questionnaire: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>',
+  report: '<path d="M4 3v18h17M8 16v-5M13 16V7M18 16V4"/>',
+  settings: '<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/>',
+  menu: '<path d="M4 6h16M4 12h16M4 18h16"/>'
+};
+
+function createSvgIcon(name) {
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('fill', 'none');
+  svg.setAttribute('stroke', 'currentColor');
+  svg.setAttribute('stroke-width', '2');
+  svg.setAttribute('stroke-linecap', 'round');
+  svg.setAttribute('stroke-linejoin', 'round');
+  svg.classList.add('setup-brand-icon');
+  svg.innerHTML = ICON_PATHS[name] || ICON_PATHS.menu;
+  return svg;
+}
+
 let nav, bar, panel, up, svgDoc, curvePath, orb, glow, orbIcon, queued = false;
+let currentCx = null;
+let currentTab = null;
 const targets = new Map();
 const workout = /\/workouts\.html$/.test(location.pathname);
 
@@ -66,6 +91,16 @@ function choose(name) {
     location.href = 'index.html?setupDestination=' + encodeURIComponent(name);
     return;
   }
+
+  // Pre-update UI and trigger jump immediately on user click
+  const clickedBtn = bar.querySelector(`[data-setup-destination="${name}"]`);
+  if (clickedBtn && !clickedBtn.classList.contains('setup-menu-trigger')) {
+    bar.querySelectorAll('[data-setup-destination]:not(.setup-menu-trigger)').forEach(btn => {
+      btn.classList.toggle('on', btn === clickedBtn);
+    });
+    updateNotch(true);
+  }
+
   const target = targets.get(name);
   if (target?.isConnected) {
     target.click();
@@ -79,9 +114,11 @@ function button(name, label) {
   b.dataset.setupDestination = name;
   b.dataset.setupLabel = label;
   b.setAttribute('role', 'menuitem');
-  b.innerHTML = `
-    <span class="setup-brand-label">${label}</span>
-  `;
+  b.appendChild(createSvgIcon(name));
+  const span = document.createElement('span');
+  span.className = 'setup-brand-label';
+  span.textContent = label;
+  b.appendChild(span);
   b.addEventListener('click', () => choose(name));
   return b;
 }
@@ -158,6 +195,7 @@ function mount() {
   up.setAttribute('aria-controls', 'setup-up-panel');
   up.setAttribute('aria-label', 'Меню');
   up.title = 'Меню';
+  up.appendChild(createSvgIcon('menu'));
 
   panel = document.createElement('div');
   panel.id = 'setup-up-panel';
@@ -186,30 +224,37 @@ function updateNotch(animated = true) {
   svgDoc.setAttribute('viewBox', `0 0 ${w} ${h}`);
 
   const activeBtn = bar.querySelector('[data-setup-destination].on:not(.setup-menu-trigger)');
-  let cx = w / 2;
   if (activeBtn) {
     const bRect = activeBtn.getBoundingClientRect();
-    cx = (bRect.left + bRect.width / 2) - rect.left;
+    const cx = (bRect.left + bRect.width / 2) - rect.left;
+    const tabName = activeBtn.dataset.setupDestination;
+
     orb.style.display = 'flex';
     glow.style.display = 'block';
 
-    const activeSvg = activeBtn.querySelector('.setup-brand-icon');
-    if (activeSvg) {
-      orbIcon.innerHTML = activeSvg.outerHTML;
+    const isDifferent = currentCx !== null && Math.abs(currentCx - cx) > 4;
+
+    orb.style.left = `${cx}px`;
+    glow.style.left = `${cx}px`;
+    curvePath.setAttribute('d', generateNotchPath(w, h, cx));
+
+    if (currentTab !== tabName) {
+      orbIcon.innerHTML = '';
+      orbIcon.appendChild(createSvgIcon(tabName));
+      currentTab = tabName;
     }
+
+    if (animated && isDifferent) {
+      orb.classList.remove('is-jumping');
+      void orb.offsetWidth; // Force reflow to re-trigger bounce animation
+      orb.classList.add('is-jumping');
+    }
+
+    currentCx = cx;
   } else {
-    // If extra menu is active, park notch at center or hide
     orb.style.display = 'none';
     glow.style.display = 'none';
-  }
-
-  curvePath.setAttribute('d', generateNotchPath(w, h, cx));
-  orb.style.left = `${cx}px`;
-  glow.style.left = `${cx}px`;
-
-  if (animated && activeBtn) {
-    orb.classList.add('is-animating');
-    setTimeout(() => orb.classList.remove('is-animating'), 200);
+    curvePath.setAttribute('d', `M 0 16 Q 0 0 16 0 L ${w - 16} 0 Q ${w} 0 ${w} 16 L ${w} ${h - 16} Q ${w} ${h} ${w - 16} ${h} L 16 ${h} Q 0 ${h} 0 ${h - 16} Z`);
   }
 }
 

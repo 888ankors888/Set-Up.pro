@@ -37,7 +37,7 @@ html body #nav .setup-wordnav {
   border-radius: 50% !important;
   background: #d4f96a !important;
   color: #071b13 !important;
-  z-index: 10 !important;
+  z-index: 15 !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -46,11 +46,23 @@ html body #nav .setup-wordnav {
               0 3px 8px rgba(0, 0, 0, 0.45),
               inset 0 1px 1px rgba(255, 255, 255, 0.85) !important;
   transform: translate(-50%, 0) scale(1);
-  transition: left 0.44s cubic-bezier(0.34, 1.45, 0.7, 1), transform 0.22s ease-out !important;
+  transition: left 0.44s cubic-bezier(0.34, 1.45, 0.7, 1) !important;
 }
 
-.setup-nav-orb.is-animating {
-  transform: translate(-50%, 0) scale(1.18);
+.setup-nav-orb.is-jumping {
+  animation: setup-orb-jump 0.44s cubic-bezier(0.34, 1.45, 0.7, 1) !important;
+}
+
+@keyframes setup-orb-jump {
+  0% {
+    transform: translate(-50%, 0) scale(1);
+  }
+  40% {
+    transform: translate(-50%, -14px) scale(1.18);
+  }
+  100% {
+    transform: translate(-50%, 0) scale(1);
+  }
 }
 
 .setup-nav-orb .setup-brand-icon {
