@@ -1,4 +1,4 @@
-/* Updated nav-brand.css with continuous curved notch dock, 3D cyber neon sphere & black bottom-aligned labels */
+/* Updated nav-brand.css with continuous curved notch dock, 3D cyber neon sphere & elevated black labels */
 html body #nav .setup-wordnav {
   position: relative !important;
   display: flex !important;
@@ -107,7 +107,7 @@ html body #nav .setup-wordnav > button {
   background: transparent !important;
   border: none !important;
   border-radius: 18px !important;
-  padding: 6px 4px 10px 4px !important;
+  padding: 4px 4px 15px 4px !important;
   box-sizing: border-box !important;
   color: #071b13 !important;
   cursor: pointer !important;
@@ -118,11 +118,11 @@ html body #nav .setup-wordnav > button {
 
 html body #nav .setup-wordnav > button .setup-brand-icon {
   display: block !important;
-  width: 20px !important;
-  height: 20px !important;
-  flex: 0 0 20px !important;
+  width: 18px !important;
+  height: 18px !important;
+  flex: 0 0 18px !important;
   margin-bottom: auto !important;
-  margin-top: 10px !important;
+  margin-top: 8px !important;
   color: #7f9e8f !important;
   stroke: currentColor !important;
   stroke-width: 1.8 !important;
@@ -133,11 +133,11 @@ html body #nav .setup-wordnav > button:hover .setup-brand-icon {
   color: #f2f7f4 !important;
 }
 
-/* Category text labels: strictly at the bottom inside bounds, pure black */
+/* Category text labels: raised higher, clearly readable and pure black */
 html body #nav .setup-wordnav > button .setup-brand-label {
   display: block !important;
   width: 100% !important;
-  font-size: 11px !important;
+  font-size: 11.5px !important;
   font-weight: 700 !important;
   line-height: 1.15 !important;
   text-align: center !important;
@@ -148,7 +148,7 @@ html body #nav .setup-wordnav > button .setup-brand-label {
   white-space: nowrap !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
-  transform: translateY(0) !important;
+  transform: translateY(-2px) !important;
   transition: transform 0.22s ease, opacity 0.2s ease !important;
 }
 
@@ -160,8 +160,8 @@ html body #nav .setup-wordnav > button.on .setup-brand-icon {
 
 html body #nav .setup-wordnav > button.on .setup-brand-label {
   color: #000000 !important;
-  font-weight: 800 !important;
-  transform: translateY(0) !important;
+  font-weight: 850 !important;
+  transform: translateY(-2px) !important;
 }
 
 /* Separate menu trigger button */
@@ -171,7 +171,7 @@ html body #nav .setup-wordnav > button.setup-menu-trigger {
   min-width: 54px !important;
   max-width: 54px !important;
   justify-content: center !important;
-  padding-bottom: 6px !important;
+  padding-bottom: 0 !important;
 }
 
 html body #nav .setup-wordnav > button.setup-menu-trigger .setup-brand-icon {
@@ -251,9 +251,9 @@ html body #nav .setup-wordnav .setup-up-panel button.on {
     top: -20px !important;
   }
   html body #nav .setup-wordnav > button {
-    padding-bottom: 8px !important;
+    padding-bottom: 12px !important;
   }
   html body #nav .setup-wordnav > button .setup-brand-label {
-    font-size: 10.5px !important;
+    font-size: 11px !important;
   }
 }

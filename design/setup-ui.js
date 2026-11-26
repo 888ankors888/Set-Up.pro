@@ -1,5 +1,20 @@
 (() => {
 'use strict';
+
+// Automatically ensure default state exists so new users bypass onboarding/welcome screen directly to Eat
+try {
+  if (!localStorage.getItem('nt1')) {
+    const defaultState = {
+      k: 2100, p: 130, f: 65, c: 240,
+      entries: [],
+      water: 0,
+      waterTarget: 2000,
+      goals: { mode: 'maintain' }
+    };
+    localStorage.setItem('nt1', JSON.stringify(defaultState));
+  }
+} catch (e) {}
+
 const css = `
 html body:has(#nav) {
   padding-left: 0 !important;
@@ -31,9 +46,13 @@ html body #nav {
 html body #nav .setup-wordnav {
   pointer-events: auto;
 }
+/* Hide welcome onboarding banner for new users */
+.welcome, #app > .welcome {
+  display: none !important;
+}
 `;
 
-// 3D Cyber Sphere SVG without filter clipping issues
+// 3D Cyber Sphere SVG
 const CYBER_SPHERE_SVG = `
 <svg class="setup-cyber-sphere" viewBox="0 0 512 512" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
   <defs>
@@ -62,41 +81,29 @@ const CYBER_SPHERE_SVG = `
     </linearGradient>
   </defs>
 
-  <!-- База шара -->
   <circle cx="256" cy="256" r="236" fill="url(#cyberSphereGrad)"/>
-  
-  <!-- Нижний рефлекс -->
   <circle cx="256" cy="256" r="236" fill="url(#cyberRimLight)"/>
-
-  <!-- Внутреннее мягкое свечение узора -->
   <circle cx="256" cy="256" r="175" fill="#4ce66d" opacity="0.16"/>
 
-  <!-- Неоновый лабиринт -->
   <g fill="none" stroke="url(#cyberNeonGrad)" stroke-linecap="round" stroke-linejoin="round">
-    <!-- Внешнее кольцо -->
     <path d="M 244 90 A 166 166 0 0 0 90 244 L 122 244" stroke-width="12"/>
     <path d="M 268 90 A 166 166 0 0 1 422 244" stroke-width="12"/>
     <path d="M 90 268 A 166 166 0 0 0 244 422 L 244 390" stroke-width="12"/>
     <path d="M 422 268 A 166 166 0 0 1 268 422 L 268 390" stroke-width="12"/>
 
-    <!-- 2-е кольцо -->
     <path d="M 244 122 A 134 134 0 0 0 122 244" stroke-width="12"/>
     <path d="M 268 122 A 134 134 0 0 1 390 244 L 358 244" stroke-width="12"/>
     <path d="M 122 268 A 134 134 0 0 0 220 385" stroke-width="12"/>
     <path d="M 390 268 A 134 134 0 0 1 292 385" stroke-width="12"/>
 
-    <!-- 3-е кольцо -->
     <path d="M 162 215 A 102 102 0 0 1 350 215" stroke-width="12"/>
     <path d="M 154 268 A 102 102 0 0 0 358 268" stroke-width="12"/>
 
-    <!-- 4-е кольцо -->
     <path d="M 186 256 A 70 70 0 1 1 326 256 A 70 70 0 0 1 268 325 L 268 358" stroke-width="12"/>
     <path d="M 186 256 A 70 70 0 0 0 244 325 L 244 358" stroke-width="12"/>
 
-    <!-- Центр -->
     <path d="M 244 292 A 38 38 0 1 1 268 292" stroke-width="12"/>
 
-    <!-- Контакты -->
     <circle cx="145" cy="215" r="8" fill="#0d1210" stroke="#b4ff6b" stroke-width="4.5"/>
     <circle cx="348" cy="188" r="8" fill="#0d1210" stroke="#b4ff6b" stroke-width="4.5"/>
     <circle cx="404" cy="212" r="8" fill="#0d1210" stroke="#b4ff6b" stroke-width="4.5"/>
@@ -104,13 +111,8 @@ const CYBER_SPHERE_SVG = `
     <circle cx="332" cy="336" r="8" fill="#0d1210" stroke="#b4ff6b" stroke-width="4.5"/>
   </g>
 
-  <!-- Верхний стеклянный блик -->
   <path d="M 118 112 C 165 44, 347 44, 394 112 C 345 78, 167 78, 118 112 Z" fill="url(#cyberGlossTop)"/>
-
-  <!-- Левый боковой блик -->
   <path d="M 65 170 C 44 215, 44 275, 62 315 C 66 270, 68 215, 86 175 Z" fill="url(#cyberGlossSide)"/>
-
-  <!-- Кант сферы -->
   <circle cx="256" cy="256" r="235" fill="none" stroke="#ffffff" stroke-opacity="0.18" stroke-width="2.5"/>
 </svg>
 `;
