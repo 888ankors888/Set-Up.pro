@@ -66,54 +66,59 @@ html body #nav .setup-wordnav {
   display: block;
 }
 
-/* ===== Quick actions overlay (opened by the Menu button) ===== */
+/* ===== Quick actions popover (opened by the neon plus), small, anchored to the right corner ===== */
 .sqm {
   --sqm-lime: #B6FF3B;
-  --sqm-lime2: #A3FF12;
   --sqm-aqua: #38bdf8;
   --sqm-spring: cubic-bezier(0.22, 1.18, 0.36, 1);
   --sqm-smooth: cubic-bezier(0.22, 1, 0.36, 1);
   position: fixed;
-  inset: 0;
-  z-index: 58;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: calc(76px + env(safe-area-inset-top, 0px)) 20px calc(104px + env(safe-area-inset-bottom, 0px));
+  right: 12px;
+  bottom: calc(92px + env(safe-area-inset-bottom, 0px));
+  width: min(272px, calc(100vw - 24px));
+  max-height: calc(100vh - 180px);
   overflow-y: auto;
-  background: radial-gradient(circle at 50% 35%, rgba(6, 24, 18, 0.42) 0%, rgba(3, 11, 8, 0.72) 100%);
-  -webkit-backdrop-filter: blur(16px) saturate(145%);
-  backdrop-filter: blur(16px) saturate(145%);
+  z-index: 65;
+  padding: 12px;
+  border-radius: 28px;
+  background: linear-gradient(160deg, rgba(14, 44, 33, 0.9) 0%, rgba(5, 20, 15, 0.94) 100%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  backdrop-filter: blur(24px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.2), 0 18px 44px -8px rgba(0, 0, 0, 0.85), 0 0 30px -8px rgba(163, 255, 18, 0.25);
   font-family: Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
   color: #f3fcf7;
-  transition: opacity 0.34s var(--sqm-smooth), visibility 0.34s var(--sqm-smooth);
+  transform-origin: 100% 100%;
+  transition: opacity 0.26s var(--sqm-smooth), transform 0.38s var(--sqm-spring), visibility 0.26s;
   -webkit-tap-highlight-color: transparent;
+}
+@media (min-width: 1000px) {
+  .sqm { top: 92px; bottom: auto; right: 24px; transform-origin: 100% 0; }
 }
 .sqm.is-closed {
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
+  transform: translateY(14px) scale(0.9);
 }
 .sqm * { box-sizing: border-box; }
 .sqm-grid {
   width: 100%;
-  max-width: 368px;
-  margin: 0 auto;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 14px;
+  gap: 8px;
 }
 .sqm-item {
   opacity: 1;
   transform: translateY(0) scale(1);
-  transition: opacity 0.36s var(--sqm-smooth), transform 0.54s var(--sqm-spring), border-color 0.25s ease, box-shadow 0.25s ease;
-  transition-delay: calc(var(--i, 0) * 36ms);
+  transition: opacity 0.3s var(--sqm-smooth), transform 0.44s var(--sqm-spring), border-color 0.25s ease, box-shadow 0.25s ease;
+  transition-delay: calc(var(--i, 0) * 28ms);
 }
 .sqm.is-closed .sqm-item {
   opacity: 0;
-  transform: translateY(28px) scale(0.91);
-  transition: opacity 0.18s ease, transform 0.24s ease;
-  transition-delay: calc((8 - var(--i, 0)) * 14ms);
+  transform: translateY(14px) scale(0.92);
+  transition: opacity 0.14s ease, transform 0.18s ease;
+  transition-delay: 0ms;
 }
 .sqm-tile {
   position: relative;
@@ -123,10 +128,8 @@ html body #nav .setup-wordnav {
   color: inherit;
   text-align: left;
   background: linear-gradient(152deg, rgba(20, 54, 41, 0.72) 0%, rgba(8, 27, 20, 0.66) 55%, rgba(12, 37, 28, 0.7) 100%);
-  -webkit-backdrop-filter: blur(26px) saturate(160%);
-  backdrop-filter: blur(26px) saturate(160%);
   border: 1px solid rgba(255, 255, 255, 0.13);
-  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.24), inset 0 -1px 0 0 rgba(255, 255, 255, 0.04), 0 14px 32px -10px rgba(0, 0, 0, 0.68);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.22), inset 0 -1px 0 0 rgba(255, 255, 255, 0.04), 0 8px 18px -8px rgba(0, 0, 0, 0.7);
   cursor: pointer;
   user-select: none;
   -webkit-user-select: none;
@@ -137,27 +140,27 @@ html body #nav .setup-wordnav {
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.13) 0%, rgba(255, 255, 255, 0.025) 34%, transparent 62%);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.02) 34%, transparent 62%);
   pointer-events: none;
 }
-.sqm-tile:active { transform: scale(0.955) !important; }
+.sqm-tile:active { transform: scale(0.95) !important; }
 @media (hover: hover) {
   .sqm-tile:hover {
     border-color: rgba(163, 255, 18, 0.45);
-    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.28), 0 16px 34px -8px rgba(0, 0, 0, 0.7), 0 0 24px -4px rgba(163, 255, 18, 0.2);
+    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.26), 0 8px 20px -6px rgba(0, 0, 0, 0.7), 0 0 18px -4px rgba(163, 255, 18, 0.22);
   }
 }
 .sqm-pill {
-  height: 72px;
+  height: 44px;
   border-radius: 999px;
-  padding: 0 18px;
+  padding: 0 12px;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
 }
 .sqm-pill span.sqm-label {
   position: relative;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 600;
   letter-spacing: -0.015em;
   color: #f3fcf7;
@@ -165,43 +168,43 @@ html body #nav .setup-wordnav {
 }
 .sqm-ico {
   position: relative;
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   flex: none;
   color: var(--sqm-lime);
-  filter: drop-shadow(0 0 8px rgba(163, 255, 18, 0.38));
+  filter: drop-shadow(0 0 6px rgba(163, 255, 18, 0.38));
 }
 .sqm-scanner {
-  height: 76px;
+  height: 52px;
   border-radius: 999px;
-  padding: 0 14px;
+  padding: 0 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 6px;
   background: linear-gradient(132deg, rgba(163, 255, 18, 0.28) 0%, rgba(14, 58, 39, 0.76) 48%, rgba(182, 255, 59, 0.22) 100%);
   border-color: rgba(182, 255, 59, 0.44);
-  box-shadow: inset 0 1px 0 0 rgba(232, 255, 184, 0.4), inset 0 -1px 0 0 rgba(163, 255, 18, 0.15), 0 14px 34px -8px rgba(0, 0, 0, 0.65), 0 0 34px -6px rgba(163, 255, 18, 0.32);
+  box-shadow: inset 0 1px 0 0 rgba(232, 255, 184, 0.4), inset 0 -1px 0 0 rgba(163, 255, 18, 0.15), 0 8px 20px -6px rgba(0, 0, 0, 0.65), 0 0 22px -6px rgba(163, 255, 18, 0.32);
 }
-.sqm-scanner .sqm-ico { width: 28px; height: 28px; }
+.sqm-scanner .sqm-ico { width: 22px; height: 22px; }
 .sqm-scanner span.sqm-label {
   position: relative;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 600;
-  line-height: 1.18;
+  line-height: 1.15;
   letter-spacing: -0.015em;
   color: #f7ffeb;
 }
 .sqm-duo {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 14px;
+  gap: 8px;
   align-items: center;
 }
 .sqm-round {
   aspect-ratio: 1 / 1;
   width: 100%;
-  max-height: 76px;
+  max-height: 44px;
   border-radius: 999px;
   display: flex;
   align-items: center;
@@ -211,14 +214,14 @@ html body #nav .setup-wordnav {
 }
 .sqm-water {
   grid-row: span 2;
-  min-height: 166px;
-  border-radius: 34px;
-  padding: 16px;
+  min-height: 104px;
+  border-radius: 24px;
+  padding: 10px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 14px;
+  gap: 8px;
   text-align: center;
 }
 .sqm-water:hover { border-color: rgba(56, 189, 248, 0.5); }
@@ -247,26 +250,26 @@ html body #nav .setup-wordnav {
 @keyframes sqm-wave { 0% { transform: translateX(-8%); } 100% { transform: translateX(8%); } }
 .sqm-water .sqm-glass {
   position: relative;
-  width: 44px;
-  height: 48px;
+  width: 30px;
+  height: 33px;
   color: var(--sqm-aqua);
-  filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.45));
+  filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.45));
 }
 .sqm-water-count {
   position: relative;
   font-variant-numeric: tabular-nums;
   line-height: 1;
-  font-size: 14px;
+  font-size: 12px;
   color: rgba(209, 250, 229, 0.65);
 }
-.sqm-water-count b { font-size: 16px; font-weight: 700; color: #fff; }
+.sqm-water-count b { font-size: 14px; font-weight: 700; color: #fff; }
 .sqm-reset {
   position: absolute;
-  top: 10px;
-  right: 10px;
+  top: 6px;
+  right: 6px;
   z-index: 3;
-  width: 28px;
-  height: 28px;
+  width: 22px;
+  height: 22px;
   border-radius: 999px;
   padding: 0;
   display: flex;
@@ -281,9 +284,11 @@ html body #nav .setup-wordnav {
   transition: opacity 0.2s ease, transform 0.2s ease;
 }
 .sqm-reset.is-on { opacity: 1; pointer-events: auto; transform: scale(1); }
-.sqm-reset svg { width: 14px; height: 14px; }
-/* Menu button highlight while the overlay is open */
-html body #nav .setup-wordnav > button.setup-menu-trigger.sqm-open .setup-brand-icon { color: #b4ff6b !important; }
+.sqm-reset svg { width: 12px; height: 12px; }
+/* The Menu button is a neon plus; it turns into a cross while the popover is open */
+html body #nav .setup-wordnav > button.setup-menu-trigger.sqm-open .setup-brand-icon {
+  transform: rotate(45deg) !important;
+}
 `;
 
 // Three identical glowing spheres; only the icon in the middle differs.
@@ -539,8 +544,7 @@ function uniqueSvg(svg, prefix) {
 const ICON_PATHS = {
   questionnaire: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>',
   report: '<path d="M4 3v18h17M8 16v-5M13 16V7M18 16V4"/>',
-  settings: '<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/>',
-  menu: '<path d="M4 6h16M4 12h16M4 18h16"/>'
+  settings: '<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/>'
 };
 
 // Navigation button icons use the same drawings as the spheres (white), with heavier strokes for small size.
@@ -579,6 +583,14 @@ const ICON_ART = {
       <circle cx="256" cy="256" r="124" stroke-width="17"/>
       <path d="M 194 258 L 240 304 L 322 208" stroke-width="30"/>
     </g>`
+  },
+  // Menu: neon lime plus with a glow (rotates into a cross while the quick menu is open)
+  menu: {
+    viewBox: '0 0 24 24',
+    body: `<g fill="none" stroke="#C8FF5A" stroke-linecap="round" stroke-width="2.8">
+      <path d="M12 4.5v15M4.5 12h15"/>
+    </g>`,
+    glow: 'drop-shadow(0 0 2px rgba(214, 255, 120, 0.95)) drop-shadow(0 0 6px rgba(163, 255, 18, 0.9)) drop-shadow(0 0 12px rgba(118, 232, 108, 0.7))'
   }
 };
 
@@ -593,11 +605,15 @@ function createSvgIcon(name) {
   if (art) {
     svg.setAttribute('viewBox', art.viewBox);
     svg.innerHTML = art.body;
+    if (art.glow) {
+      svg.style.filter = art.glow;
+      svg.style.overflow = 'visible';
+    }
   } else {
     svg.setAttribute('viewBox', '0 0 24 24');
     svg.setAttribute('stroke', 'currentColor');
     svg.setAttribute('stroke-width', '1.9');
-    svg.innerHTML = ICON_PATHS[name] || ICON_PATHS.menu;
+    svg.innerHTML = ICON_PATHS[name];
   }
   return svg;
 }
@@ -629,7 +645,7 @@ function close() {
   if (panel) panel.hidden = true;
 }
 
-/* ===== Quick actions overlay ===== */
+/* ===== Quick actions popover ===== */
 let quick = null;
 let quickOpen = false;
 
@@ -654,10 +670,12 @@ function buildQuick() {
   const el = document.createElement('div');
   el.id = 'setup-quick-menu';
   el.className = 'sqm is-closed';
+  el.setAttribute('role', 'dialog');
+  el.setAttribute('aria-label', 'Быстрые действия');
   el.setAttribute('aria-hidden', 'true');
   el.innerHTML =
     '<div class="sqm-grid">' +
-      '<button type="button" class="sqm-item sqm-tile sqm-pill" data-q="data" style="--i:0">' + qSvg('data') + '<span class="sqm-label">Ваши данные</span></button>' +
+      '<button type="button" class="sqm-item sqm-tile sqm-pill" data-q="data" style="--i:0">' + qSvg('data') + '<span class="sqm-label">Данные</span></button>' +
       '<button type="button" class="sqm-item sqm-tile sqm-pill" data-q="reports" style="--i:1">' + qSvg('reports') + '<span class="sqm-label">Отчёты</span></button>' +
       '<div class="sqm-item sqm-tile sqm-water" id="sqm-water" role="button" tabindex="0" aria-label="Добавить 250 мл воды" data-q="water" style="--i:2">' +
         '<div class="sqm-fill" id="sqm-fill"><div class="sqm-wave"></div></div>' +
@@ -676,7 +694,6 @@ function buildQuick() {
     '</div>';
 
   el.addEventListener('click', e => {
-    if (e.target === el || e.target.classList.contains('sqm-grid')) { closeQuick(); return; }
     const hit = e.target.closest('[data-q]');
     if (!hit) return;
     e.stopPropagation();
@@ -974,7 +991,7 @@ function mount() {
   up.title = 'Меню';
   up.appendChild(createSvgIcon('menu'));
 
-  // The old drop-up panel is kept (hidden) only for compatibility; the Menu button opens the quick-actions overlay
+  // The old drop-up panel is kept (hidden) only for compatibility; the plus button opens the quick-actions popover
   panel = document.createElement('div');
   panel.id = 'setup-up-panel';
   panel.className = 'setup-up-panel';
@@ -1191,6 +1208,8 @@ function start() {
 
   document.addEventListener('pointerdown', e => {
     if (!bar?.contains(e.target)) close();
+    // Tapping anywhere outside the popover and the plus button closes the quick menu
+    if (quickOpen && quick && !quick.contains(e.target) && !(up && up.contains(e.target))) closeQuick();
   });
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape' && quickOpen) {
