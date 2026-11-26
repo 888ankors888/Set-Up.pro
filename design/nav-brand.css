@@ -107,13 +107,18 @@ html body #nav .setup-wordnav > button {
   overflow: hidden !important;
 }
 
-html body #nav .setup-wordnav > button.on,
-html body #nav .setup-wordnav > button[aria-current="page"] {
+/* Active button: identical to inactive (beats themes.css lime gradient by specificity) */
+html:root:root:root:root:root:root body #nav .setup-wordnav > button.on,
+html:root:root:root:root:root:root body #nav .setup-wordnav > button[aria-current="page"],
+html:root:root:root:root:root:root body #nav .setup-wordnav > button[aria-expanded="true"],
+html[data-setup-theme] body #nav .setup-wordnav > button.on {
   background: transparent !important;
   background-color: transparent !important;
   background-image: none !important;
-  box-shadow: none !important;
   border: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
 }
 
 html body #nav .setup-wordnav > button:not(.on):not(.setup-menu-trigger) {
