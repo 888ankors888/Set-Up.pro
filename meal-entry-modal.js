@@ -176,4 +176,9 @@
   habitColors.rel = 'stylesheet';
   habitColors.href = 'habit-tracker-colors.css?v=local';
   document.head.appendChild(habitColors);
+
+  // Rename "Мои цели" -> "Мои данные"
+  const rename = document.createElement('script');
+  rename.src = 'goals-rename.js?v=local';
+  document.head.appendChild(rename);
 })();
