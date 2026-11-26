@@ -117,7 +117,7 @@ const SPHERE_SVGS = {
     <mask id="mazeCutout">
       <rect x="0" y="0" width="512" height="512" fill="#ffffff"/>
       <circle cx="256" cy="256" r="96" fill="#000000"/>
-      <path d="M 168 256 L 230 318 L 352 184" fill="none" stroke="#000000" stroke-width="64" stroke-linecap="round" stroke-linejoin="round"/>
+      <path transform="translate(256 256) scale(0.5) translate(-260 -251)" d="M 168 256 L 230 318 L 352 184" fill="none" stroke="#000000" stroke-width="64" stroke-linecap="round" stroke-linejoin="round"/>
     </mask>
     <clipPath id="sphereClip">
       <circle cx="256" cy="256" r="236"/>
@@ -145,7 +145,8 @@ const SPHERE_SVGS = {
         <circle cx="332" cy="336" r="7" fill="#0d1210" stroke-width="4.5"/>
       </g>
     </g>
-    <g filter="url(#checkShadow)">
+    <!-- Check mark, half of the original size, centred on the sphere -->
+    <g transform="translate(256 256) scale(0.5) translate(-260 -251)" filter="url(#checkShadow)">
       <path d="M 168 256 L 230 318 L 352 184" fill="none" stroke="url(#checkWhiteGrad)" stroke-width="38" stroke-linecap="square" stroke-linejoin="miter"/>
       <path d="M 170 248 L 230 308 L 348 178" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="square" stroke-linejoin="miter" opacity="0.85"/>
     </g>
