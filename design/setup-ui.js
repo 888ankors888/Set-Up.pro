@@ -72,6 +72,8 @@ html body #nav .setup-wordnav {
 `;
 
 // Three identical glowing spheres; only the icon in the middle differs.
+// Icons (barbell, fork and knife) are drawn in solid white: a gradient stroke on a perfectly horizontal/vertical
+// line has a zero-size bounding box and is not rendered, which is why parts of them used to be missing.
 const SPHERE_SVGS = {
   tracker: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <defs>
@@ -201,6 +203,9 @@ const SPHERE_SVGS = {
       <circle cx="378" cy="326" r="6" fill="#0d1210" stroke-width="4"/>
       <circle cx="224" cy="120" r="5.5" fill="#0d1210" stroke-width="4"/>
       <circle cx="288" cy="392" r="5.5" fill="#0d1210" stroke-width="4"/>
+    </g>
+    <!-- Barbell, solid white -->
+    <g fill="none" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round">
       <line x1="102" y1="256" x2="410" y2="256" stroke-width="11"/>
       <line x1="102" y1="244" x2="102" y2="268" stroke-width="7"/>
       <line x1="410" y1="244" x2="410" y2="268" stroke-width="7"/>
@@ -210,8 +215,8 @@ const SPHERE_SVGS = {
       <rect x="332" y="198" width="18" height="116" rx="6" fill="#0d1410" stroke-width="9"/>
       <rect x="358" y="212" width="16" height="88" rx="6" fill="#0d1410" stroke-width="8.5"/>
       <rect x="382" y="226" width="14" height="60" rx="5" fill="#0d1410" stroke-width="8"/>
-      <rect x="186" y="245" width="8" height="22" rx="3" fill="url(#neonGrad)" stroke="none"/>
-      <rect x="318" y="245" width="8" height="22" rx="3" fill="url(#neonGrad)" stroke="none"/>
+      <rect x="186" y="245" width="8" height="22" rx="3" fill="#ffffff" stroke="none"/>
+      <rect x="318" y="245" width="8" height="22" rx="3" fill="#ffffff" stroke="none"/>
     </g>
     <path d="M 118 112 C 165 44, 347 44, 394 112 C 345 78, 167 78, 118 112 Z" fill="url(#glossTop)"/>
     <path d="M 65 170 C 44 215, 44 275, 62 315 C 66 270, 68 215, 86 175 Z" fill="url(#glossSide)"/>
@@ -277,11 +282,14 @@ const SPHERE_SVGS = {
       <circle cx="374" cy="330" r="6" fill="#0d1210" stroke-width="4"/>
       <circle cx="212" cy="389" r="5.5" fill="#0d1210" stroke-width="4"/>
       <circle cx="300" cy="389" r="5.5" fill="#0d1210" stroke-width="4"/>
+    </g>
+    <!-- Fork and knife, solid white -->
+    <g fill="none" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round">
       <path d="M 200 166 L 200 208 C 200 226, 212 234, 220 234" stroke-width="8.5"/>
       <path d="M 240 166 L 240 208 C 240 226, 228 234, 220 234" stroke-width="8.5"/>
       <line x1="220" y1="166" x2="220" y2="234" stroke-width="8.5"/>
       <line x1="220" y1="234" x2="220" y2="346" stroke-width="10.5"/>
-      <path d="M 298 258 L 298 166 C 276 174, 272 210, 272 252 L 298 258 Z" fill="url(#neonGrad)" fill-opacity="0.16" stroke-width="9"/>
+      <path d="M 298 258 L 298 166 C 276 174, 272 210, 272 252 L 298 258 Z" fill="#ffffff" fill-opacity="0.18" stroke-width="9"/>
       <line x1="298" y1="258" x2="298" y2="346" stroke-width="10.5"/>
     </g>
     <path d="M 118 112 C 165 44, 347 44, 394 112 C 345 78, 167 78, 118 112 Z" fill="url(#glossTop)"/>
