@@ -208,32 +208,32 @@ function button(name, label) {
   return b;
 }
 
-// Socket: round bowl (radius 34, centre 8px below the top edge) with very long (up to 140px), gentle S-curve shoulders
-const SOCKET_R = 34;
-const SOCKET_CY = 8;
+// Bowl: one continuous cubic Bezier curve, horizontal tangent at both ends and at the bottom,
+// so there are no corners anywhere. Depth 42px; closest distance to the orb (r=29) is >= 33px.
+const BOWL_DEPTH = 42;
+const BOWL_TIGHT = 40;
 
 function generateNotchPaths(w, h, cx) {
-  const l = cx - SOCKET_R, r = cx + SOCKET_R;
-  const sh = Math.max(16, Math.min(140, cx - SOCKET_R - 16, w - 16 - cx - SOCKET_R));
-  const ls = l - sh, rs = r + sh;
+  const S = Math.max(56, Math.min(150, cx - 16, w - 16 - cx));
+  const a = S * 0.63;
+  const ls = cx - S, rs = cx + S;
 
   const topBorderD = `
     M 0 16
-    Q 0 0 16 0
+    C 0 6 6 0 16 0
     L ${Math.max(16, ls)} 0
-    C ${ls + sh * 0.72} 0, ${l} ${SOCKET_CY * 0.08}, ${l} ${SOCKET_CY}
-    A ${SOCKET_R} ${SOCKET_R} 0 1 0 ${r} ${SOCKET_CY}
-    C ${r} ${SOCKET_CY * 0.08}, ${rs - sh * 0.72} 0, ${rs} 0
+    C ${ls + a} 0, ${cx - BOWL_TIGHT} ${BOWL_DEPTH}, ${cx} ${BOWL_DEPTH}
+    C ${cx + BOWL_TIGHT} ${BOWL_DEPTH}, ${rs - a} 0, ${rs} 0
     L ${w - 16} 0
-    Q ${w} 0 ${w} 16
+    C ${w - 6} 0 ${w} 6 ${w} 16
   `;
 
   const fullFillD = `
     ${topBorderD}
     L ${w} ${h - 16}
-    Q ${w} ${h} ${w - 16} ${h}
+    C ${w} ${h - 6} ${w - 6} ${h} ${w - 16} ${h}
     L 16 ${h}
-    Q 0 ${h} 0 ${h - 16}
+    C 6 ${h} 0 ${h - 6} 0 ${h - 16}
     Z
   `;
 
@@ -328,29 +328,31 @@ function mount() {
   nav.append(bar);
 }
 
+// Bubble-in-water motion: slow sine ease, gentle lazy rise, side-to-side sway and a jelly wobble that fades out
 function flyOrb(prevCx, cx) {
-  const dur = 560;
-  const lift = 34 + Math.min(22, Math.abs(cx - prevCx) * 0.08);
-  const frames = [];
-  const N = 28;
+  const dur = 1150;
+  const dist = cx - prevCx;
+  const dir = dist >= 0 ? 1 : -1;
+  const rise = 20 + Math.min(10, Math.abs(dist) * 0.04);
+  const N = 72;
+  const move = [];
+  const jelly = [];
   for (let i = 0; i <= N; i++) {
     const t = i / N;
-    const e = t * t * (3 - 2 * t);
-    const x = prevCx + (cx - prevCx) * e;
-    const y = -Math.sin(Math.PI * t) * lift;
-    frames.push({ transform: `translate3d(${x}px, ${y}px, 0) translate(-50%, 0)` });
+    const e = 0.5 - 0.5 * Math.cos(Math.PI * t);
+    const env = Math.sin(Math.PI * t);
+    const x = prevCx + dist * e + Math.sin(Math.PI * 3 * t) * 5 * env * dir;
+    const y = -env * rise + Math.sin(Math.PI * 4 * t) * 3 * env;
+    move.push({ transform: `translate3d(${x}px, ${y}px, 0) translate(-50%, 0)` });
+    const fade = Math.pow(1 - t, 1.4);
+    const s = 0.075 * Math.sin(Math.PI * 2 * 3 * t) * (0.35 + env) * fade;
+    const tilt = 5 * Math.sin(Math.PI * 2 * 1.5 * t) * fade * dir;
+    jelly.push({ transform: `rotate(${tilt}deg) scale(${1 + s}, ${1 - s})` });
   }
   const opts = { duration: dur, easing: 'linear' };
-  orb.animate(frames, opts);
-  if (glow) glow.animate(frames, opts);
-  orbInner.animate([
-    { transform: 'scale(1,1)', offset: 0 },
-    { transform: 'scale(0.94,1.08)', offset: 0.25 },
-    { transform: 'scale(1,1)', offset: 0.7 },
-    { transform: 'scale(1.14,0.86)', offset: 0.88 },
-    { transform: 'scale(0.97,1.04)', offset: 0.95 },
-    { transform: 'scale(1,1)', offset: 1 }
-  ], { duration: dur, easing: 'ease-out' });
+  orb.animate(move, opts);
+  if (glow) glow.animate(move, opts);
+  orbInner.animate(jelly, opts);
   return dur;
 }
 
@@ -395,7 +397,7 @@ function updateNotch(animated = true) {
       if (animated && isDifferent && typeof orb.animate === 'function') {
         const prev = currentCx;
         const dur = flyOrb(prev, cx);
-        notchTimer = setTimeout(() => drawNotch(w, h, cx), dur * 0.62);
+        notchTimer = setTimeout(() => drawNotch(w, h, cx), dur * 0.7);
       } else {
         drawNotch(w, h, cx);
       }
