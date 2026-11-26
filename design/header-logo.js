@@ -85,7 +85,7 @@ style.id = 'setup-logo-style';
 style.textContent = `
 html body .brand a.setup-logo,html body a.setup-logo{display:inline-flex!important;align-items:center!important;gap:.2em;height:1.4em;font-family:'Exo 2','Chakra Petch',system-ui,-apple-system,'Segoe UI',sans-serif!important;font-style:italic;font-weight:800;font-size:34px;line-height:1;letter-spacing:.005em;color:#fff!important;text-decoration:none!important;white-space:nowrap;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;flex:none!important;width:auto!important;max-width:none!important;margin:0!important;padding:0!important;visibility:visible!important;opacity:1!important}
 html body a.setup-logo b.setup-logo-word{display:inline-block!important;font:inherit!important;color:#fff!important;letter-spacing:inherit!important;text-shadow:0 2px 8px rgba(0,0,0,.5)}
-html body a.setup-logo i.setup-logo-orb{display:inline-block!important;font-style:normal;width:1.32em;height:1.32em;flex:none;filter:drop-shadow(0 0 8px rgba(76,230,109,.45));transition:transform .35s ease,filter .35s ease}
+html body a.setup-logo i.setup-logo-orb{display:inline-block!important;font-style:normal;width:.99em;height:.99em;flex:none;filter:drop-shadow(0 0 8px rgba(76,230,109,.45));transition:transform .35s ease,filter .35s ease}
 html body a.setup-logo i.setup-logo-orb svg{display:block!important;width:100%!important;height:100%!important;overflow:visible}
 html body a.setup-logo:hover i.setup-logo-orb,html body a.setup-logo:focus-visible i.setup-logo-orb{transform:rotate(25deg) scale(1.06);filter:drop-shadow(0 0 14px rgba(76,230,109,.7))}
 html body a.setup-logo:focus-visible{outline:2px solid #b4ff6b;outline-offset:4px;border-radius:8px}
