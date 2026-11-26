@@ -78,17 +78,19 @@ if (!document.getElementById('setup-logo-font')) {
   document.head.appendChild(link);
 }
 
+/* NOTE: the site hides every "span" inside ".brand" (body .brand span{display:none!important}),
+   so the logo parts are <b>/<i> elements and the main rules are repeated with high specificity. */
 const style = document.createElement('style');
 style.id = 'setup-logo-style';
 style.textContent = `
-.setup-logo{display:inline-flex;align-items:center;gap:.2em;height:1.18em;font-family:'Exo 2','Chakra Petch',system-ui,-apple-system,'Segoe UI',sans-serif;font-style:italic;font-weight:800;font-size:34px;line-height:1;letter-spacing:.005em;color:#fff;text-decoration:none;white-space:nowrap;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;flex:none}
-.setup-logo-word{display:inline-block;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.5)}
-.setup-logo-orb{display:inline-block;width:.66em;height:.66em;flex:none;filter:drop-shadow(0 0 8px rgba(76,230,109,.45));transition:transform .35s ease,filter .35s ease}
-.setup-logo-orb svg{display:block;width:100%;height:100%;overflow:visible}
-.setup-logo:hover .setup-logo-orb,.setup-logo:focus-visible .setup-logo-orb{transform:rotate(25deg) scale(1.06);filter:drop-shadow(0 0 14px rgba(76,230,109,.7))}
-.setup-logo:focus-visible{outline:2px solid #b4ff6b;outline-offset:4px;border-radius:8px}
-@media(max-width:768px){.setup-logo{font-size:26px}}
-@media(prefers-reduced-motion:reduce){.setup-logo-orb{transition:none}.setup-logo:hover .setup-logo-orb,.setup-logo:focus-visible .setup-logo-orb{transform:none}}
+html body .brand a.setup-logo,html body a.setup-logo{display:inline-flex!important;align-items:center!important;gap:.2em;height:1.18em;font-family:'Exo 2','Chakra Petch',system-ui,-apple-system,'Segoe UI',sans-serif!important;font-style:italic;font-weight:800;font-size:34px;line-height:1;letter-spacing:.005em;color:#fff!important;text-decoration:none!important;white-space:nowrap;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;flex:none!important;width:auto!important;max-width:none!important;margin:0!important;padding:0!important;visibility:visible!important;opacity:1!important}
+html body a.setup-logo b.setup-logo-word{display:inline-block!important;font:inherit!important;color:#fff!important;letter-spacing:inherit!important;text-shadow:0 2px 8px rgba(0,0,0,.5)}
+html body a.setup-logo i.setup-logo-orb{display:inline-block!important;font-style:normal;width:.66em;height:.66em;flex:none;filter:drop-shadow(0 0 8px rgba(76,230,109,.45));transition:transform .35s ease,filter .35s ease}
+html body a.setup-logo i.setup-logo-orb svg{display:block!important;width:100%!important;height:100%!important;overflow:visible}
+html body a.setup-logo:hover i.setup-logo-orb,html body a.setup-logo:focus-visible i.setup-logo-orb{transform:rotate(25deg) scale(1.06);filter:drop-shadow(0 0 14px rgba(76,230,109,.7))}
+html body a.setup-logo:focus-visible{outline:2px solid #b4ff6b;outline-offset:4px;border-radius:8px}
+@media(max-width:768px){html body .brand a.setup-logo,html body a.setup-logo{font-size:26px}}
+@media(prefers-reduced-motion:reduce){html body a.setup-logo i.setup-logo-orb{transition:none}html body a.setup-logo:hover i.setup-logo-orb,html body a.setup-logo:focus-visible i.setup-logo-orb{transform:none}}
 html:root:root:root:root:root:root body:has(#nav) :is(.brand:not(.big),main>.setup-home)>img{display:none!important}
 `;
 document.head.appendChild(style);
@@ -101,7 +103,7 @@ function build() {
   a.href = '/';
   a.setAttribute('aria-label', 'SetUp — На главную');
   const svg = SVG.replace(/(id="|url\(#)(sphereGrad|rimLight|neonGrad|glossTop|glossSide|neonGlow|sphereClip)/g, '$1' + id + '-$2');
-  a.innerHTML = '<span class="setup-logo-word">Set</span><span class="setup-logo-orb" aria-hidden="true">' + svg + '</span><span class="setup-logo-word">Up</span>';
+  a.innerHTML = '<b class="setup-logo-word">Set</b><i class="setup-logo-orb" aria-hidden="true">' + svg + '</i><b class="setup-logo-word">Up</b>';
   return a;
 }
 
