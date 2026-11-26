@@ -168,7 +168,7 @@ html body #nav .setup-wordnav > button .setup-brand-label {
   transition: color 0.2s ease, text-shadow 0.2s ease, font-weight 0.2s ease !important;
 }
 
-/* Relative offsets (content is taller than the bar, so it is centred with equal overflow) */
+/* Relative offsets */
 html:root:root:root body #nav .setup-wordnav > button:not(.setup-menu-trigger) > .setup-brand-icon {
   position: relative !important;
   top: 4px !important;
@@ -280,6 +280,11 @@ html body #nav .setup-wordnav .setup-up-panel button .setup-brand-icon {
 
 /* ---- Mobile (<1000px): beat desktop-brand.css, which shrinks nav buttons to 33px and icons to 16px ---- */
 @media (max-width: 999px) {
+  /* Taller panel: 48px icon + label + paddings fit inside it (the panel shape is drawn from this height) */
+  html:root:root:root:root:root:root body #nav .setup-wordnav {
+    width: min(100%, 480px) !important;
+    height: 96px !important;
+  }
   html:root:root:root:root:root:root body #nav .setup-wordnav > button:not(.setup-menu-trigger) {
     height: 100% !important;
     min-height: 0 !important;
@@ -310,6 +315,19 @@ html body #nav .setup-wordnav .setup-up-panel button .setup-brand-icon {
     height: 20px !important;
     flex: 0 0 20px !important;
   }
+  /* With the taller panel the content has room: icon sits under the wave, label near the bottom */
+  html:root:root:root:root:root:root body #nav .setup-wordnav > button:not(.setup-menu-trigger) > .setup-brand-icon {
+    position: relative !important;
+    top: 8px !important;
+  }
+  html:root:root:root:root:root:root body #nav .setup-wordnav > button:not(.setup-menu-trigger) > .setup-brand-label {
+    position: relative !important;
+    top: 8px !important;
+  }
+  html:root:root:root:root:root:root body #nav .setup-wordnav > button.setup-menu-trigger > .setup-brand-icon {
+    position: relative !important;
+    top: 8px !important;
+  }
 
   /* ---- Pinned header with the logo ---- */
   html:root:root:root:root:root body:has(#nav) :is(.brand:not(.big), main > .setup-home) {
@@ -329,12 +347,5 @@ html body #nav .setup-wordnav .setup-up-panel button .setup-brand-icon {
     background: var(--bg, #042923) !important;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
     box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35) !important;
-  }
-}
-
-@media (max-width: 480px) {
-  html body #nav .setup-wordnav {
-    width: 100% !important;
-    height: 68px !important;
   }
 }
