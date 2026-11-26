@@ -3,24 +3,67 @@
   let opened = false, selectedMeal = null;
   const automaticMeal = mealNow;
   mealNow = function (...args) { return selectedMeal || automaticMeal.apply(this, args); };
+
+  function currentMeal() {
+    return selectedMeal || (typeof ME !== 'undefined' && MEALS.includes(ME.meal) ? ME.meal : null) || automaticMeal();
+  }
+
+  function syncHead() {
+    const node = document.getElementById('meal-entry-dialog');
+    if (!node) return;
+    const meal = currentMeal();
+    const heading = node.querySelector('#meal-dialog-heading');
+    if (heading) heading.textContent = meal;
+    node.querySelectorAll('.meal-dialog-pills button').forEach(b => {
+      const on = b.dataset.meal === meal;
+      b.classList.toggle('is-active', on);
+      b.setAttribute('aria-selected', String(on));
+    });
+  }
+
+  function mealSelect(node) {
+    return [...node.querySelectorAll('.meal-dialog-body select')].find(s => [...s.options].some(o => MEALS.includes(o.value)));
+  }
+
   document.addEventListener('change', event => {
     const input = event.target;
     if (!selectedMeal || !(input instanceof HTMLSelectElement) || !MEALS.includes(input.value)) return;
     if (!input.closest('#meal-entry-dialog,dialog,#meal-estimate')) return;
     selectedMeal = input.value;
     ME.meal = input.value;
-    const heading = document.getElementById('meal-dialog-heading');
-    if (heading) heading.textContent = 'Добавить · ' + selectedMeal;
+    syncHead();
   });
+
+  function pickMeal(meal) {
+    selectedMeal = meal;
+    ME.meal = meal;
+    const node = document.getElementById('meal-entry-dialog');
+    const select = node && mealSelect(node);
+    if (select) {
+      select.value = meal;
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    syncHead();
+  }
 
   function dialog() {
     let node = document.getElementById('meal-entry-dialog');
     if (node) return node;
     node = document.createElement('dialog');
     node.id = 'meal-entry-dialog';
-    node.setAttribute('aria-label', 'Оценка приёма пищи');
-    node.innerHTML = '<header class="meal-dialog-head"><h2 id="meal-dialog-heading">Добавить приём пищи</h2><button type="button" aria-label="Закрыть окно">×</button></header><div class="meal-dialog-body"></div>';
-    node.querySelector('button').onclick = () => node.close();
+    node.setAttribute('aria-label', 'Добавить приём пищи');
+    node.innerHTML =
+      '<header class="meal-dialog-head"><div class="meal-dialog-titles"><span class="meal-dialog-eyebrow">Добавить еду</span><h2 id="meal-dialog-heading">Приём пищи</h2></div>' +
+      '<button type="button" class="meal-dialog-close" aria-label="Закрыть окно">×</button></header>' +
+      '<div class="meal-dialog-pills" role="tablist" aria-label="Приём пищи">' +
+      MEALS.map(m => '<button type="button" role="tab" data-meal="' + m + '">' + m + '</button>').join('') +
+      '</div><div class="meal-dialog-body"></div>';
+    node.querySelector('.meal-dialog-close').onclick = () => node.close();
+    node.querySelector('.meal-dialog-pills').addEventListener('click', e => {
+      const b = e.target.closest('button[data-meal]');
+      if (b) pickMeal(b.dataset.meal);
+    });
+    node.addEventListener('click', e => { if (e.target === node) node.close(); });
     node.addEventListener('close', () => {
       opened = false;
       if (tab === 'diary') selectedMeal = null;
@@ -30,6 +73,17 @@
     });
     document.body.appendChild(node);
     return node;
+  }
+
+  function hideInnerMealSelect(node) {
+    const select = mealSelect(node);
+    if (!select) return;
+    const wrap = select.parentElement;
+    if (wrap && !wrap.classList.contains('meal-dialog-body') && wrap.id !== 'meal-estimate' &&
+        wrap.querySelectorAll('input,textarea,select,button').length === 1) {
+      wrap.hidden = true;
+      wrap.style.display = 'none';
+    }
   }
 
   function mount() {
@@ -50,7 +104,8 @@
       }
       node.querySelector('.meal-dialog-body').replaceChildren(card);
     }
-    document.getElementById('meal-dialog-heading').textContent = 'Добавить · ' + (ME.meal || 'Приём пищи');
+    hideInnerMealSelect(node);
+    syncHead();
     if (opened && !node.open) {
       node.showModal();
       document.documentElement.classList.add('meal-entry-open');
@@ -66,7 +121,8 @@
     requestAnimationFrame(() => {
       document.getElementById('me-text')?.focus({ preventScroll: true });
       const node = dialog();
-      node.scrollTop = 0;
+      const body = node.querySelector('.meal-dialog-body');
+      if (body) body.scrollTop = 0;
     });
   };
 
