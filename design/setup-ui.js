@@ -213,8 +213,11 @@ function button(name, label) {
 const BOWL_DEPTH = 42;
 const BOWL_TIGHT = 40;
 
-function generateNotchPaths(w, h, cx) {
-  const S = Math.max(56, Math.min(150, cx - 16, w - 16 - cx));
+function shoulderFor(w, cx) {
+  return Math.max(56, Math.min(150, cx - 16, w - 16 - cx));
+}
+
+function generateNotchPaths(w, h, cx, S) {
   const a = S * 0.63;
   const ls = cx - S, rs = cx + S;
 
@@ -240,8 +243,17 @@ function generateNotchPaths(w, h, cx) {
   return { fullFillD, topBorderD };
 }
 
+// "Eat" uses exactly the same wave length as "Habits"; "Sport" keeps its own
 function drawNotch(w, h, cx) {
-  const { fullFillD, topBorderD } = generateNotchPaths(w, h, cx);
+  let S = shoulderFor(w, cx);
+  const eatBtn = bar.querySelector(':scope > [data-setup-destination="eat"]');
+  const habitsBtn = bar.querySelector(':scope > [data-setup-destination="tracker"]');
+  if (eatBtn && habitsBtn) {
+    const eatCx = eatBtn.offsetLeft + eatBtn.offsetWidth / 2;
+    const habitsCx = habitsBtn.offsetLeft + habitsBtn.offsetWidth / 2;
+    if (Math.abs(cx - eatCx) < 3) S = shoulderFor(w, habitsCx);
+  }
+  const { fullFillD, topBorderD } = generateNotchPaths(w, h, cx, S);
   curvePath.setAttribute('d', fullFillD);
   if (neonTopBorder) neonTopBorder.setAttribute('d', topBorderD);
 }
