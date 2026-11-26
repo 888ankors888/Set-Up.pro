@@ -137,7 +137,7 @@ function createSvgIcon(name) {
   return svg;
 }
 
-let nav, bar, panel, up, svgDoc, curvePath, neonTopBorder, orb, orbInner, queued = false;
+let nav, bar, panel, up, svgDoc, curvePath, neonTopBorder, orb, orbInner, glow, queued = false;
 let currentCx = null;
 let currentTab = null;
 let notchTimer = null;
@@ -284,6 +284,10 @@ function mount() {
 
   bar.appendChild(svgDoc);
 
+  glow = document.createElement('div');
+  glow.className = 'setup-nav-glow';
+  bar.appendChild(glow);
+
   orb = document.createElement('div');
   orb.id = 'setup-orb';
   orb.className = 'setup-nav-orb';
@@ -334,7 +338,9 @@ function flyOrb(prevCx, cx) {
     const y = -Math.sin(Math.PI * t) * lift;
     frames.push({ transform: `translate3d(${x}px, ${y}px, 0) translate(-50%, 0)` });
   }
-  orb.animate(frames, { duration: dur, easing: 'linear' });
+  const opts = { duration: dur, easing: 'linear' };
+  orb.animate(frames, opts);
+  if (glow) glow.animate(frames, opts);
   orbInner.animate([
     { transform: 'scale(1,1)', offset: 0 },
     { transform: 'scale(0.94,1.08)', offset: 0.25 },
