@@ -1,7 +1,6 @@
 (() => {
 'use strict';
 
-// Automatically ensure default state exists so new users bypass onboarding/welcome screen directly to Eat
 try {
   if (!localStorage.getItem('nt1')) {
     const defaultState = {
@@ -51,7 +50,6 @@ html body #nav .setup-wordnav {
 }
 `;
 
-// 3D Cyber Sphere SVG
 const CYBER_SPHERE_SVG = `
 <svg class="setup-cyber-sphere" viewBox="0 0 512 512" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
   <defs>
@@ -139,16 +137,17 @@ function createSvgIcon(name) {
   return svg;
 }
 
-let nav, bar, panel, up, svgDoc, curvePath, neonTopBorder, orb, glow, queued = false;
+let nav, bar, panel, up, svgDoc, curvePath, neonTopBorder, orb, orbInner, glow, queued = false;
 let currentCx = null;
 let currentTab = null;
+let notchTimer = null;
 const targets = new Map();
 const workout = /\/workouts\.html$/.test(location.pathname);
 
 function kind(b) {
   if (b.dataset.setupNavKind) return b.dataset.setupNavKind;
   const t = b.textContent.trim();
-  if (b.dataset.workoutJournal !== undefined || /Трениров|Спорт|^Sport$/.test(t)) return 'sport';
+  if (b.dataset.workoutJournal !== undefined || /Тренhéров|Спорт|^Sport$/.test(t)) return 'sport';
   if (/Привыч|^Tracker$/.test(t)) return 'tracker';
   if (/Питан|Дневник|^Eat$/.test(t)) return 'eat';
   if (/Отч|Прогресс/.test(t)) return 'report';
@@ -179,7 +178,6 @@ function choose(name) {
     return;
   }
 
-  // Pre-update UI and slide orb immediately
   const clickedBtn = bar?.querySelector(`[data-setup-destination="${name}"]`);
   if (clickedBtn && !clickedBtn.classList.contains('setup-menu-trigger')) {
     bar.querySelectorAll('[data-setup-destination]:not(.setup-menu-trigger)').forEach(btn => {
@@ -210,18 +208,21 @@ function button(name, label) {
   return b;
 }
 
+// Round socket sized to the orb: orb radius 29, socket radius 33, socket centre 8px below the top edge
+const SOCKET_R = 33;
+const SOCKET_CY = 8;
+
 function generateNotchPaths(w, h, cx) {
-  const notchRadius = 45;
-  const depth = 30;
-  const left = cx - notchRadius;
-  const right = cx + notchRadius;
+  const dx = Math.round(Math.sqrt(SOCKET_R * SOCKET_R - SOCKET_CY * SOCKET_CY));
+  const l = cx - dx, r = cx + dx;
 
   const topBorderD = `
     M 0 16
     Q 0 0 16 0
-    L ${Math.max(16, left - 12)} 0
-    C ${left} 0, ${cx - 24} ${depth}, ${cx} ${depth}
-    C ${cx + 24} ${depth}, ${right} 0, ${Math.min(w - 16, right + 12)} 0
+    L ${Math.max(16, l - 14)} 0
+    Q ${l - 4} 0 ${l} 1
+    A ${SOCKET_R} ${SOCKET_R} 0 1 0 ${r} 1
+    Q ${r + 4} 0 ${Math.min(w - 16, r + 14)} 0
     L ${w - 16} 0
     Q ${w} 0 ${w} 16
   `;
@@ -238,11 +239,16 @@ function generateNotchPaths(w, h, cx) {
   return { fullFillD, topBorderD };
 }
 
+function drawNotch(w, h, cx) {
+  const { fullFillD, topBorderD } = generateNotchPaths(w, h, cx);
+  curvePath.setAttribute('d', fullFillD);
+  if (neonTopBorder) neonTopBorder.setAttribute('d', topBorderD);
+}
+
 function mount() {
   bar = document.createElement('div');
   bar.className = 'setup-wordnav';
 
-  // SVG Layer
   const svgNs = 'http://www.w3.org/2000/svg';
   svgDoc = document.createElementNS(svgNs, 'svg');
   svgDoc.classList.add('setup-dock-svg');
@@ -262,24 +268,23 @@ function mount() {
   `;
   svgDoc.appendChild(defs);
 
-  // Background body fill
   curvePath = document.createElementNS(svgNs, 'path');
   curvePath.setAttribute('fill', 'url(#setupDockGrad)');
   curvePath.setAttribute('stroke', 'rgba(255, 255, 255, 0.08)');
   curvePath.setAttribute('stroke-width', '1');
+  curvePath.setAttribute('stroke-linejoin', 'round');
   svgDoc.appendChild(curvePath);
 
-  // Vivid Neon Top Glow Border
   neonTopBorder = document.createElementNS(svgNs, 'path');
   neonTopBorder.setAttribute('fill', 'none');
   neonTopBorder.setAttribute('stroke', 'url(#setupNeonContourGrad)');
   neonTopBorder.setAttribute('stroke-width', '2.2');
   neonTopBorder.setAttribute('stroke-linecap', 'round');
+  neonTopBorder.setAttribute('stroke-linejoin', 'round');
   svgDoc.appendChild(neonTopBorder);
 
   bar.appendChild(svgDoc);
 
-  // Orb Glow & Orb
   glow = document.createElement('div');
   glow.className = 'setup-nav-glow';
   bar.appendChild(glow);
@@ -287,16 +292,14 @@ function mount() {
   orb = document.createElement('div');
   orb.id = 'setup-orb';
   orb.className = 'setup-nav-orb';
-  const orbInner = document.createElement('div');
+  orbInner = document.createElement('div');
   orbInner.className = 'setup-nav-orb-inner';
   orbInner.innerHTML = CYBER_SPHERE_SVG;
   orb.appendChild(orbInner);
   bar.appendChild(orb);
 
-  // Buttons: Sport, Eat, Habits
   bar.append(button('sport', 'Спорт'), button('eat', 'Питание'), button('tracker', 'Привычки'));
 
-  // Separate Menu trigger
   up = document.createElement('button');
   up.type = 'button';
   up.className = 'setup-menu-trigger';
@@ -322,6 +325,33 @@ function mount() {
 
   bar.append(up, panel);
   nav.append(bar);
+}
+
+// Parabolic jump from prevCx to cx, landing in the round socket
+function flyOrb(prevCx, cx) {
+  const dur = 560;
+  const lift = 34 + Math.min(22, Math.abs(cx - prevCx) * 0.08);
+  const frames = [];
+  const N = 28;
+  for (let i = 0; i <= N; i++) {
+    const t = i / N;
+    const e = t * t * (3 - 2 * t);
+    const x = prevCx + (cx - prevCx) * e;
+    const y = -Math.sin(Math.PI * t) * lift;
+    frames.push({ transform: `translate3d(${x}px, ${y}px, 0) translate(-50%, 0)` });
+  }
+  const opts = { duration: dur, easing: 'linear' };
+  orb.animate(frames, opts);
+  glow.animate(frames, opts);
+  orbInner.animate([
+    { transform: 'scale(1,1)', offset: 0 },
+    { transform: 'scale(0.94,1.08)', offset: 0.25 },
+    { transform: 'scale(1,1)', offset: 0.7 },
+    { transform: 'scale(1.14,0.86)', offset: 0.88 },
+    { transform: 'scale(0.97,1.04)', offset: 0.95 },
+    { transform: 'scale(1,1)', offset: 1 }
+  ], { duration: dur, easing: 'ease-out' });
+  return dur;
 }
 
 function updateNotch(animated = true) {
@@ -360,20 +390,17 @@ function updateNotch(animated = true) {
       const isDifferent = currentCx !== null && Math.abs(currentCx - cx) > 4;
 
       bar.style.setProperty('--orb-x', `${cx}px`);
-      const { fullFillD, topBorderD } = generateNotchPaths(w, h, cx);
-      curvePath.setAttribute('d', fullFillD);
-      if (neonTopBorder) neonTopBorder.setAttribute('d', topBorderD);
+      clearTimeout(notchTimer);
 
-      if (currentTab !== tabName) {
-        currentTab = tabName;
+      if (animated && isDifferent && typeof orb.animate === 'function') {
+        const prev = currentCx;
+        const dur = flyOrb(prev, cx);
+        notchTimer = setTimeout(() => drawNotch(w, h, cx), dur * 0.62);
+      } else {
+        drawNotch(w, h, cx);
       }
 
-      if (animated && isDifferent) {
-        orb.classList.remove('is-jumping');
-        void orb.offsetWidth;
-        orb.classList.add('is-jumping');
-      }
-
+      currentTab = tabName;
       currentCx = cx;
     }
   }
