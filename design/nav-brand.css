@@ -1,4 +1,4 @@
-/* Updated nav-brand.css with continuous curved notch dock, neon contour, 3D cyber sphere & mint buttons */
+/* Updated nav-brand.css with continuous curved notch dock, neon contour, 3D cyber sphere & static centered labels */
 html body #nav .setup-wordnav {
   position: relative !important;
   display: flex !important;
@@ -146,7 +146,7 @@ html body #nav .setup-wordnav > button:hover .setup-brand-icon {
   transform: translateY(-2px) !important;
 }
 
-/* Category text labels: centered, compact, highly legible mint */
+/* Category text labels: strictly static position, centered, compact, highly legible mint */
 html body #nav .setup-wordnav > button .setup-brand-label {
   display: block !important;
   width: 100% !important;
@@ -161,11 +161,11 @@ html body #nav .setup-wordnav > button .setup-brand-label {
   white-space: nowrap !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
-  transform: translateY(0) !important;
-  transition: transform 0.22s ease, opacity 0.2s ease, color 0.2s ease !important;
+  transform: none !important;
+  transition: color 0.2s ease, text-shadow 0.2s ease, font-weight 0.2s ease !important;
 }
 
-/* Active button state */
+/* Active button state: icon hidden, text stays STRICTLY in place without shifting */
 html body #nav .setup-wordnav > button.on .setup-brand-icon {
   opacity: 0 !important;
   transform: translateY(14px) scale(0.4) !important;
@@ -174,7 +174,7 @@ html body #nav .setup-wordnav > button.on .setup-brand-icon {
 html body #nav .setup-wordnav > button.on .setup-brand-label {
   color: #b4ff6b !important;
   font-weight: 850 !important;
-  transform: translateY(10px) !important;
+  transform: none !important;
   text-shadow: 0 0 10px rgba(180, 255, 107, 0.45) !important;
 }
 
