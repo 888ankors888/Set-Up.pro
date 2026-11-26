@@ -46,7 +46,6 @@ html body #nav {
 html body #nav .setup-wordnav {
   pointer-events: auto;
 }
-/* Hide welcome onboarding banner for new users */
 .welcome, #app > .welcome {
   display: none !important;
 }
@@ -140,7 +139,7 @@ function createSvgIcon(name) {
   return svg;
 }
 
-let nav, bar, panel, up, svgDoc, curvePath, orb, glow, queued = false;
+let nav, bar, panel, up, svgDoc, curvePath, neonTopBorder, orb, glow, queued = false;
 let currentCx = null;
 let currentTab = null;
 const targets = new Map();
@@ -211,13 +210,13 @@ function button(name, label) {
   return b;
 }
 
-function generateNotchPath(w, h, cx) {
+function generateNotchPaths(w, h, cx) {
   const notchRadius = 45;
   const depth = 30;
   const left = cx - notchRadius;
   const right = cx + notchRadius;
 
-  return `
+  const topBorderD = `
     M 0 16
     Q 0 0 16 0
     L ${Math.max(16, left - 12)} 0
@@ -225,12 +224,18 @@ function generateNotchPath(w, h, cx) {
     C ${cx + 24} ${depth}, ${right} 0, ${Math.min(w - 16, right + 12)} 0
     L ${w - 16} 0
     Q ${w} 0 ${w} 16
+  `;
+
+  const fullFillD = `
+    ${topBorderD}
     L ${w} ${h - 16}
     Q ${w} ${h} ${w - 16} ${h}
     L 16 ${h}
     Q 0 ${h} 0 ${h - 16}
     Z
   `;
+
+  return { fullFillD, topBorderD };
 }
 
 function mount() {
@@ -249,14 +254,29 @@ function mount() {
       <stop offset="0%" stop-color="#102c20" stop-opacity="0.94"/>
       <stop offset="100%" stop-color="#0a2219" stop-opacity="0.98"/>
     </linearGradient>
+    <linearGradient id="setupNeonContourGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#76e86c" stop-opacity="0.4"/>
+      <stop offset="50%" stop-color="#b4ff6b" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#76e86c" stop-opacity="0.4"/>
+    </linearGradient>
   `;
   svgDoc.appendChild(defs);
 
+  // Background body fill
   curvePath = document.createElementNS(svgNs, 'path');
   curvePath.setAttribute('fill', 'url(#setupDockGrad)');
   curvePath.setAttribute('stroke', 'rgba(255, 255, 255, 0.08)');
   curvePath.setAttribute('stroke-width', '1');
   svgDoc.appendChild(curvePath);
+
+  // Vivid Neon Top Glow Border
+  neonTopBorder = document.createElementNS(svgNs, 'path');
+  neonTopBorder.setAttribute('fill', 'none');
+  neonTopBorder.setAttribute('stroke', 'url(#setupNeonContourGrad)');
+  neonTopBorder.setAttribute('stroke-width', '2.2');
+  neonTopBorder.setAttribute('stroke-linecap', 'round');
+  svgDoc.appendChild(neonTopBorder);
+
   bar.appendChild(svgDoc);
 
   // Orb Glow & Orb
@@ -340,7 +360,9 @@ function updateNotch(animated = true) {
       const isDifferent = currentCx !== null && Math.abs(currentCx - cx) > 4;
 
       bar.style.setProperty('--orb-x', `${cx}px`);
-      curvePath.setAttribute('d', generateNotchPath(w, h, cx));
+      const { fullFillD, topBorderD } = generateNotchPaths(w, h, cx);
+      curvePath.setAttribute('d', fullFillD);
+      if (neonTopBorder) neonTopBorder.setAttribute('d', topBorderD);
 
       if (currentTab !== tabName) {
         currentTab = tabName;
