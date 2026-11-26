@@ -278,17 +278,7 @@ html body #nav .setup-wordnav .setup-up-panel button .setup-brand-icon {
   flex: 0 0 20px !important;
 }
 
-/* ---- Neon icons (same colour and glow as the plus) and white labels. CSS beats the SVG attributes (#fff). ---- */
-html:root:root:root body #nav .setup-wordnav > button:not(.setup-menu-trigger) .setup-brand-icon {
-  filter: drop-shadow(0 0 2px rgba(214, 255, 120, 0.95)) drop-shadow(0 0 6px rgba(163, 255, 18, 0.85)) drop-shadow(0 0 12px rgba(118, 232, 108, 0.6)) !important;
-  overflow: visible !important;
-}
-html:root:root:root body #nav .setup-wordnav > button:not(.setup-menu-trigger) .setup-brand-icon g {
-  stroke: #C8FF5A !important;
-}
-html:root:root:root body #nav .setup-wordnav > button:not(.setup-menu-trigger) .setup-brand-icon [fill="#ffffff"] {
-  fill: #C8FF5A !important;
-}
+/* ---- Labels are white; the Sport / Eat / Habits icons keep their white drawings (SVG attributes) ---- */
 html:root:root:root body #nav .setup-wordnav > button .setup-brand-label {
   color: #ffffff !important;
 }

@@ -79,3 +79,13 @@ html.meal-entry-open{overflow:hidden}
   .meal-dialog-body{padding:4px 18px 18px}
 }
 @media(prefers-reduced-motion:reduce){#meal-entry-dialog[open]{animation:none}}
+
+/* ===== Lime buttons: black text (beats the dialog-wide button color rule) ===== */
+#food-add-dialog .fam-primary,
+#food-add-dialog .fam-plus,
+#food-add-dialog .fam-chip.on,
+#food-add-dialog .fam-chk,
+#food-add-dialog .fam-badge-n,
+#meal-entry-dialog .meal-dialog-pills button.is-active{color:#000!important}
+#food-add-dialog .fam-airow.off .fam-chk{color:transparent!important}
+#meal-entry-dialog .meal-dialog-pills button.is-active{background:#c6f85c;border-color:#c6f85c}
