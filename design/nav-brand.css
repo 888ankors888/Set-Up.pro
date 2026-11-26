@@ -45,24 +45,28 @@ html body #nav .setup-wordnav {
   box-shadow: 0 8px 24px rgba(212, 249, 106, 0.35),
               0 3px 8px rgba(0, 0, 0, 0.45),
               inset 0 1px 1px rgba(255, 255, 255, 0.85) !important;
-  transform: translate(-50%, 0) scale(1);
-  transition: left 0.44s cubic-bezier(0.34, 1.45, 0.7, 1) !important;
+  transform: translate3d(var(--orb-x, 0px), 0, 0) translate(-50%, 0);
+  transition: transform 0.44s cubic-bezier(0.34, 1.45, 0.7, 1) !important;
+  will-change: transform;
 }
 
-.setup-nav-orb.is-jumping {
-  animation: setup-orb-jump 0.44s cubic-bezier(0.34, 1.45, 0.7, 1) !important;
+.setup-nav-orb-inner {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  height: 100% !important;
+  transition: transform 0.22s ease-out !important;
 }
 
-@keyframes setup-orb-jump {
-  0% {
-    transform: translate(-50%, 0) scale(1);
-  }
-  40% {
-    transform: translate(-50%, -14px) scale(1.18);
-  }
-  100% {
-    transform: translate(-50%, 0) scale(1);
-  }
+.setup-nav-orb.is-jumping .setup-nav-orb-inner {
+  animation: setup-orb-bounce 0.44s cubic-bezier(0.34, 1.45, 0.7, 1) !important;
+}
+
+@keyframes setup-orb-bounce {
+  0% { transform: translateY(0) scale(1); }
+  40% { transform: translateY(-14px) scale(1.18); }
+  100% { transform: translateY(0) scale(1); }
 }
 
 .setup-nav-orb .setup-brand-icon {
@@ -83,8 +87,9 @@ html body #nav .setup-wordnav {
   background: radial-gradient(circle, rgba(212, 249, 106, 0.28) 0%, rgba(212, 249, 106, 0) 70%) !important;
   pointer-events: none !important;
   z-index: 2 !important;
-  transform: translate(-50%, 0) !important;
-  transition: left 0.44s cubic-bezier(0.34, 1.45, 0.7, 1) !important;
+  transform: translate3d(var(--orb-x, 0px), 0, 0) translate(-50%, 0) !important;
+  transition: transform 0.44s cubic-bezier(0.34, 1.45, 0.7, 1) !important;
+  will-change: transform;
 }
 
 /* Buttons in nav */
@@ -106,7 +111,6 @@ html body #nav .setup-wordnav > button {
   color: #7f9e8f !important;
   cursor: pointer !important;
   box-shadow: none !important;
-  transform: none !important;
   transition: color 0.2s ease, opacity 0.2s ease !important;
 }
 

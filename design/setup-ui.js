@@ -179,9 +179,12 @@ function mount() {
   orb = document.createElement('div');
   orb.id = 'setup-orb';
   orb.className = 'setup-nav-orb';
+  const orbInner = document.createElement('div');
+  orbInner.className = 'setup-nav-orb-inner';
   orbIcon = document.createElement('div');
   orbIcon.className = 'setup-orb-icon';
-  orb.appendChild(orbIcon);
+  orbInner.appendChild(orbIcon);
+  orb.appendChild(orbInner);
   bar.appendChild(orb);
 
   // Buttons: Sport, Eat, Habits
@@ -217,16 +220,19 @@ function mount() {
 
 function updateNotch(animated = true) {
   if (!bar || !curvePath || !orb) return;
-  const rect = bar.getBoundingClientRect();
-  const w = rect.width || 420;
-  const h = rect.height || 72;
+  const barRect = bar.getBoundingClientRect();
+  const w = bar.offsetWidth || barRect.width || 420;
+  const h = bar.offsetHeight || barRect.height || 72;
 
   svgDoc.setAttribute('viewBox', `0 0 ${w} ${h}`);
 
   const activeBtn = bar.querySelector('[data-setup-destination].on:not(.setup-menu-trigger)');
   if (activeBtn) {
-    const bRect = activeBtn.getBoundingClientRect();
-    const cx = (bRect.left + bRect.width / 2) - rect.left;
+    let cx = activeBtn.offsetLeft + (activeBtn.offsetWidth / 2);
+    if (!cx || isNaN(cx)) {
+      const bRect = activeBtn.getBoundingClientRect();
+      cx = (bRect.left + bRect.width / 2) - barRect.left;
+    }
     const tabName = activeBtn.dataset.setupDestination;
 
     orb.style.display = 'flex';
@@ -234,8 +240,7 @@ function updateNotch(animated = true) {
 
     const isDifferent = currentCx !== null && Math.abs(currentCx - cx) > 4;
 
-    orb.style.left = `${cx}px`;
-    glow.style.left = `${cx}px`;
+    bar.style.setProperty('--orb-x', `${cx}px`);
     curvePath.setAttribute('d', generateNotchPath(w, h, cx));
 
     if (currentTab !== tabName) {
@@ -246,7 +251,7 @@ function updateNotch(animated = true) {
 
     if (animated && isDifferent) {
       orb.classList.remove('is-jumping');
-      void orb.offsetWidth; // Force reflow to re-trigger bounce animation
+      void orb.offsetWidth;
       orb.classList.add('is-jumping');
     }
 
@@ -345,7 +350,7 @@ function render() {
     }
   }
   sportHeader();
-  updateNotch(true);
+  requestAnimationFrame(() => updateNotch(true));
 }
 
 function schedule() {
@@ -382,6 +387,7 @@ function start() {
   });
 
   window.addEventListener('resize', () => updateNotch(false));
+  window.addEventListener('load', () => setTimeout(() => updateNotch(false), 50));
   window.addEventListener('pagehide', () => observer.disconnect(), { once: true });
 }
 
