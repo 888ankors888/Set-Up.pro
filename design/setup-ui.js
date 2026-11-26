@@ -137,7 +137,7 @@ function createSvgIcon(name) {
   return svg;
 }
 
-let nav, bar, panel, up, svgDoc, curvePath, neonTopBorder, orb, orbInner, glow, queued = false;
+let nav, bar, panel, up, svgDoc, curvePath, neonTopBorder, orb, orbInner, queued = false;
 let currentCx = null;
 let currentTab = null;
 let notchTimer = null;
@@ -147,7 +147,7 @@ const workout = /\/workouts\.html$/.test(location.pathname);
 function kind(b) {
   if (b.dataset.setupNavKind) return b.dataset.setupNavKind;
   const t = b.textContent.trim();
-  if (b.dataset.workoutJournal !== undefined || /Тренhéров|Спорт|^Sport$/.test(t)) return 'sport';
+  if (b.dataset.workoutJournal !== undefined || /Трениров|Спорт|^Sport$/.test(t)) return 'sport';
   if (/Привыч|^Tracker$/.test(t)) return 'tracker';
   if (/Питан|Дневник|^Eat$/.test(t)) return 'eat';
   if (/Отч|Прогресс/.test(t)) return 'report';
@@ -208,7 +208,6 @@ function button(name, label) {
   return b;
 }
 
-// Round socket sized to the orb: orb radius 29, socket radius 33, socket centre 8px below the top edge
 const SOCKET_R = 33;
 const SOCKET_CY = 8;
 
@@ -285,10 +284,6 @@ function mount() {
 
   bar.appendChild(svgDoc);
 
-  glow = document.createElement('div');
-  glow.className = 'setup-nav-glow';
-  bar.appendChild(glow);
-
   orb = document.createElement('div');
   orb.id = 'setup-orb';
   orb.className = 'setup-nav-orb';
@@ -327,7 +322,6 @@ function mount() {
   nav.append(bar);
 }
 
-// Parabolic jump from prevCx to cx, landing in the round socket
 function flyOrb(prevCx, cx) {
   const dur = 560;
   const lift = 34 + Math.min(22, Math.abs(cx - prevCx) * 0.08);
@@ -340,9 +334,7 @@ function flyOrb(prevCx, cx) {
     const y = -Math.sin(Math.PI * t) * lift;
     frames.push({ transform: `translate3d(${x}px, ${y}px, 0) translate(-50%, 0)` });
   }
-  const opts = { duration: dur, easing: 'linear' };
-  orb.animate(frames, opts);
-  glow.animate(frames, opts);
+  orb.animate(frames, { duration: dur, easing: 'linear' });
   orbInner.animate([
     { transform: 'scale(1,1)', offset: 0 },
     { transform: 'scale(0.94,1.08)', offset: 0.25 },

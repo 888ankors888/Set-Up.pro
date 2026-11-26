@@ -1,4 +1,4 @@
-/* nav-brand.css: round socket notch, arcing orb, neon contour, static labels */
+/* nav-brand.css: round socket notch, arcing orb, neon contour, static labels, no orb glow */
 html body #nav .setup-wordnav {
   position: relative !important;
   display: flex !important;
@@ -43,7 +43,7 @@ html body #nav .setup-wordnav {
   justify-content: center !important;
   pointer-events: none !important;
   opacity: 1 !important;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.55), 0 0 16px rgba(118, 232, 108, 0.4) !important;
+  box-shadow: none !important;
   transform: translate3d(var(--orb-x, 150px), 0, 0) translate(-50%, 0);
   transition: none !important;
   will-change: transform;
@@ -66,19 +66,7 @@ html body #nav .setup-wordnav {
 }
 
 .setup-nav-glow {
-  position: absolute !important;
-  top: -31px !important;
-  left: 0 !important;
-  width: 86px !important;
-  height: 86px !important;
-  border-radius: 50% !important;
-  background: radial-gradient(circle, rgba(118, 232, 108, 0.35) 0%, rgba(118, 232, 108, 0) 70%) !important;
-  pointer-events: none !important;
-  z-index: 2 !important;
-  opacity: 1 !important;
-  transform: translate3d(var(--orb-x, 150px), 0, 0) translate(-50%, 0) !important;
-  transition: none !important;
-  will-change: transform;
+  display: none !important;
 }
 
 html body #nav .setup-wordnav > button {
