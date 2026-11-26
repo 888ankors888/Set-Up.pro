@@ -54,15 +54,11 @@ html body #nav .setup-wordnav {
 .setup-sphere-layer {
   position: absolute;
   inset: 0;
-  opacity: 0;
-  transform: scale(0.8);
-  transition: opacity 0.8s ease-in-out, transform 0.8s cubic-bezier(0.34, 1.3, 0.64, 1);
+  display: none;
   pointer-events: none;
-  will-change: opacity, transform;
 }
 .setup-sphere-layer.is-on {
-  opacity: 1;
-  transform: scale(1);
+  display: block;
 }
 .setup-sphere-layer > svg {
   width: 100%;
@@ -453,7 +449,7 @@ function drawNotch(w, h, cx) {
   }
 }
 
-// Smooth swap of the sphere artwork: the old sphere fades/shrinks out while the new one fades/grows in
+// Instant sphere swap: no fade or scale animation, the right sphere is simply shown
 function setSphere(tab) {
   if (!orbInner || !SPHERE_SVGS[tab]) return;
   orbInner.querySelectorAll('.setup-sphere-layer').forEach(layer => {
@@ -553,31 +549,31 @@ function mount() {
   nav.append(bar);
 }
 
-// Bubble-in-water motion: slow sine ease, gentle lazy rise, side-to-side sway and a jelly wobble that fades out
+// Slow, smooth hop from one button to another along a high arc (no sway, no wobble).
+// Horizontal motion eases in and out; the height follows a sine arc; a soft squash happens only on landing.
 function flyOrb(prevCx, cx) {
-  const dur = 1150;
+  const dur = 1600;
   const dist = cx - prevCx;
-  const dir = dist >= 0 ? 1 : -1;
-  const rise = 20 + Math.min(10, Math.abs(dist) * 0.04);
-  const N = 72;
+  const lift = Math.min(60, 38 + Math.abs(dist) * 0.06);
+  const N = 80;
   const move = [];
-  const jelly = [];
   for (let i = 0; i <= N; i++) {
     const t = i / N;
     const e = 0.5 - 0.5 * Math.cos(Math.PI * t);
-    const env = Math.sin(Math.PI * t);
-    const x = prevCx + dist * e + Math.sin(Math.PI * 3 * t) * 5 * env * dir;
-    const y = -env * rise + Math.sin(Math.PI * 4 * t) * 3 * env;
+    const x = prevCx + dist * e;
+    const y = -Math.sin(Math.PI * t) * lift;
     move.push({ transform: `translate3d(${x}px, ${y}px, 0) translate(-50%, 0)` });
-    const fade = Math.pow(1 - t, 1.4);
-    const s = 0.075 * Math.sin(Math.PI * 2 * 3 * t) * (0.35 + env) * fade;
-    const tilt = 5 * Math.sin(Math.PI * 2 * 1.5 * t) * fade * dir;
-    jelly.push({ transform: `rotate(${tilt}deg) scale(${1 + s}, ${1 - s})` });
   }
   const opts = { duration: dur, easing: 'linear' };
   orb.animate(move, opts);
   if (glow) glow.animate(move, opts);
-  orbInner.animate(jelly, opts);
+  orbInner.animate([
+    { transform: 'scale(1,1)', offset: 0 },
+    { transform: 'scale(1,1)', offset: 0.82 },
+    { transform: 'scale(1.08,0.92)', offset: 0.92 },
+    { transform: 'scale(0.98,1.02)', offset: 0.97 },
+    { transform: 'scale(1,1)', offset: 1 }
+  ], { duration: dur, easing: 'ease-in-out' });
   return dur;
 }
 
@@ -623,7 +619,7 @@ function updateNotch(animated = true) {
       if (animated && isDifferent && typeof orb.animate === 'function') {
         const prev = currentCx;
         const dur = flyOrb(prev, cx);
-        notchTimer = setTimeout(() => drawNotch(w, h, cx), dur * 0.7);
+        notchTimer = setTimeout(() => drawNotch(w, h, cx), dur * 0.75);
       } else {
         drawNotch(w, h, cx);
       }
