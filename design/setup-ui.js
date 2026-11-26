@@ -33,6 +33,45 @@ html body #nav .setup-wordnav {
 }
 `;
 
+// Detailed illustrations for orb
+const CATEGORY_ARTWORK = {
+  sport: `
+    <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="2" y="10" width="4" height="12" rx="2" fill="#071b13"/>
+      <rect x="7" y="7" width="4" height="18" rx="2" fill="#0a2e20"/>
+      <rect x="11" y="14" width="10" height="4" rx="1.5" fill="#071b13"/>
+      <rect x="21" y="7" width="4" height="18" rx="2" fill="#0a2e20"/>
+      <rect x="26" y="10" width="4" height="12" rx="2" fill="#071b13"/>
+      <path d="M13 14h6" stroke="#d4f96a" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+  `,
+  eat: `
+    <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M16 6C16 6 18 3 22 4" stroke="#164d36" stroke-width="2" stroke-linecap="round"/>
+      <path d="M19 4.5C19 4.5 21 2.5 24 3C24 6 22 8 19 8" fill="#1b5c41"/>
+      <path d="M16 8C11 8 7 12 7 18C7 24 11 28 16 28C21 28 25 24 25 18C25 12 21 8 16 8Z" fill="#071b13"/>
+      <path d="M12 14C12 12.5 13.5 11 15.5 11" stroke="#d4f96a" stroke-width="1.5" stroke-linecap="round"/>
+      <circle cx="16" cy="18" r="4.5" fill="#0d2e20" stroke="#d4f96a" stroke-width="1"/>
+    </svg>
+  `,
+  tracker: `
+    <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="5" y="6" width="22" height="22" rx="5" fill="#071b13"/>
+      <path d="M11 3v5M21 3v5" stroke="#0a2e20" stroke-width="2" stroke-linecap="round"/>
+      <path d="M5 12h22" stroke="#164d36" stroke-width="1.5"/>
+      <path d="M11 19l3.5 3.5 7-7" stroke="#d4f96a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  `,
+  menu: `
+    <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="6" y="6" width="8" height="8" rx="2.5" fill="#071b13"/>
+      <rect x="18" y="6" width="8" height="8" rx="2.5" fill="#071b13"/>
+      <rect x="6" y="18" width="8" height="8" rx="2.5" fill="#071b13"/>
+      <rect x="18" y="18" width="8" height="8" rx="2.5" fill="#071b13"/>
+    </svg>
+  `
+};
+
 const ICON_PATHS = {
   sport: '<circle cx="5" cy="7" r="2"/><circle cx="19" cy="17" r="2"/><path d="m7 8 10 8M3 14l5-5m8 6 5-5"/>',
   eat: '<path d="M4 3v6a3 3 0 0 0 6 0V3M7 3v18M20 21V3c-4 2-5 8 0 9"/>',
@@ -48,7 +87,7 @@ function createSvgIcon(name) {
   svg.setAttribute('viewBox', '0 0 24 24');
   svg.setAttribute('fill', 'none');
   svg.setAttribute('stroke', 'currentColor');
-  svg.setAttribute('stroke-width', '2');
+  svg.setAttribute('stroke-width', '1.9');
   svg.setAttribute('stroke-linecap', 'round');
   svg.setAttribute('stroke-linejoin', 'round');
   svg.classList.add('setup-brand-icon');
@@ -56,7 +95,7 @@ function createSvgIcon(name) {
   return svg;
 }
 
-let nav, bar, panel, up, svgDoc, curvePath, orb, glow, orbIcon, queued = false;
+let nav, bar, panel, up, svgDoc, curvePath, orb, glow, orbArt, queued = false;
 let currentCx = null;
 let currentTab = null;
 let isInitialized = false;
@@ -97,7 +136,7 @@ function choose(name) {
     return;
   }
 
-  // Pre-update UI and immediately slide orb directly from previous button
+  // Pre-update UI and slide orb immediately
   const clickedBtn = bar?.querySelector(`[data-setup-destination="${name}"]`);
   if (clickedBtn && !clickedBtn.classList.contains('setup-menu-trigger')) {
     bar.querySelectorAll('[data-setup-destination]:not(.setup-menu-trigger)').forEach(btn => {
@@ -186,9 +225,9 @@ function mount() {
   orb.className = 'setup-nav-orb';
   const orbInner = document.createElement('div');
   orbInner.className = 'setup-nav-orb-inner';
-  orbIcon = document.createElement('div');
-  orbIcon.className = 'setup-orb-icon';
-  orbInner.appendChild(orbIcon);
+  orbArt = document.createElement('div');
+  orbArt.className = 'setup-orb-art';
+  orbInner.appendChild(orbArt);
   orb.appendChild(orbInner);
   bar.appendChild(orb);
 
@@ -231,7 +270,6 @@ function updateNotch(animated = true) {
 
   svgDoc.setAttribute('viewBox', `0 0 ${w} ${h}`);
 
-  // Find active button among main 3 buttons
   let activeBtn = bar.querySelector('[data-setup-destination].on:not(.setup-menu-trigger)');
   if (!activeBtn) {
     let saved = null;
@@ -263,13 +301,11 @@ function updateNotch(animated = true) {
       curvePath.setAttribute('d', generateNotchPath(w, h, cx));
 
       if (currentTab !== tabName) {
-        orbIcon.innerHTML = '';
-        orbIcon.appendChild(createSvgIcon(tabName));
+        orbArt.innerHTML = CATEGORY_ARTWORK[tabName] || CATEGORY_ARTWORK.eat;
         currentTab = tabName;
       }
 
       if (!isInitialized) {
-        // First render: snap instantly without flying from left
         isInitialized = true;
         orb.classList.add('is-ready');
         glow.classList.add('is-ready');
