@@ -165,4 +165,9 @@
     document.head.appendChild(meals);
   };
   document.head.appendChild(loader);
+
+  // Header logo: text + inline SVG sphere
+  const logo = document.createElement('script');
+  logo.src = 'design/header-logo.js?v=local';
+  document.head.appendChild(logo);
 })();
