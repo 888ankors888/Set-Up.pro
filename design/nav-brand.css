@@ -278,7 +278,7 @@ html body #nav .setup-wordnav .setup-up-panel button .setup-brand-icon {
   flex: 0 0 20px !important;
 }
 
-/* ---- Mobile (<1000px): beat desktop-brand.css; menu scaled by 1.2 vs the previous 48px version ---- */
+/* ---- Mobile (<1000px): beat desktop-brand.css; icons are 18px ---- */
 @media (max-width: 999px) {
   html:root:root:root:root:root:root body #nav .setup-wordnav {
     width: min(100%, 480px) !important;
@@ -300,15 +300,15 @@ html body #nav .setup-wordnav .setup-up-panel button .setup-brand-icon {
     max-width: 65px !important;
   }
   html:root:root:root:root:root:root body #nav .setup-wordnav > button:not(.setup-menu-trigger) .setup-brand-icon {
-    width: 29px !important;
-    height: 29px !important;
-    flex: 0 0 29px !important;
-    margin-bottom: 2px !important;
+    width: 18px !important;
+    height: 18px !important;
+    flex: 0 0 18px !important;
+    margin-bottom: 3px !important;
   }
   html:root:root:root:root:root:root body #nav .setup-wordnav > button.setup-menu-trigger .setup-brand-icon {
-    width: 29px !important;
-    height: 29px !important;
-    flex: 0 0 29px !important;
+    width: 18px !important;
+    height: 18px !important;
+    flex: 0 0 18px !important;
   }
   html:root:root:root:root:root:root body #nav .setup-wordnav > button .setup-brand-label {
     font-size: 12px !important;
