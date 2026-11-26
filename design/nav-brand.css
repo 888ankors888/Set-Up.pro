@@ -168,7 +168,7 @@ html body #nav .setup-wordnav > button .setup-brand-label {
   transition: color 0.2s ease, text-shadow 0.2s ease, font-weight 0.2s ease !important;
 }
 
-/* Relative offsets (content is taller than the bar now, so it is centred with equal overflow) */
+/* Relative offsets (content is taller than the bar, so it is centred with equal overflow) */
 html:root:root:root body #nav .setup-wordnav > button:not(.setup-menu-trigger) > .setup-brand-icon {
   position: relative !important;
   top: 4px !important;
@@ -176,7 +176,7 @@ html:root:root:root body #nav .setup-wordnav > button:not(.setup-menu-trigger) >
 
 html:root:root:root body #nav .setup-wordnav > button:not(.setup-menu-trigger) > .setup-brand-label {
   position: relative !important;
-  top: 2px !important;
+  top: 8px !important;
 }
 
 html body #nav .setup-wordnav > button.on .setup-brand-icon {
