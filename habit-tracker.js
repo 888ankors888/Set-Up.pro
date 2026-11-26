@@ -52,25 +52,33 @@
     render();
   }
 
-  /* Shared group meta: colours and icons are used by the summary and by the habit cards */
-  const extraColors=['#5EEAD4','#F472B6','#60A5FA','#FB7185','#FACC15','#34D399','#A78BFA','#22D3EE','#F97316','#E879F9','#4ADE80'];
-  const iconPaths={
-    heart:'<path d="M12 20.5s-7.5-4.6-7.5-10.2a4.3 4.3 0 0 1 7.5-2.6 4.3 4.3 0 0 1 7.5 2.6c0 5.6-7.5 10.2-7.5 10.2z"/>',
-    leaf:'<path d="M12 21v-8"/><path d="M12 13c0-4 2.8-6.5 7-6.5 0 4.2-2.8 6.5-7 6.5z"/><path d="M12 15.5c0-3-2.2-5-5.5-5 0 3.2 2.2 5 5.5 5z"/>',
-    bolt:'<path d="M13 2.5 5 13.5h6l-1 8 8-11h-6z"/>',
-    spark:'<path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/>'
-  };
-  const groupIcon=(kind,n)=>'<svg viewBox="0 0 24 24" width="'+n+'" height="'+n+'" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(iconPaths[kind]||iconPaths.spark)+'</svg>';
+  /* Group meta: one emoji and one scale colour per habit group (shared by the summary and the cards).
+     Matching is by name first, then by group index (the 14 groups keep their order). */
+  const GROUPS=[
+    ['здоровье и тело','#B4F74A','💧'],
+    ['психич','#C084FC','🌿'],
+    ['питани','#FF7A6B','🥗'],
+    ['физическ','#FFB347','🚶'],
+    ['сон и восстан','#7C83FF','🌙'],
+    ['обучен','#4DA6FF','📚'],
+    ['работа','#2DD4BF','🎯'],
+    ['финанс','#EAD84A','💰'],
+    ['отношен','#F472B6','🤝'],
+    ['дом и порядок','#E2A76F','🏡'],
+    ['цифров','#22D3EE','📵'],
+    ['творч','#E879F9','🎨'],
+    ['саморефл','#CBD5E1','📝'],
+    ['эколог','#5BD16F','🌍']
+  ];
   const iconCheck=n=>'<svg viewBox="0 0 24 24" width="'+n+'" height="'+n+'" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>';
   const rgba=(hex,a)=>{const n=parseInt(hex.slice(1),16);return 'rgba('+(n>>16&255)+','+(n>>8&255)+','+(n&255)+','+a+')'};
   function groupMeta(d){
     const key=gkey(d),name=d.category||'Группа',n=name.toLowerCase();
-    let color,icon;
-    if(n.includes('здоровье и тело')){color='#B4F74A';icon='heart';}
-    else if(n.includes('психич')||n.includes('эмоцион')){color='#C084FC';icon='leaf';}
-    else if(n.includes('физическ')||n.includes('активн')){color='#FFB347';icon='bolt';}
-    else{color=extraColors[key%extraColors.length];icon='spark';}
-    return {key,name,color,icon};
+    let item=GROUPS.find(g=>n.includes(g[0]));
+    if(!item&&n.includes('эмоцион'))item=GROUPS[1];
+    if(!item&&n.includes('активн'))item=GROUPS[3];
+    if(!item)item=GROUPS[key]||['','#B4F74A','✨'];
+    return {key,name,color:item[1],emoji:d.image||item[2]};
   }
   const weekKeys=()=>{const end=selected<minDate()?selected:today();return Array.from({length:7},(_,i)=>{const date=dt(end);date.setDate(date.getDate()+i-6);return dk(date)})};
 
@@ -86,7 +94,7 @@
     const cells=keys.map(k=>{const m=done(id,k),label=k.slice(8)+'.'+k.slice(5,7);return '<button type="button" class="hb-day'+(m?' is-done':'')+(k===selected?' is-selected':'')+'" data-hb-day data-habit="'+esc(id)+'" data-date="'+k+'" aria-pressed="'+m+'" aria-label="'+esc(fmt(k))+': '+(m?'выполнено, нажмите, чтобы снять отметку':'нет отметки, нажмите, чтобы отметить')+'"><span class="hb-day-date">'+label+'</span><span class="hb-day-mark" aria-hidden="true">'+(m?iconCheck(14):'—')+'</span></button>'}).join('');
     const ring='<div class="hb-ring" role="img" aria-label="Выполнено '+count+' из 7 дней"><svg viewBox="0 0 80 80" width="80" height="80" aria-hidden="true"><defs><linearGradient id="hb-g-'+uid+'" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#B4F74A"/><stop offset="1" stop-color="#92E619"/></linearGradient></defs><circle class="hb-ring-track" cx="40" cy="40" r="'+R+'" fill="none" stroke-width="7"/>'+(count?'<circle class="hb-ring-arc" cx="40" cy="40" r="'+R+'" fill="none" stroke="url(#hb-g-'+uid+')" stroke-width="7" stroke-linecap="round" stroke-dasharray="'+C+'" stroke-dashoffset="'+off+'" style="--hb-c:'+C+'"/>':'')+'</svg><div class="hb-ring-c"><b>'+count+'/7</b><small>за 7 дн.</small></div></div>';
     return '<section class="hb-card" data-hb-habit="'+esc(id)+'" data-hb-group="'+meta.key+'" style="--hb-g:'+meta.color+';--hb-g-a:'+rgba(meta.color,.1)+';--hb-g-b:'+rgba(meta.color,.35)+'">'
-      +'<div class="hb-top"><span class="hb-badge">'+groupIcon(meta.icon,14)+'<span class="hb-badge-text">'+esc(meta.name)+'</span></span><button type="button" class="hb-info" data-hb-info aria-expanded="false" aria-controls="hb-pop-'+uid+'" aria-label="Ручная отметка: пояснение">i</button></div>'
+      +'<div class="hb-top"><span class="hb-badge"><span class="hb-badge-emoji" aria-hidden="true">'+esc(meta.emoji)+'</span><span class="hb-badge-text">'+esc(meta.name)+'</span></span><button type="button" class="hb-info" data-hb-info aria-expanded="false" aria-controls="hb-pop-'+uid+'" aria-label="Ручная отметка: пояснение">i</button></div>'
       +'<div class="hb-pop" id="hb-pop-'+uid+'" role="note" hidden>'+esc(info)+'</div>'
       +'<div class="hb-head"><div class="hb-head-main"><h2 class="hb-title">'+esc(title(d,c))+'</h2><div class="hb-chips">'+chips.map(x=>'<span class="hb-chip">'+esc(x)+'</span>').join('')+'</div><p class="hb-status'+(marked?' is-done':'')+'"><span class="hb-status-dot" aria-hidden="true"></span>'+esc(status)+'</p></div>'+ring+'</div>'
       +'<button type="button" class="hb-cta'+(marked?' is-done':'')+'" data-hb-cta data-habit="'+esc(id)+'" data-date="'+selected+'" aria-pressed="'+marked+'"><span class="hb-cta-box" aria-hidden="true">'+iconCheck(16)+'</span><span>'+(marked?'Выполнено':'Отметить выполнение')+'</span></button>'
@@ -132,7 +140,7 @@
     const left='<div class="hd-col hd-col-left">'+hdRing(s)+'<div class="hd-metrics"><p class="hd-metrics-label">Выполнение за выбранный день</p><div class="hd-percent">'+s.percent+'<span>%</span></div>'+chip+(s.extra?'<p class="hd-extra">Отметок вне расписания: '+s.extra+'</p>':'')+'</div></div>';
     const tiles=s.groups.map(g=>{
       const pct=g.total?Math.round(g.completed/g.total*100):0,on=activeGroup===g.key,dim=activeGroup!==null&&!on;
-      return '<button type="button" class="hd-group'+(on?' is-active':'')+(dim?' is-dim':'')+'" data-hd-group="'+g.key+'" aria-pressed="'+on+'" aria-label="'+esc(g.name)+': выполнено '+g.completed+' из '+g.total+'" style="--hd-c:'+g.color+';--hd-c-a:'+rgba(g.color,.13)+';--hd-c-b:'+rgba(g.color,.5)+'"><span class="hd-group-top"><span class="hd-group-ico">'+groupIcon(g.icon,16)+'</span><span class="hd-group-name">'+esc(g.name)+'</span><span class="hd-group-count">'+g.completed+'/'+g.total+'</span></span><span class="hd-bar" aria-hidden="true"><i style="width:'+pct+'%"></i></span></button>';
+      return '<button type="button" class="hd-group'+(on?' is-active':'')+(dim?' is-dim':'')+'" data-hd-group="'+g.key+'" aria-pressed="'+on+'" aria-label="'+esc(g.name)+': выполнено '+g.completed+' из '+g.total+'" style="--hd-c:'+g.color+';--hd-c-a:'+rgba(g.color,.13)+';--hd-c-b:'+rgba(g.color,.5)+'"><span class="hd-group-top"><span class="hd-group-ico" aria-hidden="true">'+esc(g.emoji)+'</span><span class="hd-group-name">'+esc(g.name)+'</span><span class="hd-group-count">'+g.completed+'/'+g.total+'</span></span><span class="hd-bar" aria-hidden="true"><i style="width:'+pct+'%"></i></span></button>';
     }).join('');
     const right='<div class="hd-col hd-col-right"><div class="hd-groups-head"><h3>Группы привычек в трекере</h3>'+(activeGroup!==null?'<button type="button" class="hd-reset" data-hd-reset>Показать все</button>':'')+'</div><div class="hd-groups" role="group" aria-label="Фильтр по группам привычек">'+tiles+'</div></div>';
     return '<section class="hd-module" aria-labelledby="hd-title"><header class="hd-head"><h2 class="hd-title" id="hd-title">Привычки дня</h2>'+capsule+'</header><div class="hd-body">'+left+right+'</div></section>';
@@ -277,8 +285,7 @@
 .hd-module .hd-group.is-active{border-color:var(--hd-c);background:var(--hd-c-a)}
 .hd-module .hd-group.is-dim{opacity:.5}
 .hd-group-top{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px}
-.hd-group-ico{display:grid;place-items:center;width:28px;height:28px;border-radius:9px;background:var(--hd-c-a);color:var(--hd-c)}
-.hd-group-ico svg{display:block;filter:drop-shadow(0 0 4px var(--hd-c-b))}
+.hd-group-ico{display:grid;place-items:center;width:30px;height:30px;border-radius:10px;background:var(--hd-c-a);box-shadow:inset 0 0 0 1px var(--hd-c-b);font:400 16px/1 'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif}
 .hd-group-name{min-width:0;font:600 14px/1.3 var(--hb-ui);overflow-wrap:anywhere}
 .hd-group-count{color:var(--hb-tx);font:700 15px/1 var(--hb-head);font-variant-numeric:tabular-nums;white-space:nowrap;text-align:right}
 .hd-bar{display:block;height:4px;margin-top:10px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden}
@@ -291,8 +298,8 @@
 .hb-card{position:relative;display:flex;flex-direction:column;gap:16px;min-width:0;padding:18px;border-radius:26px;background:var(--hb-surface);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);border:1px solid var(--hb-line);box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 18px 40px -26px rgba(0,0,0,.8);color:var(--hb-tx);font-family:var(--hb-ui);box-sizing:border-box}
 .hb-card *{box-sizing:border-box}
 .hb-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.hb-badge{display:inline-flex;align-items:center;gap:6px;min-width:0;padding:6px 11px;border-radius:999px;background:var(--hb-g-a,rgba(180,247,74,.08));border:1px solid var(--hb-g-b,var(--hb-line));color:var(--hb-g,var(--hb-acc))}
-.hb-badge svg{flex:none;filter:drop-shadow(0 0 4px var(--hb-g-b,var(--hb-acc-glow)))}
+.hb-badge{display:inline-flex;align-items:center;gap:7px;min-width:0;padding:6px 11px;border-radius:999px;background:var(--hb-g-a,rgba(180,247,74,.08));border:1px solid var(--hb-g-b,var(--hb-line));color:var(--hb-g,var(--hb-acc))}
+.hb-badge-emoji{flex:none;font:400 14px/1 'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif}
 .hb-badge-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:600 11px/1.2 var(--hb-ui);letter-spacing:.08em;text-transform:uppercase}
 .hb-card .hb-info{flex:none;display:grid;place-items:center;width:34px;height:34px;padding:0;border-radius:50%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);color:var(--hb-tx2);font:italic 700 15px/1 var(--hb-head);cursor:pointer;transition:border-color .2s,color .2s,background .2s}
 .hb-card .hb-info:hover,.hb-card .hb-info[aria-expanded=true]{color:var(--hb-acc);border-color:var(--hb-acc);background:rgba(180,247,74,.1)}
