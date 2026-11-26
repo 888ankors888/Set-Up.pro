@@ -104,7 +104,7 @@ html body #nav .setup-wordnav > button {
   box-shadow: none !important;
   outline: none !important;
   transition: all 0.25s ease !important;
-  overflow: hidden !important;
+  overflow: visible !important;
 }
 
 /* Active button: identical to inactive (beats themes.css lime gradient by specificity) */
@@ -161,18 +161,17 @@ html body #nav .setup-wordnav > button .setup-brand-label {
   color: #a7e4ca !important;
   letter-spacing: 0.01em !important;
   white-space: nowrap !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
   transform: none !important;
   transition: color 0.2s ease, text-shadow 0.2s ease, font-weight 0.2s ease !important;
 }
 
-/* Buttons with labels sit lower in the bar: the content is shifted visually with a relative offset,
-   so padding, flex centering and clipping stay unchanged (works the same on mobile and desktop) */
+/* Buttons with labels sit lower in the bar: the content is shifted visually with a relative offset */
 html:root:root:root body #nav .setup-wordnav > button:not(.setup-menu-trigger) > .setup-brand-icon,
 html:root:root:root body #nav .setup-wordnav > button:not(.setup-menu-trigger) > .setup-brand-label {
   position: relative !important;
-  top: 16px !important;
+  top: 12px !important;
 }
 
 html body #nav .setup-wordnav > button.on .setup-brand-icon {
