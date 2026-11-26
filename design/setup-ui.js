@@ -72,8 +72,8 @@ html body #nav .setup-wordnav {
 `;
 
 // Three identical glowing spheres; only the icon in the middle differs.
-// Icons (barbell, fork and knife) are drawn in solid white: a gradient stroke on a perfectly horizontal/vertical
-// line has a zero-size bounding box and is not rendered, which is why parts of them used to be missing.
+// Icons (barbell, fork and knife) are drawn in solid white and scaled to 68% around the sphere centre.
+// (A gradient stroke on a perfectly horizontal/vertical line has a zero-size bounding box and is not rendered.)
 const SPHERE_SVGS = {
   tracker: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <defs>
@@ -204,8 +204,8 @@ const SPHERE_SVGS = {
       <circle cx="224" cy="120" r="5.5" fill="#0d1210" stroke-width="4"/>
       <circle cx="288" cy="392" r="5.5" fill="#0d1210" stroke-width="4"/>
     </g>
-    <!-- Barbell, solid white -->
-    <g fill="none" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Barbell, solid white, smaller -->
+    <g transform="translate(256 256) scale(0.68) translate(-256 -256)" fill="none" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round">
       <line x1="102" y1="256" x2="410" y2="256" stroke-width="11"/>
       <line x1="102" y1="244" x2="102" y2="268" stroke-width="7"/>
       <line x1="410" y1="244" x2="410" y2="268" stroke-width="7"/>
@@ -283,8 +283,8 @@ const SPHERE_SVGS = {
       <circle cx="212" cy="389" r="5.5" fill="#0d1210" stroke-width="4"/>
       <circle cx="300" cy="389" r="5.5" fill="#0d1210" stroke-width="4"/>
     </g>
-    <!-- Fork and knife, solid white -->
-    <g fill="none" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Fork and knife, solid white, smaller -->
+    <g transform="translate(256 256) scale(0.68) translate(-259 -256)" fill="none" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round">
       <path d="M 200 166 L 200 208 C 200 226, 212 234, 220 234" stroke-width="8.5"/>
       <path d="M 240 166 L 240 208 C 240 226, 228 234, 220 234" stroke-width="8.5"/>
       <line x1="220" y1="166" x2="220" y2="234" stroke-width="8.5"/>

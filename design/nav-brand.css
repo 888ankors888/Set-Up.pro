@@ -147,11 +147,12 @@ html body #nav .setup-wordnav > button:hover .setup-brand-icon {
   transform: translateY(-2px) !important;
 }
 
+/* Labels: thinner weight */
 html body #nav .setup-wordnav > button .setup-brand-label {
   display: block !important;
   width: 100% !important;
   font-size: 10.5px !important;
-  font-weight: 700 !important;
+  font-weight: 400 !important;
   line-height: 1.15 !important;
   text-align: center !important;
   margin: 0 !important;
@@ -172,7 +173,7 @@ html body #nav .setup-wordnav > button.on .setup-brand-icon {
 
 html body #nav .setup-wordnav > button.on .setup-brand-label {
   color: #ffffff !important;
-  font-weight: 800 !important;
+  font-weight: 500 !important;
   transform: none !important;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9), 0 0 10px rgba(0, 0, 0, 0.7) !important;
 }
