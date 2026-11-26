@@ -52,10 +52,10 @@ html.meal-entry-open{overflow:hidden}
 #meal-entry-dialog .meal-dialog-body :is(input:not([type=checkbox]):not([type=radio]):not([type=file]),textarea,select){
   width:100%;box-sizing:border-box;padding:11px 13px;border-radius:14px;background:#091a15;color:#f2f7f5;
   border:1px solid rgba(198,248,92,.16);font:inherit;font-size:14px;outline:none;
-  transition:border-color .2s,box-shadow .2s,background .2s;
+  transition:border-color .2s,background .2s;
 }
 #meal-entry-dialog .meal-dialog-body textarea{min-height:88px;resize:vertical}
-#meal-entry-dialog .meal-dialog-body :is(input,textarea,select):focus{background:#0d231c;border-color:#c6f85c;box-shadow:0 0 0 3px rgba(198,248,92,.14)}
+#meal-entry-dialog .meal-dialog-body :is(input,textarea,select):focus{background:#0d231c;border-color:#c6f85c;box-shadow:none}
 #meal-entry-dialog .meal-dialog-body ::placeholder{color:#64857a}
 #meal-entry-dialog .meal-dialog-body button.btn,
 #meal-entry-dialog .meal-dialog-body button:not(.btn):not([class*=close]){
@@ -89,3 +89,13 @@ html.meal-entry-open{overflow:hidden}
 #meal-entry-dialog .meal-dialog-pills button.is-active{color:#000!important}
 #food-add-dialog .fam-airow.off .fam-chk{color:transparent!important}
 #meal-entry-dialog .meal-dialog-pills button.is-active{background:#c6f85c;border-color:#c6f85c}
+
+/* ===== Add-food module: Set-Up.pro label, no extra glow around text inputs ===== */
+#food-add-dialog .fam-eyebrow{font-size:0;line-height:0;letter-spacing:0}
+#food-add-dialog .fam-eyebrow::after{content:'Set-Up.pro';display:block;font-size:10.5px;line-height:1.45;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#c6f85c}
+#food-add-dialog .fam-search:focus-within,
+#food-add-dialog .fam-gwrap:focus-within,
+#food-add-dialog textarea.fam-ta:focus,
+#food-add-dialog input.fam-text:focus,
+#food-add-dialog input.fam-input:focus,
+#food-add-dialog input.fam-g:focus{box-shadow:none!important;outline:none!important}
