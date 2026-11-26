@@ -1,4 +1,4 @@
-/* Updated nav-brand.css with continuous curved notch dock, neon contour, 3D cyber sphere & static centered labels */
+/* Updated nav-brand.css: curved notch dock, neon contour, 3D cyber sphere, static labels, high-contrast active label */
 html body #nav .setup-wordnav {
   position: relative !important;
   display: flex !important;
@@ -16,7 +16,6 @@ html body #nav .setup-wordnav {
   isolation: isolate !important;
 }
 
-/* Background dynamic notch SVG with multi-stage neon glow */
 .setup-dock-svg {
   position: absolute !important;
   inset: 0 !important;
@@ -29,7 +28,6 @@ html body #nav .setup-wordnav {
           drop-shadow(0 -3px 18px rgba(118, 232, 108, 0.2)) !important;
 }
 
-/* Floating Orb Indicator with 3D Cyber Sphere */
 .setup-nav-orb {
   position: absolute !important;
   top: -22px !important;
@@ -69,7 +67,6 @@ html body #nav .setup-wordnav {
   100% { transform: translateY(0) scale(1) rotate(0deg); }
 }
 
-/* 3D Cyber Sphere SVG Container */
 .setup-cyber-sphere {
   width: 100% !important;
   height: 100% !important;
@@ -77,7 +74,6 @@ html body #nav .setup-wordnav {
   border-radius: 50% !important;
 }
 
-/* Ambient glow under orb */
 .setup-nav-glow {
   position: absolute !important;
   top: -32px !important;
@@ -94,7 +90,6 @@ html body #nav .setup-wordnav {
   will-change: transform;
 }
 
-/* Buttons in nav */
 html body #nav .setup-wordnav > button {
   position: relative !important;
   z-index: 5 !important;
@@ -118,7 +113,6 @@ html body #nav .setup-wordnav > button {
   overflow: hidden !important;
 }
 
-/* Passive button soft mint accent & background glow on hover */
 html body #nav .setup-wordnav > button:not(.on):not(.setup-menu-trigger) {
   color: #a7e4ca !important;
 }
@@ -128,7 +122,6 @@ html body #nav .setup-wordnav > button:not(.on):not(.setup-menu-trigger):hover {
   background: rgba(167, 228, 202, 0.08) !important;
 }
 
-/* Icons on buttons */
 html body #nav .setup-wordnav > button .setup-brand-icon {
   display: block !important;
   width: 19px !important;
@@ -146,7 +139,6 @@ html body #nav .setup-wordnav > button:hover .setup-brand-icon {
   transform: translateY(-2px) !important;
 }
 
-/* Category text labels: strictly static position, centered, compact, highly legible mint */
 html body #nav .setup-wordnav > button .setup-brand-label {
   display: block !important;
   width: 100% !important;
@@ -165,20 +157,18 @@ html body #nav .setup-wordnav > button .setup-brand-label {
   transition: color 0.2s ease, text-shadow 0.2s ease, font-weight 0.2s ease !important;
 }
 
-/* Active button state: icon hidden, text stays STRICTLY in place without shifting */
 html body #nav .setup-wordnav > button.on .setup-brand-icon {
   opacity: 0 !important;
   transform: translateY(14px) scale(0.4) !important;
 }
 
 html body #nav .setup-wordnav > button.on .setup-brand-label {
-  color: #b4ff6b !important;
-  font-weight: 850 !important;
+  color: #ffffff !important;
+  font-weight: 800 !important;
   transform: none !important;
-  text-shadow: 0 0 10px rgba(180, 255, 107, 0.45) !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9), 0 0 10px rgba(0, 0, 0, 0.7) !important;
 }
 
-/* Separate menu trigger button */
 html body #nav .setup-wordnav > button.setup-menu-trigger {
   flex: 0 0 54px !important;
   width: 54px !important;
@@ -203,7 +193,6 @@ html body #nav .setup-wordnav > button.setup-menu-trigger[aria-expanded="true"] 
   color: #b4ff6b !important;
 }
 
-/* Popover Panel for Extra Menu */
 html body #nav .setup-up-panel {
   position: absolute !important;
   bottom: calc(100% + 14px) !important;
