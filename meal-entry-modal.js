@@ -154,9 +154,15 @@
   if (typeof aiSave === 'function') aiSave = afterSave(aiSave);
   render();
 
-  // The new compact FOOD.PRO window replaces this dialog as the "Add food" entry point;
+  // The compact add-food window (food-add-modal.js) replaces this dialog as the "Add food" entry point;
   // this dialog stays only for the photo estimate result (window.foodOpenEstimateWindow).
+  // food-add-meals.js adds the meal buttons above the search field once the window script is loaded.
   const loader = document.createElement('script');
   loader.src = 'food-add-modal.js?v=local';
+  loader.onload = () => {
+    const meals = document.createElement('script');
+    meals.src = 'food-add-meals.js?v=local';
+    document.head.appendChild(meals);
+  };
   document.head.appendChild(loader);
 })();
