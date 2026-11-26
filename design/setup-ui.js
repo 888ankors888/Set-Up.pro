@@ -65,6 +65,225 @@ html body #nav .setup-wordnav {
   height: 100%;
   display: block;
 }
+
+/* ===== Quick actions overlay (opened by the Menu button) ===== */
+.sqm {
+  --sqm-lime: #B6FF3B;
+  --sqm-lime2: #A3FF12;
+  --sqm-aqua: #38bdf8;
+  --sqm-spring: cubic-bezier(0.22, 1.18, 0.36, 1);
+  --sqm-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+  position: fixed;
+  inset: 0;
+  z-index: 58;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: calc(76px + env(safe-area-inset-top, 0px)) 20px calc(104px + env(safe-area-inset-bottom, 0px));
+  overflow-y: auto;
+  background: radial-gradient(circle at 50% 35%, rgba(6, 24, 18, 0.42) 0%, rgba(3, 11, 8, 0.72) 100%);
+  -webkit-backdrop-filter: blur(16px) saturate(145%);
+  backdrop-filter: blur(16px) saturate(145%);
+  font-family: Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+  color: #f3fcf7;
+  transition: opacity 0.34s var(--sqm-smooth), visibility 0.34s var(--sqm-smooth);
+  -webkit-tap-highlight-color: transparent;
+}
+.sqm.is-closed {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.sqm * { box-sizing: border-box; }
+.sqm-grid {
+  width: 100%;
+  max-width: 368px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.sqm-item {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  transition: opacity 0.36s var(--sqm-smooth), transform 0.54s var(--sqm-spring), border-color 0.25s ease, box-shadow 0.25s ease;
+  transition-delay: calc(var(--i, 0) * 36ms);
+}
+.sqm.is-closed .sqm-item {
+  opacity: 0;
+  transform: translateY(28px) scale(0.91);
+  transition: opacity 0.18s ease, transform 0.24s ease;
+  transition-delay: calc((8 - var(--i, 0)) * 14ms);
+}
+.sqm-tile {
+  position: relative;
+  appearance: none;
+  -webkit-appearance: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  background: linear-gradient(152deg, rgba(20, 54, 41, 0.72) 0%, rgba(8, 27, 20, 0.66) 55%, rgba(12, 37, 28, 0.7) 100%);
+  -webkit-backdrop-filter: blur(26px) saturate(160%);
+  backdrop-filter: blur(26px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.24), inset 0 -1px 0 0 rgba(255, 255, 255, 0.04), 0 14px 32px -10px rgba(0, 0, 0, 0.68);
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  overflow: hidden;
+}
+.sqm-tile::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.13) 0%, rgba(255, 255, 255, 0.025) 34%, transparent 62%);
+  pointer-events: none;
+}
+.sqm-tile:active { transform: scale(0.955) !important; }
+@media (hover: hover) {
+  .sqm-tile:hover {
+    border-color: rgba(163, 255, 18, 0.45);
+    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.28), 0 16px 34px -8px rgba(0, 0, 0, 0.7), 0 0 24px -4px rgba(163, 255, 18, 0.2);
+  }
+}
+.sqm-pill {
+  height: 72px;
+  border-radius: 999px;
+  padding: 0 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.sqm-pill span.sqm-label {
+  position: relative;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  color: #f3fcf7;
+  white-space: nowrap;
+}
+.sqm-ico {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  flex: none;
+  color: var(--sqm-lime);
+  filter: drop-shadow(0 0 8px rgba(163, 255, 18, 0.38));
+}
+.sqm-scanner {
+  height: 76px;
+  border-radius: 999px;
+  padding: 0 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: linear-gradient(132deg, rgba(163, 255, 18, 0.28) 0%, rgba(14, 58, 39, 0.76) 48%, rgba(182, 255, 59, 0.22) 100%);
+  border-color: rgba(182, 255, 59, 0.44);
+  box-shadow: inset 0 1px 0 0 rgba(232, 255, 184, 0.4), inset 0 -1px 0 0 rgba(163, 255, 18, 0.15), 0 14px 34px -8px rgba(0, 0, 0, 0.65), 0 0 34px -6px rgba(163, 255, 18, 0.32);
+}
+.sqm-scanner .sqm-ico { width: 28px; height: 28px; }
+.sqm-scanner span.sqm-label {
+  position: relative;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.18;
+  letter-spacing: -0.015em;
+  color: #f7ffeb;
+}
+.sqm-duo {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  align-items: center;
+}
+.sqm-round {
+  aspect-ratio: 1 / 1;
+  width: 100%;
+  max-height: 76px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+  padding: 0;
+}
+.sqm-water {
+  grid-row: span 2;
+  min-height: 166px;
+  border-radius: 34px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  text-align: center;
+}
+.sqm-water:hover { border-color: rgba(56, 189, 248, 0.5); }
+.sqm-fill {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 0%;
+  opacity: 0;
+  background: linear-gradient(180deg, rgba(56, 189, 248, 0.42) 0%, rgba(16, 185, 129, 0.28) 52%, rgba(6, 95, 70, 0.42) 100%);
+  border-top: 1.5px solid rgba(125, 211, 252, 0.75);
+  box-shadow: 0 -8px 24px rgba(56, 189, 248, 0.34);
+  transition: height 0.68s var(--sqm-spring), opacity 0.3s ease;
+  pointer-events: none;
+}
+.sqm-wave {
+  position: absolute;
+  top: -9px;
+  left: -50%;
+  width: 200%;
+  height: 16px;
+  background: radial-gradient(ellipse at 50% 100%, rgba(186, 230, 253, 0.42) 0%, transparent 65%);
+  animation: sqm-wave 3.6s ease-in-out infinite alternate;
+}
+@keyframes sqm-wave { 0% { transform: translateX(-8%); } 100% { transform: translateX(8%); } }
+.sqm-water .sqm-glass {
+  position: relative;
+  width: 44px;
+  height: 48px;
+  color: var(--sqm-aqua);
+  filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.45));
+}
+.sqm-water-count {
+  position: relative;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  font-size: 14px;
+  color: rgba(209, 250, 229, 0.65);
+}
+.sqm-water-count b { font-size: 16px; font-weight: 700; color: #fff; }
+.sqm-reset {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 3;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(3, 11, 8, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: rgba(186, 230, 253, 0.85);
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0.75);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.sqm-reset.is-on { opacity: 1; pointer-events: auto; transform: scale(1); }
+.sqm-reset svg { width: 14px; height: 14px; }
+/* Menu button highlight while the overlay is open */
+html body #nav .setup-wordnav > button.setup-menu-trigger.sqm-open .setup-brand-icon { color: #b4ff6b !important; }
 `;
 
 // Three identical glowing spheres; only the icon in the middle differs.
@@ -408,12 +627,171 @@ function active(b) {
 
 function close() {
   if (panel) panel.hidden = true;
-  if (up) up.setAttribute('aria-expanded', 'false');
+}
+
+/* ===== Quick actions overlay ===== */
+let quick = null;
+let quickOpen = false;
+
+const Q_ICON = {
+  data: '<rect x="2.5" y="4.5" width="19" height="15" rx="3.5" fill="currentColor" fill-opacity="0.12"/><circle cx="8.5" cy="10.2" r="2.1"/><path d="M5.5 15.8a3.2 3.2 0 0 1 6 0"/><path d="M14.5 9.5h4"/><path d="M14.5 13h3"/>',
+  reports: '<rect x="3" y="3.5" width="18" height="17" rx="3.5" fill="currentColor" fill-opacity="0.12"/><path d="M8 16v-3.5"/><path d="M12 16V8.5"/><path d="M16 16v-5.5"/>',
+  sport: '<path d="M6.5 6.5v11"/><path d="M17.5 6.5v11"/><path d="M3.5 9v6"/><path d="M20.5 9v6"/><path d="M6.5 12h11"/>',
+  habits: '<path d="M20 12a8 8 0 0 1-14.9 4"/><path d="M4 12a8 8 0 0 1 14.9-4"/><path d="M19.5 4.5V8h-3.5"/><path d="M4.5 19.5V16H8"/><path d="m9.2 12.2 1.9 1.9 3.8-4"/>',
+  scanner: '<path d="M4 8V6a2 2 0 0 1 2-2h2"/><path d="M16 4h2a2 2 0 0 1 2 2v2"/><path d="M20 16v2a2 2 0 0 1-2 2h-2"/><path d="M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M10 9.6V8.4"/><path d="M12 9.2V8"/><path d="M14 9.6V8.4"/><path d="M7.5 12h9a4.5 4.5 0 0 1-9 0Z" fill="currentColor" fill-opacity="0.22"/>',
+  plus: '<circle cx="12" cy="12" r="9"/><path d="M12 8v8"/><path d="M8 12h8"/>'
+};
+
+function qSvg(key, cls) {
+  return '<svg class="sqm-ico' + (cls ? ' ' + cls : '') + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + Q_ICON[key] + '</svg>';
+}
+
+function qMeal(i, meal) {
+  return '<button type="button" class="sqm-item sqm-tile sqm-pill" data-q="meal:' + meal + '" style="--i:' + i + '">' + qSvg('plus') + '<span class="sqm-label">' + meal + '</span></button>';
+}
+
+function buildQuick() {
+  const el = document.createElement('div');
+  el.id = 'setup-quick-menu';
+  el.className = 'sqm is-closed';
+  el.setAttribute('aria-hidden', 'true');
+  el.innerHTML =
+    '<div class="sqm-grid">' +
+      '<button type="button" class="sqm-item sqm-tile sqm-pill" data-q="data" style="--i:0">' + qSvg('data') + '<span class="sqm-label">Ваши данные</span></button>' +
+      '<button type="button" class="sqm-item sqm-tile sqm-pill" data-q="reports" style="--i:1">' + qSvg('reports') + '<span class="sqm-label">Отчёты</span></button>' +
+      '<div class="sqm-item sqm-tile sqm-water" id="sqm-water" role="button" tabindex="0" aria-label="Добавить 250 мл воды" data-q="water" style="--i:2">' +
+        '<div class="sqm-fill" id="sqm-fill"><div class="sqm-wave"></div></div>' +
+        '<button type="button" class="sqm-reset" id="sqm-reset" data-q="water-reset" aria-label="Сбросить воду" title="Сбросить">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>' +
+        '</button>' +
+        '<svg class="sqm-glass" viewBox="0 0 40 44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h24l-3.2 31a3 3 0 0 1-3 2.7H14.2a3 3 0 0 1-3-2.7L8 6Z" fill="rgba(56, 189, 248, 0.12)"/><path d="M20 17v10"/><path d="M15 22h10"/></svg>' +
+        '<div class="sqm-water-count"><b id="sqm-water-now">0</b> / <span id="sqm-water-goal">2</span> л</div>' +
+      '</div>' +
+      '<div class="sqm-item sqm-duo" style="--i:3">' +
+        '<button type="button" class="sqm-tile sqm-round" data-q="sport" aria-label="Спорт" title="Спорт">' + qSvg('sport') + '</button>' +
+        '<button type="button" class="sqm-tile sqm-round" data-q="habits" aria-label="Привычки" title="Привычки">' + qSvg('habits') + '</button>' +
+      '</div>' +
+      '<button type="button" class="sqm-item sqm-tile sqm-scanner" data-q="scanner" style="--i:4">' + qSvg('scanner') + '<span class="sqm-label">Сканер<br>тарелки</span></button>' +
+      qMeal(5, 'Завтрак') + qMeal(6, 'Обед') + qMeal(7, 'Ужин') + qMeal(8, 'Перекус') +
+    '</div>';
+
+  el.addEventListener('click', e => {
+    if (e.target === el || e.target.classList.contains('sqm-grid')) { closeQuick(); return; }
+    const hit = e.target.closest('[data-q]');
+    if (!hit) return;
+    e.stopPropagation();
+    quickAction(hit.dataset.q);
+  });
+  el.addEventListener('keydown', e => {
+    if ((e.key === 'Enter' || e.key === ' ') && e.target.id === 'sqm-water') {
+      e.preventDefault();
+      quickAction('water');
+    }
+  });
+  return el;
+}
+
+function ensureQuick() {
+  if (quick && quick.isConnected) return quick;
+  document.getElementById('setup-quick-menu')?.remove();
+  quick = buildQuick();
+  document.body.appendChild(quick);
+  return quick;
+}
+
+function waterNow() {
+  try {
+    const ml = Number((S.water || {})[day] || 0);
+    const goal = Number((S.profile && S.profile.nutritionGoalSettings && S.profile.nutritionGoalSettings.waterMl) || S.waterGoal || 2000);
+    return { ml: Number.isFinite(ml) ? ml : 0, goal: Number.isFinite(goal) && goal > 0 ? goal : 2000 };
+  } catch (e) {
+    return { ml: 0, goal: 2000 };
+  }
+}
+
+function fmtL(ml) {
+  return (ml / 1000).toLocaleString('ru-RU', { maximumFractionDigits: 2 });
+}
+
+function refreshQuickWater() {
+  if (!quick) return;
+  const { ml, goal } = waterNow();
+  quick.querySelector('#sqm-water-now').textContent = fmtL(ml);
+  quick.querySelector('#sqm-water-goal').textContent = fmtL(goal);
+  const fill = quick.querySelector('#sqm-fill');
+  fill.style.height = Math.min(ml / goal, 1) * 100 + '%';
+  fill.style.opacity = ml > 0 ? '1' : '0';
+  quick.querySelector('#sqm-reset').classList.toggle('is-on', ml > 0);
+}
+
+function openQuick() {
+  ensureQuick();
+  refreshQuickWater();
+  quickOpen = true;
+  quick.classList.remove('is-closed');
+  quick.setAttribute('aria-hidden', 'false');
+  if (up) {
+    up.setAttribute('aria-expanded', 'true');
+    up.classList.add('sqm-open');
+  }
+}
+
+function closeQuick() {
+  quickOpen = false;
+  if (quick) {
+    quick.classList.add('is-closed');
+    quick.setAttribute('aria-hidden', 'true');
+  }
+  if (up) {
+    up.setAttribute('aria-expanded', 'false');
+    up.classList.remove('sqm-open');
+  }
+}
+
+function toggleQuick() {
+  if (quickOpen) closeQuick(); else openQuick();
+}
+
+function quickAction(key) {
+  if (key === 'water') {
+    if (typeof foodDiaryWaterAdd === 'function') {
+      foodDiaryWaterAdd(250);
+      setTimeout(refreshQuickWater, 60);
+    }
+    return;
+  }
+  if (key === 'water-reset') {
+    const { ml } = waterNow();
+    if (ml > 0 && typeof foodDiaryWaterAdd === 'function') {
+      foodDiaryWaterAdd(-ml);
+      setTimeout(refreshQuickWater, 60);
+    }
+    return;
+  }
+  closeQuick();
+  const openMeal = meal => setTimeout(() => {
+    if (typeof window.foodOpenMealWindow === 'function') window.foodOpenMealWindow(meal);
+  }, 160);
+  if (key === 'data') return choose('questionnaire');
+  if (key === 'reports') return choose('report');
+  if (key === 'sport') return choose('sport');
+  if (key === 'habits') return choose('tracker');
+  if (key === 'scanner') {
+    let meal = 'Завтрак';
+    try { if (typeof mealNow === 'function') meal = mealNow(); } catch (e) {}
+    choose('eat');
+    return openMeal(meal);
+  }
+  if (key.startsWith('meal:')) {
+    choose('eat');
+    return openMeal(key.slice(5));
+  }
 }
 
 function choose(name) {
   pending = null;
   close();
+  closeQuick();
   try {
     sessionStorage.setItem('setup_active_tab', name);
   } catch (e) {}
@@ -457,7 +835,7 @@ function button(name, label) {
 }
 
 // Bowl: one continuous cubic Bezier curve, horizontal tangent at both ends and at the bottom,
-// so there are no corners anywhere. Desktop depth 42px; on mobile the panel is only 48px tall, so the bowl is 26px deep.
+// so there are no corners anywhere. Desktop depth 42px; on mobile the panel is only 58px tall, so the bowl is 26px deep.
 const BOWL_DEPTH_DESKTOP = 42;
 const BOWL_DEPTH_MOBILE = 26;
 const BOWL_TIGHT = 40;
@@ -591,11 +969,12 @@ function mount() {
   up.className = 'setup-menu-trigger';
   up.dataset.setupDecorated = 'true';
   up.setAttribute('aria-expanded', 'false');
-  up.setAttribute('aria-controls', 'setup-up-panel');
+  up.setAttribute('aria-controls', 'setup-quick-menu');
   up.setAttribute('aria-label', 'Меню');
   up.title = 'Меню';
   up.appendChild(createSvgIcon('menu'));
 
+  // The old drop-up panel is kept (hidden) only for compatibility; the Menu button opens the quick-actions overlay
   panel = document.createElement('div');
   panel.id = 'setup-up-panel';
   panel.className = 'setup-up-panel';
@@ -603,15 +982,15 @@ function mount() {
   panel.setAttribute('role', 'menu');
   panel.append(button('questionnaire', 'Моя анкета'), button('report', 'Отчёты'), button('settings', 'Настройки'));
 
-  up.addEventListener('click', () => {
-    const open = panel.hidden;
-    panel.hidden = !open;
-    up.setAttribute('aria-expanded', String(open));
-    if (open) panel.querySelector('button')?.focus();
-  });
+  up.addEventListener('click', toggleQuick);
 
   bar.append(up, panel);
   nav.append(bar);
+  ensureQuick();
+  if (quickOpen) {
+    up.setAttribute('aria-expanded', 'true');
+    up.classList.add('sqm-open');
+  }
 }
 
 // Slow, smooth hop from one button to another along a high arc (no sway, no wobble).
@@ -786,6 +1165,7 @@ function render() {
     }
   }
   sportHeader();
+  if (quickOpen) refreshQuickWater();
   requestAnimationFrame(() => updateNotch(false));
 }
 
@@ -805,20 +1185,17 @@ function start() {
   render();
 
   const observer = new MutationObserver(records => {
-    if (records.some(r => !bar?.contains(r.target))) schedule();
+    if (records.some(r => !bar?.contains(r.target) && !(quick && quick.contains(r.target)))) schedule();
   });
   observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'disabled', 'aria-current'] });
 
   document.addEventListener('pointerdown', e => {
     if (!bar?.contains(e.target)) close();
   });
-  document.addEventListener('focusin', e => {
-    if (!bar?.contains(e.target)) close();
-  });
   document.addEventListener('keydown', e => {
-    if (e.key === 'Escape' && panel && !panel.hidden) {
-      close();
-      up.focus();
+    if (e.key === 'Escape' && quickOpen) {
+      closeQuick();
+      up?.focus();
     }
   });
 
