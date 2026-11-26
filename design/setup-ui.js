@@ -92,8 +92,8 @@ function choose(name) {
     return;
   }
 
-  // Pre-update UI and trigger jump immediately on user click
-  const clickedBtn = bar.querySelector(`[data-setup-destination="${name}"]`);
+  // Pre-update UI and trigger jump immediately directly from the previous button
+  const clickedBtn = bar?.querySelector(`[data-setup-destination="${name}"]`);
   if (clickedBtn && !clickedBtn.classList.contains('setup-menu-trigger')) {
     bar.querySelectorAll('[data-setup-destination]:not(.setup-menu-trigger)').forEach(btn => {
       btn.classList.toggle('on', btn === clickedBtn);
@@ -171,7 +171,7 @@ function mount() {
   svgDoc.appendChild(curvePath);
   bar.appendChild(svgDoc);
 
-  // Orb Glow & Orb
+  // Orb Glow & Orb (Keep initial default X at center so it never starts from left 0)
   glow = document.createElement('div');
   glow.className = 'setup-nav-glow';
   bar.appendChild(glow);
@@ -226,40 +226,43 @@ function updateNotch(animated = true) {
 
   svgDoc.setAttribute('viewBox', `0 0 ${w} ${h}`);
 
-  const activeBtn = bar.querySelector('[data-setup-destination].on:not(.setup-menu-trigger)');
+  // Find active button among main 3 buttons
+  let activeBtn = bar.querySelector('[data-setup-destination].on:not(.setup-menu-trigger)');
+  if (!activeBtn) {
+    // Fallback to Eat button so it stays anchored to a tab rather than resetting
+    activeBtn = bar.querySelector('[data-setup-destination="eat"]');
+  }
+
   if (activeBtn) {
     let cx = activeBtn.offsetLeft + (activeBtn.offsetWidth / 2);
     if (!cx || isNaN(cx)) {
       const bRect = activeBtn.getBoundingClientRect();
-      cx = (bRect.left + bRect.width / 2) - barRect.left;
-    }
-    const tabName = activeBtn.dataset.setupDestination;
-
-    orb.style.display = 'flex';
-    glow.style.display = 'block';
-
-    const isDifferent = currentCx !== null && Math.abs(currentCx - cx) > 4;
-
-    bar.style.setProperty('--orb-x', `${cx}px`);
-    curvePath.setAttribute('d', generateNotchPath(w, h, cx));
-
-    if (currentTab !== tabName) {
-      orbIcon.innerHTML = '';
-      orbIcon.appendChild(createSvgIcon(tabName));
-      currentTab = tabName;
+      if (bRect.width > 0) {
+        cx = (bRect.left + bRect.width / 2) - barRect.left;
+      }
     }
 
-    if (animated && isDifferent) {
-      orb.classList.remove('is-jumping');
-      void orb.offsetWidth;
-      orb.classList.add('is-jumping');
-    }
+    if (cx && !isNaN(cx) && cx > 0) {
+      const tabName = activeBtn.dataset.setupDestination;
+      const isDifferent = currentCx !== null && Math.abs(currentCx - cx) > 4;
 
-    currentCx = cx;
-  } else {
-    orb.style.display = 'none';
-    glow.style.display = 'none';
-    curvePath.setAttribute('d', `M 0 16 Q 0 0 16 0 L ${w - 16} 0 Q ${w} 0 ${w} 16 L ${w} ${h - 16} Q ${w} ${h} ${w - 16} ${h} L 16 ${h} Q 0 ${h} 0 ${h - 16} Z`);
+      bar.style.setProperty('--orb-x', `${cx}px`);
+      curvePath.setAttribute('d', generateNotchPath(w, h, cx));
+
+      if (currentTab !== tabName) {
+        orbIcon.innerHTML = '';
+        orbIcon.appendChild(createSvgIcon(tabName));
+        currentTab = tabName;
+      }
+
+      if (animated && isDifferent) {
+        orb.classList.remove('is-jumping');
+        void orb.offsetWidth;
+        orb.classList.add('is-jumping');
+      }
+
+      currentCx = cx;
+    }
   }
 }
 
