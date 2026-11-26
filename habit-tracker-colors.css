@@ -1,0 +1,20 @@
+/* Habit cards: interactive elements use the colour of the habit group (--hb-g, --hb-g-a, --hb-g-b are set per card) */
+html body .hb-card .hb-status{color:var(--hb-g)}
+html body .hb-card .hb-status-dot{background:var(--hb-g);opacity:.75}
+html body .hb-card .hb-status.is-done .hb-status-dot{opacity:1;background:var(--hb-g);box-shadow:0 0 8px var(--hb-g-b)}
+
+html body .hb-card .hb-cta{background:var(--hb-g-a);border-color:var(--hb-g-b);color:var(--hb-g)}
+html body .hb-card .hb-cta:hover{border-color:var(--hb-g)}
+html body .hb-card .hb-cta .hb-cta-box{border-color:var(--hb-g)}
+html body .hb-card .hb-cta.is-done{background:var(--hb-g);background:linear-gradient(135deg,var(--hb-g),color-mix(in srgb,var(--hb-g) 76%,#000));border-color:transparent;color:#041410;box-shadow:0 10px 26px -10px var(--hb-g-b),inset 0 1px 0 rgba(255,255,255,.35)}
+html body .hb-card .hb-cta.is-done .hb-cta-box{border-color:rgba(4,20,16,.55);color:#041410}
+
+html body .hb-card .hb-day:hover{border-color:var(--hb-g-b);background:var(--hb-g-a)}
+html body .hb-card .hb-day.is-done{background:var(--hb-g-a);border-color:var(--hb-g-b);color:var(--hb-g)}
+html body .hb-card .hb-day.is-done .hb-day-mark{color:var(--hb-g)}
+html body .hb-card .hb-day.is-selected{border-color:var(--hb-g);box-shadow:0 0 0 1px var(--hb-g-b)}
+
+html body .hb-card .hb-ring-arc{stroke:var(--hb-g);filter:drop-shadow(0 0 5px var(--hb-g-b))}
+html body .hb-card .hb-info:hover,html body .hb-card .hb-info[aria-expanded=true]{color:var(--hb-g);border-color:var(--hb-g);background:var(--hb-g-a)}
+html body .hb-card .hb-pop{border-color:var(--hb-g-b)}
+html body .hb-card button:focus-visible{outline-color:var(--hb-g)}

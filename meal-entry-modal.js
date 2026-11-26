@@ -170,4 +170,10 @@
   const logo = document.createElement('script');
   logo.src = 'design/header-logo.js?v=local';
   document.head.appendChild(logo);
+
+  // Habit cards: category colours for status, CTA and the day strip
+  const habitColors = document.createElement('link');
+  habitColors.rel = 'stylesheet';
+  habitColors.href = 'habit-tracker-colors.css?v=local';
+  document.head.appendChild(habitColors);
 })();
