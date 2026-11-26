@@ -457,8 +457,9 @@ function button(name, label) {
 }
 
 // Bowl: one continuous cubic Bezier curve, horizontal tangent at both ends and at the bottom,
-// so there are no corners anywhere. Depth 42px; closest distance to the orb (r=29) is >= 33px.
-const BOWL_DEPTH = 42;
+// so there are no corners anywhere. Desktop depth 42px; on mobile the panel is only 48px tall, so the bowl is 26px deep.
+const BOWL_DEPTH_DESKTOP = 42;
+const BOWL_DEPTH_MOBILE = 26;
 const BOWL_TIGHT = 40;
 
 function shoulderFor(w, cx) {
@@ -468,6 +469,7 @@ function shoulderFor(w, cx) {
 // Same wave on every tab (the one used for "Habits"). Where it does not fit next to the panel edge
 // ("Sport"), the wave simply continues past the edge and is clipped by the rounded panel outline.
 function generateNotchPaths(w, h, cx, S) {
+  const BOWL_DEPTH = window.innerWidth < 1000 ? BOWL_DEPTH_MOBILE : BOWL_DEPTH_DESKTOP;
   const a = S * 0.63;
   const ls = cx - S, rs = cx + S;
   const leftFits = ls >= 16, rightFits = rs <= w - 16;

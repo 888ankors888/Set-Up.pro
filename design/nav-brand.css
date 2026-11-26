@@ -278,36 +278,36 @@ html body #nav .setup-wordnav .setup-up-panel button .setup-brand-icon {
   flex: 0 0 20px !important;
 }
 
-/* ---- Mobile (<1000px): beat desktop-brand.css, which shrinks nav buttons to 33px and icons to 16px ---- */
+/* ---- Mobile (<1000px): beat desktop-brand.css; panel and buttons are half the previous height (96 -> 48px) ---- */
 @media (max-width: 999px) {
-  /* Taller panel: 48px icon + label + paddings fit inside it (the panel shape is drawn from this height) */
   html:root:root:root:root:root:root body #nav .setup-wordnav {
     width: min(100%, 480px) !important;
-    height: 96px !important;
+    height: 48px !important;
   }
   html:root:root:root:root:root:root body #nav .setup-wordnav > button:not(.setup-menu-trigger) {
     height: 100% !important;
     min-height: 0 !important;
-    padding: 6px 4px !important;
+    padding: 2px 4px !important;
     gap: 0 !important;
   }
   html:root:root:root:root:root:root body #nav .setup-wordnav > button.setup-menu-trigger {
     height: 100% !important;
     min-height: 0 !important;
-    padding: 6px 4px !important;
+    padding: 2px 4px !important;
   }
   html:root:root:root:root:root:root body #nav .setup-wordnav > button:not(.setup-menu-trigger) .setup-brand-icon {
-    width: 48px !important;
-    height: 48px !important;
-    flex: 0 0 48px !important;
+    width: 24px !important;
+    height: 24px !important;
+    flex: 0 0 24px !important;
+    margin-bottom: 2px !important;
   }
   html:root:root:root:root:root:root body #nav .setup-wordnav > button.setup-menu-trigger .setup-brand-icon {
-    width: 28px !important;
-    height: 28px !important;
-    flex: 0 0 28px !important;
+    width: 24px !important;
+    height: 24px !important;
+    flex: 0 0 24px !important;
   }
   html:root:root:root:root:root:root body #nav .setup-wordnav > button .setup-brand-label {
-    font-size: 10.5px !important;
+    font-size: 10px !important;
     line-height: 1.15 !important;
   }
   html:root:root:root:root:root:root body #nav .setup-wordnav .setup-up-panel button .setup-brand-icon {
@@ -315,18 +315,22 @@ html body #nav .setup-wordnav .setup-up-panel button .setup-brand-icon {
     height: 20px !important;
     flex: 0 0 20px !important;
   }
-  /* With the taller panel the content has room: icon sits under the wave, label near the bottom */
-  html:root:root:root:root:root:root body #nav .setup-wordnav > button:not(.setup-menu-trigger) > .setup-brand-icon {
+  html:root:root:root:root:root:root body #nav .setup-wordnav > button:not(.setup-menu-trigger) > .setup-brand-icon,
+  html:root:root:root:root:root:root body #nav .setup-wordnav > button.setup-menu-trigger > .setup-brand-icon {
     position: relative !important;
-    top: 8px !important;
+    top: 0 !important;
   }
   html:root:root:root:root:root:root body #nav .setup-wordnav > button:not(.setup-menu-trigger) > .setup-brand-label {
     position: relative !important;
-    top: 8px !important;
+    top: 1px !important;
   }
-  html:root:root:root:root:root:root body #nav .setup-wordnav > button.setup-menu-trigger > .setup-brand-icon {
-    position: relative !important;
-    top: 8px !important;
+
+  /* Shallower wave (see setup-ui.js), so the orb sits higher and nests into it */
+  html:root:root:root:root:root:root body #nav .setup-wordnav > .setup-nav-orb {
+    top: -34px !important;
+  }
+  html:root:root:root:root:root:root body #nav .setup-wordnav > .setup-nav-glow {
+    top: -44px !important;
   }
 
   /* ---- Pinned header with the logo ---- */
