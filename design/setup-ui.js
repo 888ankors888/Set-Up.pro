@@ -208,12 +208,13 @@ function button(name, label) {
   return b;
 }
 
-// Bowl: one continuous cubic Bezier curve with horizontal tangents at both ends and at the bottom (no corners).
-// The shoulder length S is shared by all tabs, so the contour has exactly the same shape on every tab.
+// Bowl: one continuous cubic Bezier curve, horizontal tangent at both ends and at the bottom,
+// so there are no corners anywhere. Depth 42px; closest distance to the orb (r=29) is >= 33px.
 const BOWL_DEPTH = 42;
 const BOWL_TIGHT = 40;
 
-function generateNotchPaths(w, h, cx, S) {
+function generateNotchPaths(w, h, cx) {
+  const S = Math.max(56, Math.min(150, cx - 16, w - 16 - cx));
   const a = S * 0.63;
   const ls = cx - S, rs = cx + S;
 
@@ -239,19 +240,8 @@ function generateNotchPaths(w, h, cx, S) {
   return { fullFillD, topBorderD };
 }
 
-function sharedShoulder(w) {
-  const centers = ['sport', 'eat', 'tracker']
-    .map(n => bar.querySelector(`:scope > [data-setup-destination="${n}"]`))
-    .filter(Boolean)
-    .map(b => b.offsetLeft + b.offsetWidth / 2)
-    .filter(c => c > 0);
-  if (!centers.length) return 56;
-  const room = Math.min(...centers.map(c => c - 16), ...centers.map(c => w - 16 - c));
-  return Math.max(48, Math.min(150, room));
-}
-
 function drawNotch(w, h, cx) {
-  const { fullFillD, topBorderD } = generateNotchPaths(w, h, cx, sharedShoulder(w));
+  const { fullFillD, topBorderD } = generateNotchPaths(w, h, cx);
   curvePath.setAttribute('d', fullFillD);
   if (neonTopBorder) neonTopBorder.setAttribute('d', topBorderD);
 }
@@ -381,10 +371,10 @@ function updateNotch(animated = true) {
       saved = sessionStorage.getItem('setup_active_tab');
     } catch (e) {}
     if (saved) {
-      activeBtn = bar.querySelector(`:scope > [data-setup-destination="${saved}"]`);
+      activeBtn = bar.querySelector(`[data-setup-destination="${saved}"]`);
     }
     if (!activeBtn) {
-      activeBtn = bar.querySelector(':scope > [data-setup-destination="eat"]');
+      activeBtn = bar.querySelector('[data-setup-destination="eat"]');
     }
   }
 
