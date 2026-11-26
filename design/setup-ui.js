@@ -208,7 +208,7 @@ function button(name, label) {
   return b;
 }
 
-// Socket: round bowl (radius 34, centre 8px below the top edge) with long, soft S-curve shoulders
+// Socket: round bowl (radius 34, centre 8px below the top edge) with long, very soft S-curve shoulders
 const SOCKET_R = 34;
 const SOCKET_CY = 8;
 const SHOULDER_Y = 10;
@@ -216,16 +216,16 @@ const SHOULDER_Y = 10;
 function generateNotchPaths(w, h, cx) {
   const dx = Math.round(Math.sqrt(SOCKET_R * SOCKET_R - (SHOULDER_Y - SOCKET_CY) * (SHOULDER_Y - SOCKET_CY)));
   const l = cx - dx, r = cx + dx;
-  const sh = Math.max(14, Math.min(40, cx - dx - 18, w - 18 - cx - dx));
+  const sh = Math.max(16, Math.min(76, cx - dx - 18, w - 18 - cx - dx));
   const ls = l - sh, rs = r + sh;
 
   const topBorderD = `
     M 0 16
     Q 0 0 16 0
     L ${Math.max(16, ls)} 0
-    C ${ls + sh * 0.6} 0, ${l} ${-1}, ${l} ${SHOULDER_Y}
+    C ${ls + sh * 0.82} 0, ${l} 0, ${l} ${SHOULDER_Y}
     A ${SOCKET_R} ${SOCKET_R} 0 1 0 ${r} ${SHOULDER_Y}
-    C ${r} ${-1}, ${rs - sh * 0.6} 0, ${rs} 0
+    C ${r} 0, ${rs - sh * 0.82} 0, ${rs} 0
     L ${w - 16} 0
     Q ${w} 0 ${w} 16
   `;
