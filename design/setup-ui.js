@@ -33,44 +33,76 @@ html body #nav .setup-wordnav {
 }
 `;
 
-// Detailed illustrations for orb
-const CATEGORY_ARTWORK = {
-  sport: `
-    <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="2" y="10" width="4" height="12" rx="2" fill="#071b13"/>
-      <rect x="7" y="7" width="4" height="18" rx="2" fill="#0a2e20"/>
-      <rect x="11" y="14" width="10" height="4" rx="1.5" fill="#071b13"/>
-      <rect x="21" y="7" width="4" height="18" rx="2" fill="#0a2e20"/>
-      <rect x="26" y="10" width="4" height="12" rx="2" fill="#071b13"/>
-      <path d="M13 14h6" stroke="#d4f96a" stroke-width="1.5" stroke-linecap="round"/>
-    </svg>
-  `,
-  eat: `
-    <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M16 6C16 6 18 3 22 4" stroke="#164d36" stroke-width="2" stroke-linecap="round"/>
-      <path d="M19 4.5C19 4.5 21 2.5 24 3C24 6 22 8 19 8" fill="#1b5c41"/>
-      <path d="M16 8C11 8 7 12 7 18C7 24 11 28 16 28C21 28 25 24 25 18C25 12 21 8 16 8Z" fill="#071b13"/>
-      <path d="M12 14C12 12.5 13.5 11 15.5 11" stroke="#d4f96a" stroke-width="1.5" stroke-linecap="round"/>
-      <circle cx="16" cy="18" r="4.5" fill="#0d2e20" stroke="#d4f96a" stroke-width="1"/>
-    </svg>
-  `,
-  tracker: `
-    <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="5" y="6" width="22" height="22" rx="5" fill="#071b13"/>
-      <path d="M11 3v5M21 3v5" stroke="#0a2e20" stroke-width="2" stroke-linecap="round"/>
-      <path d="M5 12h22" stroke="#164d36" stroke-width="1.5"/>
-      <path d="M11 19l3.5 3.5 7-7" stroke="#d4f96a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
-  `,
-  menu: `
-    <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="6" y="6" width="8" height="8" rx="2.5" fill="#071b13"/>
-      <rect x="18" y="6" width="8" height="8" rx="2.5" fill="#071b13"/>
-      <rect x="6" y="18" width="8" height="8" rx="2.5" fill="#071b13"/>
-      <rect x="18" y="18" width="8" height="8" rx="2.5" fill="#071b13"/>
-    </svg>
-  `
-};
+// 3D Cyber Sphere SVG
+const CYBER_SPHERE_SVG = `
+<svg class="setup-cyber-sphere" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <radialGradient id="sphereGrad" cx="38%" cy="28%" r="70%" fx="32%" fy="22%">
+      <stop offset="0%" stop-color="#454a4e"/>
+      <stop offset="25%" stop-color="#1b1e21"/>
+      <stop offset="70%" stop-color="#090a0c"/>
+      <stop offset="100%" stop-color="#000000"/>
+    </radialGradient>
+    <radialGradient id="rimLight" cx="50%" cy="92%" r="45%">
+      <stop offset="0%" stop-color="#2c3e35" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="neonGrad" x1="20%" y1="15%" x2="80%" y2="85%">
+      <stop offset="0%" stop-color="#b4ff6b"/>
+      <stop offset="45%" stop-color="#76e86c"/>
+      <stop offset="100%" stop-color="#2ba859"/>
+    </linearGradient>
+    <linearGradient id="glossTop" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0.0"/>
+    </linearGradient>
+    <linearGradient id="glossSide" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0.0"/>
+    </linearGradient>
+    <filter id="neonGlow" x="-25%" y="-25%" width="150%" height="150%">
+      <feGaussianBlur stdDeviation="5" result="blur1"/>
+      <feGaussianBlur stdDeviation="12" result="blur2"/>
+      <feMerge>
+        <feMergeNode in="blur2"/>
+        <feMergeNode in="blur1"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <clipPath id="sphereClip">
+      <circle cx="256" cy="256" r="236"/>
+    </clipPath>
+  </defs>
+  <g clip-path="url(#sphereClip)">
+    <circle cx="256" cy="256" r="236" fill="url(#sphereGrad)"/>
+    <circle cx="256" cy="256" r="236" fill="url(#rimLight)"/>
+    <circle cx="256" cy="256" r="175" fill="#4ce66d" opacity="0.12" filter="url(#neonGlow)"/>
+    <g fill="none" stroke="url(#neonGrad)" stroke-linecap="round" stroke-linejoin="round" filter="url(#neonGlow)">
+      <path d="M 244 90 A 166 166 0 0 0 90 244 L 122 244" stroke-width="11"/>
+      <path d="M 268 90 A 166 166 0 0 1 422 244" stroke-width="11"/>
+      <path d="M 90 268 A 166 166 0 0 0 244 422 L 244 390" stroke-width="11"/>
+      <path d="M 422 268 A 166 166 0 0 1 268 422 L 268 390" stroke-width="11"/>
+      <path d="M 244 122 A 134 134 0 0 0 122 244" stroke-width="11"/>
+      <path d="M 268 122 A 134 134 0 0 1 390 244 L 358 244" stroke-width="11"/>
+      <path d="M 122 268 A 134 134 0 0 0 220 385" stroke-width="11"/>
+      <path d="M 390 268 A 134 134 0 0 1 292 385" stroke-width="11"/>
+      <path d="M 162 215 A 102 102 0 0 1 350 215" stroke-width="11"/>
+      <path d="M 154 268 A 102 102 0 0 0 358 268" stroke-width="11"/>
+      <path d="M 186 256 A 70 70 0 1 1 326 256 A 70 70 0 0 1 268 325 L 268 358" stroke-width="11"/>
+      <path d="M 186 256 A 70 70 0 0 0 244 325 L 244 358" stroke-width="11"/>
+      <path d="M 244 292 A 38 38 0 1 1 268 292" stroke-width="11"/>
+      <circle cx="145" cy="215" r="7" fill="#0d1210" stroke-width="4.5"/>
+      <circle cx="348" cy="188" r="7" fill="#0d1210" stroke-width="4.5"/>
+      <circle cx="404" cy="212" r="7" fill="#0d1210" stroke-width="4.5"/>
+      <circle cx="185" cy="340" r="7" fill="#0d1210" stroke-width="4.5"/>
+      <circle cx="332" cy="336" r="7" fill="#0d1210" stroke-width="4.5"/>
+    </g>
+    <path d="M 118 112 C 165 44, 347 44, 394 112 C 345 78, 167 78, 118 112 Z" fill="url(#glossTop)"/>
+    <path d="M 65 170 C 44 215, 44 275, 62 315 C 66 270, 68 215, 86 175 Z" fill="url(#glossSide)"/>
+    <circle cx="256" cy="256" r="235" fill="none" stroke="#ffffff" stroke-opacity="0.12" stroke-width="2"/>
+  </g>
+</svg>
+`;
 
 const ICON_PATHS = {
   sport: '<circle cx="5" cy="7" r="2"/><circle cx="19" cy="17" r="2"/><path d="m7 8 10 8M3 14l5-5m8 6 5-5"/>',
@@ -95,7 +127,7 @@ function createSvgIcon(name) {
   return svg;
 }
 
-let nav, bar, panel, up, svgDoc, curvePath, orb, glow, orbArt, queued = false;
+let nav, bar, panel, up, svgDoc, curvePath, orb, glow, queued = false;
 let currentCx = null;
 let currentTab = null;
 let isInitialized = false;
@@ -168,8 +200,8 @@ function button(name, label) {
 }
 
 function generateNotchPath(w, h, cx) {
-  const notchRadius = 42;
-  const depth = 28;
+  const notchRadius = 45;
+  const depth = 30;
   const left = cx - notchRadius;
   const right = cx + notchRadius;
 
@@ -177,8 +209,8 @@ function generateNotchPath(w, h, cx) {
     M 0 16
     Q 0 0 16 0
     L ${Math.max(16, left - 12)} 0
-    C ${left} 0, ${cx - 22} ${depth}, ${cx} ${depth}
-    C ${cx + 22} ${depth}, ${right} 0, ${Math.min(w - 16, right + 12)} 0
+    C ${left} 0, ${cx - 24} ${depth}, ${cx} ${depth}
+    C ${cx + 24} ${depth}, ${right} 0, ${Math.min(w - 16, right + 12)} 0
     L ${w - 16} 0
     Q ${w} 0 ${w} 16
     L ${w} ${h - 16}
@@ -225,9 +257,7 @@ function mount() {
   orb.className = 'setup-nav-orb';
   const orbInner = document.createElement('div');
   orbInner.className = 'setup-nav-orb-inner';
-  orbArt = document.createElement('div');
-  orbArt.className = 'setup-orb-art';
-  orbInner.appendChild(orbArt);
+  orbInner.innerHTML = CYBER_SPHERE_SVG;
   orb.appendChild(orbInner);
   bar.appendChild(orb);
 
@@ -301,7 +331,6 @@ function updateNotch(animated = true) {
       curvePath.setAttribute('d', generateNotchPath(w, h, cx));
 
       if (currentTab !== tabName) {
-        orbArt.innerHTML = CATEGORY_ARTWORK[tabName] || CATEGORY_ARTWORK.eat;
         currentTab = tabName;
       }
 
