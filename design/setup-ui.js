@@ -48,71 +48,253 @@ html body #nav .setup-wordnav {
 .welcome, #app > .welcome {
   display: none !important;
 }
+.setup-nav-orb-inner {
+  position: relative !important;
+}
+.setup-sphere-layer {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transform: scale(0.8);
+  transition: opacity 0.8s ease-in-out, transform 0.8s cubic-bezier(0.34, 1.3, 0.64, 1);
+  pointer-events: none;
+  will-change: opacity, transform;
+}
+.setup-sphere-layer.is-on {
+  opacity: 1;
+  transform: scale(1);
+}
+.setup-sphere-layer > svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
 `;
 
-const CYBER_SPHERE_SVG = `
-<svg class="setup-cyber-sphere" viewBox="0 0 512 512" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
+// Three identical glowing spheres; only the icon in the middle differs.
+const SPHERE_SVGS = {
+  tracker: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <defs>
-    <radialGradient id="cyberSphereGrad" cx="38%" cy="28%" r="70%" fx="32%" fy="22%">
+    <radialGradient id="sphereGrad" cx="38%" cy="28%" r="70%" fx="32%" fy="22%">
       <stop offset="0%" stop-color="#454a4e"/>
       <stop offset="25%" stop-color="#1b1e21"/>
       <stop offset="70%" stop-color="#090a0c"/>
       <stop offset="100%" stop-color="#000000"/>
     </radialGradient>
-    <radialGradient id="cyberRimLight" cx="50%" cy="92%" r="45%">
+    <radialGradient id="rimLight" cx="50%" cy="92%" r="45%">
       <stop offset="0%" stop-color="#2c3e35" stop-opacity="0.7"/>
       <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
     </radialGradient>
-    <linearGradient id="cyberNeonGrad" x1="20%" y1="15%" x2="80%" y2="85%">
+    <linearGradient id="neonGrad" x1="20%" y1="15%" x2="80%" y2="85%">
       <stop offset="0%" stop-color="#b4ff6b"/>
       <stop offset="45%" stop-color="#76e86c"/>
       <stop offset="100%" stop-color="#2ba859"/>
     </linearGradient>
-    <linearGradient id="cyberGlossTop" x1="0%" y1="0%" x2="0%" y2="100%">
+    <linearGradient id="glossTop" x1="0%" y1="0%" x2="0%" y2="100%">
       <stop offset="0%" stop-color="#ffffff" stop-opacity="0.55"/>
       <stop offset="100%" stop-color="#ffffff" stop-opacity="0.0"/>
     </linearGradient>
-    <linearGradient id="cyberGlossSide" x1="0%" y1="0%" x2="100%" y2="100%">
+    <linearGradient id="glossSide" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#ffffff" stop-opacity="0.35"/>
       <stop offset="100%" stop-color="#ffffff" stop-opacity="0.0"/>
     </linearGradient>
+    <filter id="neonGlow" x="-25%" y="-25%" width="150%" height="150%">
+      <feGaussianBlur stdDeviation="5" result="blur1"/>
+      <feGaussianBlur stdDeviation="12" result="blur2"/>
+      <feMerge>
+        <feMergeNode in="blur2"/>
+        <feMergeNode in="blur1"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <clipPath id="sphereClip">
+      <circle cx="256" cy="256" r="236"/>
+    </clipPath>
   </defs>
-
-  <circle cx="256" cy="256" r="236" fill="url(#cyberSphereGrad)"/>
-  <circle cx="256" cy="256" r="236" fill="url(#cyberRimLight)"/>
-  <circle cx="256" cy="256" r="175" fill="#4ce66d" opacity="0.16"/>
-
-  <g fill="none" stroke="url(#cyberNeonGrad)" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M 244 90 A 166 166 0 0 0 90 244 L 122 244" stroke-width="12"/>
-    <path d="M 268 90 A 166 166 0 0 1 422 244" stroke-width="12"/>
-    <path d="M 90 268 A 166 166 0 0 0 244 422 L 244 390" stroke-width="12"/>
-    <path d="M 422 268 A 166 166 0 0 1 268 422 L 268 390" stroke-width="12"/>
-
-    <path d="M 244 122 A 134 134 0 0 0 122 244" stroke-width="12"/>
-    <path d="M 268 122 A 134 134 0 0 1 390 244 L 358 244" stroke-width="12"/>
-    <path d="M 122 268 A 134 134 0 0 0 220 385" stroke-width="12"/>
-    <path d="M 390 268 A 134 134 0 0 1 292 385" stroke-width="12"/>
-
-    <path d="M 162 215 A 102 102 0 0 1 350 215" stroke-width="12"/>
-    <path d="M 154 268 A 102 102 0 0 0 358 268" stroke-width="12"/>
-
-    <path d="M 186 256 A 70 70 0 1 1 326 256 A 70 70 0 0 1 268 325 L 268 358" stroke-width="12"/>
-    <path d="M 186 256 A 70 70 0 0 0 244 325 L 244 358" stroke-width="12"/>
-
-    <path d="M 244 292 A 38 38 0 1 1 268 292" stroke-width="12"/>
-
-    <circle cx="145" cy="215" r="8" fill="#0d1210" stroke="#b4ff6b" stroke-width="4.5"/>
-    <circle cx="348" cy="188" r="8" fill="#0d1210" stroke="#b4ff6b" stroke-width="4.5"/>
-    <circle cx="404" cy="212" r="8" fill="#0d1210" stroke="#b4ff6b" stroke-width="4.5"/>
-    <circle cx="185" cy="340" r="8" fill="#0d1210" stroke="#b4ff6b" stroke-width="4.5"/>
-    <circle cx="332" cy="336" r="8" fill="#0d1210" stroke="#b4ff6b" stroke-width="4.5"/>
+  <g clip-path="url(#sphereClip)">
+    <circle cx="256" cy="256" r="236" fill="url(#sphereGrad)"/>
+    <circle cx="256" cy="256" r="236" fill="url(#rimLight)"/>
+    <circle cx="256" cy="256" r="175" fill="#4ce66d" opacity="0.12" filter="url(#neonGlow)"/>
+    <g fill="none" stroke="url(#neonGrad)" stroke-linecap="round" stroke-linejoin="round" filter="url(#neonGlow)">
+      <path d="M 244 90 A 166 166 0 0 0 90 244 L 122 244" stroke-width="11"/>
+      <path d="M 268 90 A 166 166 0 0 1 422 244" stroke-width="11"/>
+      <path d="M 90 268 A 166 166 0 0 0 244 422 L 244 390" stroke-width="11"/>
+      <path d="M 422 268 A 166 166 0 0 1 268 422 L 268 390" stroke-width="11"/>
+      <path d="M 244 122 A 134 134 0 0 0 122 244" stroke-width="11"/>
+      <path d="M 268 122 A 134 134 0 0 1 390 244 L 358 244" stroke-width="11"/>
+      <path d="M 122 268 A 134 134 0 0 0 220 385" stroke-width="11"/>
+      <path d="M 390 268 A 134 134 0 0 1 292 385" stroke-width="11"/>
+      <path d="M 162 215 A 102 102 0 0 1 350 215" stroke-width="11"/>
+      <path d="M 154 268 A 102 102 0 0 0 358 268" stroke-width="11"/>
+      <path d="M 186 256 A 70 70 0 1 1 326 256 A 70 70 0 0 1 268 325 L 268 358" stroke-width="11"/>
+      <path d="M 186 256 A 70 70 0 0 0 244 325 L 244 358" stroke-width="11"/>
+      <path d="M 244 292 A 38 38 0 1 1 268 292" stroke-width="11"/>
+      <circle cx="145" cy="215" r="7" fill="#0d1210" stroke-width="4.5"/>
+      <circle cx="348" cy="188" r="7" fill="#0d1210" stroke-width="4.5"/>
+      <circle cx="404" cy="212" r="7" fill="#0d1210" stroke-width="4.5"/>
+      <circle cx="185" cy="340" r="7" fill="#0d1210" stroke-width="4.5"/>
+      <circle cx="332" cy="336" r="7" fill="#0d1210" stroke-width="4.5"/>
+    </g>
+    <path d="M 118 112 C 165 44, 347 44, 394 112 C 345 78, 167 78, 118 112 Z" fill="url(#glossTop)"/>
+    <path d="M 65 170 C 44 215, 44 275, 62 315 C 66 270, 68 215, 86 175 Z" fill="url(#glossSide)"/>
+    <circle cx="256" cy="256" r="235" fill="none" stroke="#ffffff" stroke-opacity="0.12" stroke-width="2"/>
   </g>
+</svg>`,
+  sport: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="sphereGrad" cx="38%" cy="28%" r="70%" fx="32%" fy="22%">
+      <stop offset="0%" stop-color="#454a4e"/>
+      <stop offset="25%" stop-color="#1b1e21"/>
+      <stop offset="70%" stop-color="#090a0c"/>
+      <stop offset="100%" stop-color="#000000"/>
+    </radialGradient>
+    <radialGradient id="rimLight" cx="50%" cy="92%" r="45%">
+      <stop offset="0%" stop-color="#2c3e35" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="neonGrad" x1="15%" y1="15%" x2="85%" y2="85%">
+      <stop offset="0%" stop-color="#b4ff6b"/>
+      <stop offset="45%" stop-color="#76e86c"/>
+      <stop offset="100%" stop-color="#2ba859"/>
+    </linearGradient>
+    <linearGradient id="glossTop" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0.0"/>
+    </linearGradient>
+    <linearGradient id="glossSide" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0.0"/>
+    </linearGradient>
+    <filter id="neonGlow" x="-25%" y="-25%" width="150%" height="150%">
+      <feGaussianBlur stdDeviation="4.5" result="blur1"/>
+      <feGaussianBlur stdDeviation="12" result="blur2"/>
+      <feMerge>
+        <feMergeNode in="blur2"/>
+        <feMergeNode in="blur1"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <clipPath id="sphereClip">
+      <circle cx="256" cy="256" r="236"/>
+    </clipPath>
+  </defs>
+  <g clip-path="url(#sphereClip)">
+    <circle cx="256" cy="256" r="236" fill="url(#sphereGrad)"/>
+    <circle cx="256" cy="256" r="236" fill="url(#rimLight)"/>
+    <circle cx="256" cy="256" r="180" fill="#4ce66d" opacity="0.12" filter="url(#neonGlow)"/>
+    <g fill="none" stroke="url(#neonGrad)" stroke-linecap="round" stroke-linejoin="round" filter="url(#neonGlow)">
+      <path d="M 96 194 A 172 172 0 0 1 244 84 L 244 116" stroke-width="10"/>
+      <path d="M 268 84 A 172 172 0 0 1 416 194" stroke-width="10"/>
+      <path d="M 96 318 A 172 172 0 0 0 244 428 L 244 396" stroke-width="10"/>
+      <path d="M 416 318 A 172 172 0 0 1 268 428 L 268 396" stroke-width="10"/>
+      <path d="M 134 186 A 140 140 0 0 1 224 120" stroke-width="10"/>
+      <path d="M 268 116 A 140 140 0 0 1 378 186" stroke-width="10"/>
+      <path d="M 134 326 A 140 140 0 0 0 224 392" stroke-width="10"/>
+      <path d="M 378 326 A 140 140 0 0 1 288 392" stroke-width="10"/>
+      <path d="M 176 184 A 108 108 0 0 1 336 184" stroke-width="10"/>
+      <path d="M 176 328 A 108 108 0 0 0 336 328" stroke-width="10"/>
+      <path d="M 212 198 A 74 74 0 0 1 300 198" stroke-width="9"/>
+      <path d="M 212 314 A 74 74 0 0 0 300 314" stroke-width="9"/>
+      <circle cx="134" cy="186" r="6" fill="#0d1210" stroke-width="4"/>
+      <circle cx="378" cy="186" r="6" fill="#0d1210" stroke-width="4"/>
+      <circle cx="134" cy="326" r="6" fill="#0d1210" stroke-width="4"/>
+      <circle cx="378" cy="326" r="6" fill="#0d1210" stroke-width="4"/>
+      <circle cx="224" cy="120" r="5.5" fill="#0d1210" stroke-width="4"/>
+      <circle cx="288" cy="392" r="5.5" fill="#0d1210" stroke-width="4"/>
+      <line x1="102" y1="256" x2="410" y2="256" stroke-width="11"/>
+      <line x1="102" y1="244" x2="102" y2="268" stroke-width="7"/>
+      <line x1="410" y1="244" x2="410" y2="268" stroke-width="7"/>
+      <rect x="116" y="226" width="14" height="60" rx="5" fill="#0d1410" stroke-width="8"/>
+      <rect x="138" y="212" width="16" height="88" rx="6" fill="#0d1410" stroke-width="8.5"/>
+      <rect x="162" y="198" width="18" height="116" rx="6" fill="#0d1410" stroke-width="9"/>
+      <rect x="332" y="198" width="18" height="116" rx="6" fill="#0d1410" stroke-width="9"/>
+      <rect x="358" y="212" width="16" height="88" rx="6" fill="#0d1410" stroke-width="8.5"/>
+      <rect x="382" y="226" width="14" height="60" rx="5" fill="#0d1410" stroke-width="8"/>
+      <rect x="186" y="245" width="8" height="22" rx="3" fill="url(#neonGrad)" stroke="none"/>
+      <rect x="318" y="245" width="8" height="22" rx="3" fill="url(#neonGrad)" stroke="none"/>
+    </g>
+    <path d="M 118 112 C 165 44, 347 44, 394 112 C 345 78, 167 78, 118 112 Z" fill="url(#glossTop)"/>
+    <path d="M 65 170 C 44 215, 44 275, 62 315 C 66 270, 68 215, 86 175 Z" fill="url(#glossSide)"/>
+    <circle cx="256" cy="256" r="235" fill="none" stroke="#ffffff" stroke-opacity="0.12" stroke-width="2"/>
+  </g>
+</svg>`,
+  eat: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="sphereGrad" cx="38%" cy="28%" r="70%" fx="32%" fy="22%">
+      <stop offset="0%" stop-color="#454a4e"/>
+      <stop offset="25%" stop-color="#1b1e21"/>
+      <stop offset="70%" stop-color="#090a0c"/>
+      <stop offset="100%" stop-color="#000000"/>
+    </radialGradient>
+    <radialGradient id="rimLight" cx="50%" cy="92%" r="45%">
+      <stop offset="0%" stop-color="#2c3e35" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="neonGrad" x1="15%" y1="15%" x2="85%" y2="85%">
+      <stop offset="0%" stop-color="#b4ff6b"/>
+      <stop offset="45%" stop-color="#76e86c"/>
+      <stop offset="100%" stop-color="#2ba859"/>
+    </linearGradient>
+    <linearGradient id="glossTop" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0.0"/>
+    </linearGradient>
+    <linearGradient id="glossSide" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0.0"/>
+    </linearGradient>
+    <filter id="neonGlow" x="-25%" y="-25%" width="150%" height="150%">
+      <feGaussianBlur stdDeviation="4.5" result="blur1"/>
+      <feGaussianBlur stdDeviation="12" result="blur2"/>
+      <feMerge>
+        <feMergeNode in="blur2"/>
+        <feMergeNode in="blur1"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <clipPath id="sphereClip">
+      <circle cx="256" cy="256" r="236"/>
+    </clipPath>
+  </defs>
+  <g clip-path="url(#sphereClip)">
+    <circle cx="256" cy="256" r="236" fill="url(#sphereGrad)"/>
+    <circle cx="256" cy="256" r="236" fill="url(#rimLight)"/>
+    <circle cx="256" cy="256" r="180" fill="#4ce66d" opacity="0.12" filter="url(#neonGlow)"/>
+    <g fill="none" stroke="url(#neonGrad)" stroke-linecap="round" stroke-linejoin="round" filter="url(#neonGlow)">
+      <path d="M 244 84 A 172 172 0 0 0 84 244 L 116 244" stroke-width="10"/>
+      <path d="M 268 84 A 172 172 0 0 1 428 244" stroke-width="10"/>
+      <path d="M 84 268 A 172 172 0 0 0 244 428 L 244 396" stroke-width="10"/>
+      <path d="M 428 268 A 172 172 0 0 1 268 428 L 268 396" stroke-width="10"/>
+      <path d="M 244 116 A 140 140 0 0 0 116 244" stroke-width="10"/>
+      <path d="M 268 116 A 140 140 0 0 1 396 244 L 364 244" stroke-width="10"/>
+      <path d="M 116 268 A 140 140 0 0 0 212 389" stroke-width="10"/>
+      <path d="M 396 268 A 140 140 0 0 1 300 389" stroke-width="10"/>
+      <path d="M 180 180 A 108 108 0 0 0 180 332" stroke-width="9.5"/>
+      <path d="M 332 180 A 108 108 0 0 1 332 332" stroke-width="9.5"/>
+      <circle cx="138" cy="182" r="6" fill="#0d1210" stroke-width="4"/>
+      <circle cx="374" cy="182" r="6" fill="#0d1210" stroke-width="4"/>
+      <circle cx="138" cy="330" r="6" fill="#0d1210" stroke-width="4"/>
+      <circle cx="374" cy="330" r="6" fill="#0d1210" stroke-width="4"/>
+      <circle cx="212" cy="389" r="5.5" fill="#0d1210" stroke-width="4"/>
+      <circle cx="300" cy="389" r="5.5" fill="#0d1210" stroke-width="4"/>
+      <path d="M 200 166 L 200 208 C 200 226, 212 234, 220 234" stroke-width="8.5"/>
+      <path d="M 240 166 L 240 208 C 240 226, 228 234, 220 234" stroke-width="8.5"/>
+      <line x1="220" y1="166" x2="220" y2="234" stroke-width="8.5"/>
+      <line x1="220" y1="234" x2="220" y2="346" stroke-width="10.5"/>
+      <path d="M 298 258 L 298 166 C 276 174, 272 210, 272 252 L 298 258 Z" fill="url(#neonGrad)" fill-opacity="0.16" stroke-width="9"/>
+      <line x1="298" y1="258" x2="298" y2="346" stroke-width="10.5"/>
+    </g>
+    <path d="M 118 112 C 165 44, 347 44, 394 112 C 345 78, 167 78, 118 112 Z" fill="url(#glossTop)"/>
+    <path d="M 65 170 C 44 215, 44 275, 62 315 C 66 270, 68 215, 86 175 Z" fill="url(#glossSide)"/>
+    <circle cx="256" cy="256" r="235" fill="none" stroke="#ffffff" stroke-opacity="0.12" stroke-width="2"/>
+  </g>
+</svg>`
+};
 
-  <path d="M 118 112 C 165 44, 347 44, 394 112 C 345 78, 167 78, 118 112 Z" fill="url(#cyberGlossTop)"/>
-  <path d="M 65 170 C 44 215, 44 275, 62 315 C 66 270, 68 215, 86 175 Z" fill="url(#cyberGlossSide)"/>
-  <circle cx="256" cy="256" r="235" fill="none" stroke="#ffffff" stroke-opacity="0.18" stroke-width="2.5"/>
-</svg>
-`;
+// Each inline SVG gets its own id namespace so the three spheres never share gradients/filters
+function uniqueSvg(svg, prefix) {
+  return svg.replace(/(id="|url\(#)(sphereGrad|rimLight|neonGrad|glossTop|glossSide|neonGlow|sphereClip)/g, `$1${prefix}-$2`);
+}
 
 const ICON_PATHS = {
   sport: '<circle cx="5" cy="7" r="2"/><circle cx="19" cy="17" r="2"/><path d="m7 8 10 8M3 14l5-5m8 6 5-5"/>',
@@ -263,6 +445,14 @@ function drawNotch(w, h, cx) {
   }
 }
 
+// Smooth swap of the sphere artwork: the old sphere fades/shrinks out while the new one fades/grows in
+function setSphere(tab) {
+  if (!orbInner || !SPHERE_SVGS[tab]) return;
+  orbInner.querySelectorAll('.setup-sphere-layer').forEach(layer => {
+    layer.classList.toggle('is-on', layer.dataset.sphere === tab);
+  });
+}
+
 function mount() {
   bar = document.createElement('div');
   bar.className = 'setup-wordnav';
@@ -316,7 +506,13 @@ function mount() {
   orb.className = 'setup-nav-orb';
   orbInner = document.createElement('div');
   orbInner.className = 'setup-nav-orb-inner';
-  orbInner.innerHTML = CYBER_SPHERE_SVG;
+  for (const key of ['sport', 'eat', 'tracker']) {
+    const layer = document.createElement('div');
+    layer.className = 'setup-sphere-layer';
+    layer.dataset.sphere = key;
+    layer.innerHTML = uniqueSvg(SPHERE_SVGS[key], 'sph-' + key);
+    orbInner.appendChild(layer);
+  }
   orb.appendChild(orbInner);
   bar.appendChild(orb);
 
@@ -392,10 +588,10 @@ function updateNotch(animated = true) {
       saved = sessionStorage.getItem('setup_active_tab');
     } catch (e) {}
     if (saved) {
-      activeBtn = bar.querySelector(`[data-setup-destination="${saved}"]`);
+      activeBtn = bar.querySelector(`:scope > [data-setup-destination="${saved}"]`);
     }
     if (!activeBtn) {
-      activeBtn = bar.querySelector('[data-setup-destination="eat"]');
+      activeBtn = bar.querySelector(':scope > [data-setup-destination="eat"]');
     }
   }
 
@@ -414,6 +610,7 @@ function updateNotch(animated = true) {
 
       bar.style.setProperty('--orb-x', `${cx}px`);
       clearTimeout(notchTimer);
+      setSphere(tabName);
 
       if (animated && isDifferent && typeof orb.animate === 'function') {
         const prev = currentCx;
