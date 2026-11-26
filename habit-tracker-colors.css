@@ -22,3 +22,33 @@ html body .hb-card button:focus-visible{outline-color:var(--hb-g)}
 /* Date picker removed from the summary header (markup is kept in habit-tracker.js; delete this rule to bring it back) */
 html body .hd-module .hd-date{display:none}
 html body .hd-module .hd-head{margin-bottom:18px}
+
+/* "My goals -> Habits": category cards use the same colours as the tracker (14 groups, same order) */
+#goals-questionnaire-habits .habit-categories>.habit-category:nth-child(1){--hg:#B4F74A;--hg-a:rgba(180,247,74,.10);--hg-b:rgba(180,247,74,.38)}
+#goals-questionnaire-habits .habit-categories>.habit-category:nth-child(2){--hg:#C084FC;--hg-a:rgba(192,132,252,.10);--hg-b:rgba(192,132,252,.38)}
+#goals-questionnaire-habits .habit-categories>.habit-category:nth-child(3){--hg:#FF7A6B;--hg-a:rgba(255,122,107,.10);--hg-b:rgba(255,122,107,.38)}
+#goals-questionnaire-habits .habit-categories>.habit-category:nth-child(4){--hg:#FFB347;--hg-a:rgba(255,179,71,.10);--hg-b:rgba(255,179,71,.38)}
+#goals-questionnaire-habits .habit-categories>.habit-category:nth-child(5){--hg:#7C83FF;--hg-a:rgba(124,131,255,.10);--hg-b:rgba(124,131,255,.38)}
+#goals-questionnaire-habits .habit-categories>.habit-category:nth-child(6){--hg:#4DA6FF;--hg-a:rgba(77,166,255,.10);--hg-b:rgba(77,166,255,.38)}
+#goals-questionnaire-habits .habit-categories>.habit-category:nth-child(7){--hg:#2DD4BF;--hg-a:rgba(45,212,191,.10);--hg-b:rgba(45,212,191,.38)}
+#goals-questionnaire-habits .habit-categories>.habit-category:nth-child(8){--hg:#EAD84A;--hg-a:rgba(234,216,74,.10);--hg-b:rgba(234,216,74,.38)}
+#goals-questionnaire-habits .habit-categories>.habit-category:nth-child(9){--hg:#F472B6;--hg-a:rgba(244,114,182,.10);--hg-b:rgba(244,114,182,.38)}
+#goals-questionnaire-habits .habit-categories>.habit-category:nth-child(10){--hg:#E2A76F;--hg-a:rgba(226,167,111,.10);--hg-b:rgba(226,167,111,.38)}
+#goals-questionnaire-habits .habit-categories>.habit-category:nth-child(11){--hg:#22D3EE;--hg-a:rgba(34,211,238,.10);--hg-b:rgba(34,211,238,.38)}
+#goals-questionnaire-habits .habit-categories>.habit-category:nth-child(12){--hg:#E879F9;--hg-a:rgba(232,121,249,.10);--hg-b:rgba(232,121,249,.38)}
+#goals-questionnaire-habits .habit-categories>.habit-category:nth-child(13){--hg:#CBD5E1;--hg-a:rgba(203,213,225,.10);--hg-b:rgba(203,213,225,.38)}
+#goals-questionnaire-habits .habit-categories>.habit-category:nth-child(14){--hg:#5BD16F;--hg-a:rgba(91,209,111,.10);--hg-b:rgba(91,209,111,.38)}
+
+html body #goals-questionnaire-habits .habit-category{--tx:#F2FBF7;--mu:#93B4A8;--ac:var(--hg);--ac2:var(--hg-a);--ln:rgba(255,255,255,.1);--site-field:rgba(255,255,255,.06);background:linear-gradient(135deg,var(--hg-a),rgba(11,34,28,.62))!important;border:1px solid var(--hg-b)!important;color:#F2FBF7;color-scheme:dark;-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);box-shadow:inset 0 1px 0 rgba(255,255,255,.06);transition:border-color .2s,box-shadow .2s}
+html body #goals-questionnaire-habits .habit-category[open]{border-color:var(--hg)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 0 24px -12px var(--hg)}
+html body #goals-questionnaire-habits .habit-category>summary{color:#F2FBF7}
+html body #goals-questionnaire-habits .habit-category .habit-picture{background:var(--hg-a);border:1px solid var(--hg-b);box-shadow:0 0 14px -6px var(--hg)}
+html body #goals-questionnaire-habits .habit-category [data-habit-count]{color:var(--hg)}
+html body #goals-questionnaire-habits .habit-category :is(input,select,textarea){background:rgba(255,255,255,.06);color:#F2FBF7;border-color:rgba(255,255,255,.14)}
+html body #goals-questionnaire-habits .habit-category select option{background:#0B221C;color:#F2FBF7}
+html body #goals-questionnaire-habits .habit-category label,html body #goals-questionnaire-habits .habit-category small,html body #goals-questionnaire-habits .habit-category .subtle{color:#93B4A8}
+html body #goals-questionnaire-habits .habit-category [data-habit-count]{color:var(--hg)}
+html body #goals-questionnaire-habits .habit-category .habit-check{color:#F2FBF7}
+html body #goals-questionnaire-habits .habit-category input[type=checkbox]{accent-color:var(--hg)}
+html body #goals-questionnaire-habits .habit-category .habit-choice{border-top-color:rgba(255,255,255,.08)}
+html body #goals-questionnaire-habits .habit-category summary:focus-visible{outline:2px solid var(--hg);outline-offset:2px;border-radius:18px}
