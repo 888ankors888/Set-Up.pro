@@ -301,25 +301,77 @@ function uniqueSvg(svg, prefix) {
 }
 
 const ICON_PATHS = {
-  sport: '<circle cx="5" cy="7" r="2"/><circle cx="19" cy="17" r="2"/><path d="m7 8 10 8M3 14l5-5m8 6 5-5"/>',
-  eat: '<path d="M4 3v6a3 3 0 0 0 6 0V3M7 3v18M20 21V3c-4 2-5 8 0 9"/>',
-  tracker: '<rect x="3" y="4" width="18" height="17" rx="3"/><path d="M8 2v4M16 2v4M3 10h18m4 5 3 3 5-5"/>',
   questionnaire: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>',
   report: '<path d="M4 3v18h17M8 16v-5M13 16V7M18 16V4"/>',
   settings: '<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/>',
   menu: '<path d="M4 6h16M4 12h16M4 18h16"/>'
 };
 
+// Navigation button icons use the same drawings as the spheres (white), with heavier strokes for small size.
+// Every shape sits inside <g stroke="#fff"> so the page-wide `stroke: currentColor` rule cannot recolour it.
+const ICON_ART = {
+  sport: {
+    viewBox: '78 78 356 356',
+    body: `<g fill="none" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="102" y1="256" x2="410" y2="256" stroke-width="17"/>
+      <line x1="102" y1="236" x2="102" y2="276" stroke-width="15"/>
+      <line x1="410" y1="236" x2="410" y2="276" stroke-width="15"/>
+      <rect x="118" y="226" width="12" height="60" rx="5" fill="#0b2a21" stroke-width="15"/>
+      <rect x="142" y="208" width="14" height="96" rx="6" fill="#0b2a21" stroke-width="15"/>
+      <rect x="168" y="188" width="16" height="136" rx="6" fill="#0b2a21" stroke-width="15"/>
+      <rect x="328" y="188" width="16" height="136" rx="6" fill="#0b2a21" stroke-width="15"/>
+      <rect x="356" y="208" width="14" height="96" rx="6" fill="#0b2a21" stroke-width="15"/>
+      <rect x="382" y="226" width="12" height="60" rx="5" fill="#0b2a21" stroke-width="15"/>
+    </g>`
+  },
+  eat: {
+    viewBox: '139 146 220 220',
+    body: `<g fill="none" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M 200 166 L 200 208 C 200 226, 212 234, 220 234" stroke-width="15"/>
+      <path d="M 240 166 L 240 208 C 240 226, 228 234, 220 234" stroke-width="15"/>
+      <line x1="220" y1="166" x2="220" y2="234" stroke-width="15"/>
+      <line x1="220" y1="234" x2="220" y2="346" stroke-width="17"/>
+      <path d="M 298 258 L 298 166 C 276 174, 272 210, 272 252 L 298 258 Z" fill="#ffffff" fill-opacity="0.2" stroke-width="15"/>
+      <line x1="298" y1="258" x2="298" y2="346" stroke-width="17"/>
+    </g>`
+  },
+  tracker: {
+    viewBox: '70 70 372 372',
+    body: `<g fill="none" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round" stroke-width="17">
+      <path d="M 244 90 A 166 166 0 0 0 90 244 L 122 244"/>
+      <path d="M 268 90 A 166 166 0 0 1 422 244"/>
+      <path d="M 90 268 A 166 166 0 0 0 244 422 L 244 390"/>
+      <path d="M 422 268 A 166 166 0 0 1 268 422 L 268 390"/>
+      <path d="M 244 122 A 134 134 0 0 0 122 244"/>
+      <path d="M 268 122 A 134 134 0 0 1 390 244 L 358 244"/>
+      <path d="M 122 268 A 134 134 0 0 0 220 385"/>
+      <path d="M 390 268 A 134 134 0 0 1 292 385"/>
+      <path d="M 162 215 A 102 102 0 0 1 350 215"/>
+      <path d="M 154 268 A 102 102 0 0 0 358 268"/>
+      <path d="M 186 256 A 70 70 0 1 1 326 256 A 70 70 0 0 1 268 325 L 268 358"/>
+      <path d="M 186 256 A 70 70 0 0 0 244 325 L 244 358"/>
+      <path d="M 244 292 A 38 38 0 1 1 268 292"/>
+    </g>`
+  }
+};
+
 function createSvgIcon(name) {
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  svg.setAttribute('viewBox', '0 0 24 24');
   svg.setAttribute('fill', 'none');
-  svg.setAttribute('stroke', 'currentColor');
-  svg.setAttribute('stroke-width', '1.9');
   svg.setAttribute('stroke-linecap', 'round');
   svg.setAttribute('stroke-linejoin', 'round');
+  svg.setAttribute('aria-hidden', 'true');
   svg.classList.add('setup-brand-icon');
-  svg.innerHTML = ICON_PATHS[name] || ICON_PATHS.menu;
+  const art = ICON_ART[name];
+  if (art) {
+    svg.setAttribute('viewBox', art.viewBox);
+    svg.innerHTML = art.body;
+  } else {
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('stroke', 'currentColor');
+    svg.setAttribute('stroke-width', '1.9');
+    svg.innerHTML = ICON_PATHS[name] || ICON_PATHS.menu;
+  }
   return svg;
 }
 
@@ -384,6 +436,8 @@ function button(name, label) {
   b.type = 'button';
   b.dataset.setupDestination = name;
   b.dataset.setupLabel = label;
+  // Tell nav-brand.js the icon is already in place so it does not replace it with its own old icon
+  b.dataset.setupDecorated = 'true';
   b.setAttribute('role', 'menuitem');
   b.appendChild(createSvgIcon(name));
   const span = document.createElement('span');
@@ -525,6 +579,7 @@ function mount() {
   up = document.createElement('button');
   up.type = 'button';
   up.className = 'setup-menu-trigger';
+  up.dataset.setupDecorated = 'true';
   up.setAttribute('aria-expanded', 'false');
   up.setAttribute('aria-controls', 'setup-up-panel');
   up.setAttribute('aria-label', 'Меню');
