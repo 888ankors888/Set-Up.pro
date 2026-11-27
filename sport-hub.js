@@ -89,7 +89,7 @@ function habitState() {
 
 /* ---------- состояние UI ---------- */
 let lastDay = '', root = null, sess = loadSess(), ticker = null, wasVisible = false;
-const ui = {screen: sess ? 'workout' : 'dash', sel: null, body: 'front', muscle: null, day: (new Date().getDay() + 6) % 7, modal: null, draft: null, q: '', result: null, ai: {goal:'hyper',level:'mid',eq:'gym',days:3}};
+const ui = {screen: sess ? 'workout' : 'dash', sel: null, body: 'front', muscle: null, day: (new Date().getDay() + 6) % 7, modal: null, draft: null, q: '', result: null, ai: {goal:'hyper',eq:'gym',min:45,focus:[]}};
 const mode = () => hub().mode;
 
 /* ---------- отрисовка: дашборд ---------- */
@@ -103,10 +103,11 @@ function bodySvg(rec) {
 }
 function suggest(h, rec) {
   let best = null, bs = -1;
-  for (const w of h.workouts) { const t = w.tags.length ? w.tags : ['legs']; const v = t.reduce((a, g) => a + (rec[g] ?? 100), 0) / t.length; if (v > bs) { bs = v; best = w; } }
+  for (const w of h.workouts.filter(z => !z.forDate)) { const t = w.tags.length ? w.tags : ['legs']; const v = t.reduce((a, g) => a + (rec[g] ?? 100), 0) / t.length; if (v > bs) { bs = v; best = w; } }
   return best;
 }
 const wdOf = d => { const [y, m, dd] = d.split('-').map(Number); return String((new Date(y, m - 1, dd).getDay() + 6) % 7); };
+const dateLabel = d => { const [y, m, dd] = d.split('-').map(Number); return dd + ' ' + RU_M[m - 1]; };
 const planOf = (h, d) => h.dated[d] || h.plan[wdOf(d)];
 const assignDate = (id) => { const d = selDay(); setHub(h => { h.dated[d] = id; }); };
 const isFuture = () => selDay() > todayS();
@@ -221,25 +222,29 @@ function exList() {
   const q = ui.q.trim().toLowerCase(), l = LIB.filter(x => !q || x.n.toLowerCase().includes(q));
   return l.map(x => `<button class="sh-item" data-act="pick" data-n="${esc(x.n)}"><span>${esc(x.n)}<br><span class="sh-mu">${GROUPS[x.m]} · ${x.w ? x.w + ' кг × ' : ''}${x.r}</span></span><b style="color:var(--lime)">+</b></button>`).join('') + (q ? `<button class="sh-item" data-act="pickc"><span>Добавить свое: «${esc(ui.q.trim())}»</span><b style="color:var(--lime)">+</b></button>` : '');
 }
+function confirmHtml() {
+  return `<div class="sh-modal" style="z-index:110;align-items:center;padding:16px"><div class="sh-sheet" style="border-radius:22px;max-width:380px;padding:20px"><h3 class="sh-h" style="margin-bottom:6px">Сохранить изменения?</h3><p class="sh-mu" style="margin-bottom:16px">Вы внесли правки, которые ещё не сохранены.</p><button class="sh-btn big" data-act="csave">Сохранить</button><button class="sh-btn red big" style="margin-top:8px" data-act="cdiscard">Не сохранять</button><button class="sh-btn ghost big" style="margin-top:8px" data-act="ccancel">Продолжить редактирование</button></div></div>`;
+}
 function modalHtml() {
   const m = ui.modal; if (!m) return '';
   const pro = mode() === 'pro';
   if (m === 'addmenu') {
     const ic = d => `<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#b8ff2c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
     const row = (a, i, t, sub) => `<button class="sh-item" data-act="${a}" style="padding:14px"><span class="sh-row" style="gap:14px">${ic(i)}<span><b>${t}</b><br><span class="sh-mu">${sub}</span></span></span><b style="color:var(--mu)">›</b></button>`;
-    return sheet('Добавить тренировку', row('favs', '<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>', 'Избранные программы', 'Выбрать из сохранённых') + row('manual', '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/>', 'Создать свою', 'Собрать тренировку вручную') + row('ai', '<path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/>', 'Конструктор программ', 'Собрать программу по цели'));
+    return sheet('Добавить на ' + dateLabel(selDay()), row('dayex', '<path d="M6 7v10M18 7v10M3 10v4M21 10v4M6 12h12"/>', 'Добавить упражнения', 'Выбрать из библиотеки') + row('favs', '<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>', 'Добавить программу тренировок', 'Готовую или новую на выбранный день') + row('ai', '<path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/>', 'Программа на день: авто-подбор', 'По цели и мышцам, без нейросети'));
   }
   if (m === 'plan') {
     const h = hub(), t = wdOf(todayS());
-    return sheet('План недели', `<p class="sh-mu" style="margin-bottom:6px">Назначьте программу на каждый день. По плану она появится в карточке дня, и её можно сразу запустить.</p>${WDL.map((n2, i) => `<div class="sh-item"><b style="min-width:110px;${String(i) === t ? 'color:var(--lime)' : ''}">${n2}</b><select data-plan="${i}"><option value="">Не задано</option><option value="rest"${h.plan[i] === 'rest' ? ' selected' : ''}>День отдыха</option>${h.workouts.map(x => `<option value="${x.id}"${h.plan[i] === x.id ? ' selected' : ''}>${esc(x.title)}</option>`).join('')}</select></div>`).join('')}<div class="sh-row" style="margin-top:14px"><button class="sh-btn ghost" style="flex:1" data-act="manual">Создать программу</button><button class="sh-btn" style="flex:1" data-act="rclose">Готово</button></div>`);
+    return sheet('План недели', `<p class="sh-mu" style="margin-bottom:6px">Назначьте программу на каждый день. По плану она появится в карточке дня, и её можно сразу запустить.</p>${WDL.map((n2, i) => `<div class="sh-item"><b style="min-width:110px;${String(i) === t ? 'color:var(--lime)' : ''}">${n2}</b><select data-plan="${i}"><option value="">Не задано</option><option value="rest"${h.plan[i] === 'rest' ? ' selected' : ''}>День отдыха</option>${h.workouts.filter(z => !z.forDate).map(x => `<option value="${x.id}"${h.plan[i] === x.id ? ' selected' : ''}>${esc(x.title)}</option>`).join('')}</select></div>`).join('')}<div class="sh-row" style="margin-top:14px"><button class="sh-btn ghost" style="flex:1" data-act="manual">Создать программу</button><button class="sh-btn" style="flex:1" data-act="rclose">Готово</button></div>`);
   }
   if (m === 'sedit') {
     const d = ui.sdraft;
     return sheet('Изменить выполненную', d.exercises.map((e, i) => `<div class="sh-ex"><div class="sh-row sh-sb"><b>${esc(e.name)}</b><button class="sh-chip" data-act="sxrem" data-e="${i}">Удалить</button></div>${e.sets.map((z, j) => `<div class="sh-set novice" style="grid-template-columns:24px 1fr 1fr 34px"><span class="t">${j + 1}</span><input inputmode="decimal" data-sf="weight" data-e="${i}" data-s="${j}" value="${esc(z.weight)}" placeholder="кг"><input inputmode="numeric" data-sf="reps" data-e="${i}" data-s="${j}" value="${esc(z.reps)}" placeholder="повт."><button class="sh-chip" data-act="ssdel" data-e="${i}" data-s="${j}">×</button></div>`).join('')}</div>`).join('') + `<div class="sh-row" style="margin-top:12px"><button class="sh-btn ghost" style="flex:1" data-act="sdelall">Удалить тренировку</button><button class="sh-btn" style="flex:1" data-act="ssave">Сохранить</button></div>`);
   }
+  if (m === 'dayex') return sheet('Упражнения на ' + dateLabel(selDay()), `<input data-q placeholder="Поиск или свое упражнение" value="${esc(ui.q)}"><div data-exlist>${exList()}</div><button class="sh-btn big" style="margin-top:14px" data-act="mclose">Готово</button>`);
   if (m === 'favs') {
     const h = hub();
-    return sheet('Избранные программы', (h.workouts.length ? h.workouts.map(x => `<div class="sh-item"><button data-act="favpick" data-id="${x.id}" style="flex:1;text-align:left"><b>${esc(x.title)}</b><br><span class="sh-mu">${x.exercises.length} упр. · ${x.tags.map(g => GROUPS[g]).join(', ')}</span></button><button class="sh-chip" data-act="favdel" data-id="${x.id}">×</button></div>`).join('') : '<p class="sh-mu">Сохранённых программ пока нет.</p>') + (h.sessions.length ? '<div class="sh-lbl" style="margin:16px 0 4px">Повторить недавние</div>' + h.sessions.slice(-5).reverse().map(x => `<div class="sh-item"><span><b>${esc(x.title)}</b><br><span class="sh-mu">${x.date}</span></span><button class="sh-chip" data-act="repeat" data-id="${x.id}">Повторить</button></div>`).join('') : ''));
+    return sheet('Программа на ' + dateLabel(selDay()), '<button class="sh-btn ghost big" data-act="manual" style="margin-bottom:6px">+ Создать новую программу</button>' + (h.workouts.filter(x => !x.forDate).length ? h.workouts.filter(x => !x.forDate).map(x => `<div class="sh-item"><button data-act="favpick" data-id="${x.id}" style="flex:1;text-align:left"><b>${esc(x.title)}</b><br><span class="sh-mu">${x.exercises.length} упр. · ${x.tags.map(g => GROUPS[g]).join(', ')}</span></button><button class="sh-chip" data-act="favdel" data-id="${x.id}">×</button></div>`).join('') : '<p class="sh-mu">Сохранённых программ пока нет.</p>') + (h.sessions.length ? '<div class="sh-lbl" style="margin:16px 0 4px">Повторить недавние</div>' + h.sessions.slice(-5).reverse().map(x => `<div class="sh-item"><span><b>${esc(x.title)}</b><br><span class="sh-mu">${x.date}</span></span><button class="sh-chip" data-act="repeat" data-id="${x.id}">Повторить</button></div>`).join('') : ''));
   }
   if (m === 'manual') {
     const d = ui.draft;
@@ -250,7 +255,7 @@ function modalHtml() {
   }
   if (m === 'ai') {
     const a = ui.ai, sel = (k, arr) => `<div class="sh-seg" style="margin-bottom:12px">${arr.map(([v, t]) => `<button data-act="aiset" data-k="${k}" data-v="${v}" class="${String(a[k]) === String(v) ? 'on' : ''}">${t}</button>`).join('')}</div>`;
-    return sheet('Конструктор программ', `<p class="sh-mu" style="margin-bottom:12px">Программа собирается по правилам из вашей цели и оборудования. Это не нейросеть.</p><div class="sh-lbl">Цель</div>${sel('goal', [['hyper','Гипертрофия'],['strength','Сила'],['recomp','Рекомпозиция']])}<div class="sh-lbl">Уровень</div>${sel('level', [['new','Новичок'],['mid','Средний'],['adv','Опытный']])}<div class="sh-lbl">Оборудование</div>${sel('eq', [['gym','Зал'],['home','Дома']])}<div class="sh-lbl">Дней в неделю</div>${sel('days', [[2,'2'],[3,'3'],[4,'4'],[5,'5']])}<button class="sh-btn big" data-act="aigen">Создать программу</button>`);
+    return sheet('Программа на ' + dateLabel(selDay()), `<p class="sh-mu" style="margin-bottom:12px">Программа собирается автоматически по вашим параметрам и восстановлению мышц. Нейросеть здесь не используется.</p><div class="sh-lbl">Цель</div>${sel('goal', [['hyper','Гипертрофия'],['strength','Сила'],['recomp','Рекомпозиция']])}<div class="sh-lbl">Оборудование</div>${sel('eq', [['gym','Зал'],['home','Дома']])}<div class="sh-lbl">Время, мин</div>${sel('min', [[30,'30'],[45,'45'],[60,'60'],[75,'75']])}<div class="sh-lbl" style="margin-bottom:6px">Акцент на мышцы (пусто — подберу по восстановлению)</div><div class="sh-row sh-wrap" style="margin-bottom:14px">${Object.keys(GROUPS).map(g => `<button class="sh-chip${a.focus.includes(g) ? ' on' : ''}" data-act="aiset" data-k="focus" data-v="${g}">${GROUPS[g]}</button>`).join('')}</div><button class="sh-btn big" data-act="aigen">Собрать программу</button>`);
   }
   if (m === 'progress') {
     const h = hub(), p = prs(h), ws = weekSets(h), top = Object.entries(p).sort((a, b) => b[1] - a[1]).slice(0, 12);
@@ -282,7 +287,7 @@ function modalHtml() {
 /* ---------- сборка / отрисовка ---------- */
 function paint(keep) {
   if (!root) return; const y = keep ? window.scrollY : null;
-  root.innerHTML = (ui.screen === 'workout' && sess ? workoutScreen() : dash()) + modalHtml();
+  root.innerHTML = (ui.screen === 'workout' && sess ? workoutScreen() : dash()) + modalHtml() + (ui.confirmClose && ui.modal ? confirmHtml() : '');
   if (y !== null) window.scrollTo(0, y);
   syncTicker();
 }
@@ -338,6 +343,30 @@ function syncEntries(rec) {
     try { if (W && W.validate) W.validate(st.workouts); } catch (e) { st.workouts = JSON.parse(backup); }
   }); } catch (e) {}
 }
+function buildDay() {
+  const a = ui.ai, h = hub(), rec = recovery(h), d = selDay(), n = a.min <= 30 ? 3 : a.min <= 45 ? 4 : a.min <= 60 ? 5 : 6;
+  const groups = a.focus.length ? a.focus.slice() : Object.keys(GROUPS).filter(g => g !== 'abs').sort((x, y) => rec[y] - rec[x]).slice(0, 3);
+  const lib = LIB.filter(x => a.eq === 'gym' || x.e === 'db' || x.e === 'bw'), names = [];
+  for (let i = 0; i < n * 4 && names.length < n; i++) { const c = lib.find(x => x.m === groups[i % groups.length] && !names.includes(x.n)); if (c) names.push(c.n); }
+  if (!names.length) return null;
+  const mult = a.goal === 'strength' ? 1.1 : a.goal === 'recomp' ? .9 : 1;
+  const w = mkW('Программа на ' + dateLabel(d), names, 'ai', {meso:'Авто-подбор · ' + ({hyper:'гипертрофия',strength:'сила',recomp:'рекомпозиция'})[a.goal], forDate:d});
+  w.exercises.forEach(e => { const l = find(e.name), reps = a.goal === 'strength' ? 5 : a.goal === 'recomp' ? 12 : l.r; e.sets.forEach(z => { if (z.type === 'n') { z.reps = reps; z.weight = l.w ? r05(l.w * mult) : 0; } }); if (a.goal === 'strength' && l.rest < 150) e.restSec = l.rest + 30; });
+  return w;
+}
+function addExDay(name, l) {
+  const d = selDay(), h0 = hub(), pv = planOf(h0, d), planned = pv && pv !== 'rest' ? h0.workouts.find(x => x.id === pv) : null;
+  const base = (ui.selDay === d && h0.workouts.find(x => x.id === ui.sel)) || planned || (d === todayS() && pv !== 'rest' ? suggest(h0, recovery(h0)) : null);
+  const ex = l ? mkEx(l) : newEx(name); let target;
+  setHub(h => {
+    if (base && base.forDate === d) target = h.workouts.find(x => x.id === base.id);
+    else { target = base ? JSON.parse(JSON.stringify(base)) : {title:'Тренировка',src:'manual',tags:[],exercises:[]}; target.id = uid('w'); target.forDate = d; h.workouts.push(target); }
+    target.exercises.push(ex); target.tags = [...new Set(target.exercises.flatMap(e => e.muscles))]; h.dated[d] = target.id;
+  });
+  if (target) setSel(target.id);
+  toast2('Добавлено: ' + ex.name);
+}
+function saveSessEdit() { const d = ui.sdraft; d.exercises.forEach(x => { x.sets = x.sets.map(z => ({...z, weight:Math.min(10000, Math.max(0, num(z.weight))), reps:Math.max(1, Math.round(num(z.reps)) || 1)})); }); const ex = d.exercises.filter(x => x.sets.length); if (!ex.length) return toast2('Оставьте хотя бы один подход или удалите тренировку'); let rec = null; setHub(h => { const x = h.sessions.find(z => z.id === d.id); if (x) { x.exercises = ex; rec = x; } }); if (rec) syncEntries(rec); ui.modal = null; ui.sdraft = null; paint(true); toast2('Изменения сохранены');}
 function finish() {
   const min = Math.max(1, Math.round((Date.now() - sess.startedAt) / 6e4)), ton = sessTon(sess), kcal = kcalOf(min), total = sessSets(sess);
   const rec = {id:sess.id,workoutId:sess.workoutId,title:sess.title,date:sess.date,startedAt:sess.startedAt,endedAt:Date.now(),minutes:min,exercises:sess.exercises.map(e => ({name:e.name,muscles:e.muscles,sets:doneSets(e).map(s => ({type:s.type,weight:num(s.weight),reps:Math.round(num(s.reps)),rir:Math.round(num(s.rir))}))})).filter(e => e.sets.length)};
@@ -355,14 +384,14 @@ function markHabit(enable) {
   }); } catch (e) { toast2('Не удалось отметить привычку'); }
 }
 function addWater() { try { commit(st => { st.water = st.water || {}; st.water[todayS()] = (Number(st.water[todayS()]) || 0) + 500; }); toast2('Добавлено 500 мл воды'); } catch (e) { toast2('Не удалось добавить воду'); } }
-function openDraft(d) { ui.draft = d || {title:'Своя тренировка',status:'today',exercises:[]}; ui.q = ''; ui.modal = 'manual'; paint(true); }
+function openDraft(d) { ui.draft = d || {title:'Своя тренировка',status:'today',exercises:[]}; ui.snap = JSON.stringify(ui.draft); ui.confirmClose = false; ui.q = ''; ui.modal = 'manual'; paint(true); }
 function saveDraft(start) {
   const d = ui.draft; if (!d.exercises.length) return toast2('Добавьте хотя бы одно упражнение');
   const w = {id:uid('w'),title:(d.title || 'Своя тренировка').trim(),src:'manual',tags:[...new Set(d.exercises.flatMap(e => e.muscles))],exercises:d.exercises.map(e => ({...e,sets:e.sets.map(s => ({...s,weight:num(s.weight),reps:Math.round(num(s.reps)) || 1}))}))};
   if (d.editId) {
     if (d.scope === 'all') { w.id = d.editId; const old = hub().workouts.find(x => x.id === d.editId); if (old) { w.src = old.src; if (old.meso) w.meso = old.meso; } setHub(h => { h.workouts = h.workouts.map(x => x.id === d.editId ? w : x); }); setSel(w.id); }
-    else { setHub(h => { h.workouts.push(w); h.dated[selDay()] = w.id; }); setSel(w.id); }
-  } else if (d.status !== 'free') { setHub(h => { h.workouts.push(w); }); if (isFuture()) assignDate(w.id); else setSel(w.id); }
+    else { w.forDate = selDay(); setHub(h => { h.workouts.push(w); h.dated[selDay()] = w.id; }); setSel(w.id); }
+  } else if (d.status !== 'free') { setHub(h => { h.workouts.push(w); }); if (d.status === 'today') { assignDate(w.id); setSel(w.id); } }
   ui.modal = null; ui.draft = null;
   if (start && !isFuture()) startSess(w); else { paint(); toast2(d.status === 'free' ? 'Черновик закрыт' : d.editId ? 'Изменения сохранены' : 'Тренировка сохранена'); }
 }
@@ -380,24 +409,30 @@ function onClick(ev) {
     case 'back': ui.screen = 'dash'; paint(); break;
     case 'editw': { const w = hub().workouts.find(x => x.id === id); if (!w) break; openDraft({title:w.title,status:'template',editId:w.id,scope:'date',exercises:JSON.parse(JSON.stringify(w.exercises)).map(e => { e.sets.forEach(z => { z.done = false; }); return e; })}); break; }
     case 'dscope': ui.draft.scope = v; paint(true); break;
-    case 'sedit': { const x = hub().sessions.find(z => z.id === id); if (!x) break; ui.sdraft = {id, exercises:JSON.parse(JSON.stringify(x.exercises))}; ui.modal = 'sedit'; paint(true); break; }
+    case 'sedit': { const x = hub().sessions.find(z => z.id === id); if (!x) break; ui.sdraft = {id, exercises:JSON.parse(JSON.stringify(x.exercises))}; ui.ssnap = JSON.stringify(ui.sdraft); ui.confirmClose = false; ui.modal = 'sedit'; paint(true); break; }
     case 'sxrem': ui.sdraft.exercises.splice(e, 1); paint(true); break;
     case 'ssdel': ui.sdraft.exercises[e].sets.splice(s, 1); if (!ui.sdraft.exercises[e].sets.length) ui.sdraft.exercises.splice(e, 1); paint(true); break;
     case 'sdelall': if (!confirm('Удалить тренировку из истории и дневника?')) break; { const sid = ui.sdraft.id, x = hub().sessions.find(z => z.id === sid); setHub(h => { h.sessions = h.sessions.filter(z => z.id !== sid); }); if (x) syncEntries({...x, exercises:[]}); } ui.modal = null; ui.sdraft = null; paint(); toast2('Тренировка удалена'); break;
-    case 'ssave': { const d = ui.sdraft; d.exercises.forEach(x => { x.sets = x.sets.map(z => ({...z, weight:Math.min(10000, Math.max(0, num(z.weight))), reps:Math.max(1, Math.round(num(z.reps)) || 1)})); }); const ex = d.exercises.filter(x => x.sets.length); if (!ex.length) return toast2('Оставьте хотя бы один подход или удалите тренировку'); let rec = null; setHub(h => { const x = h.sessions.find(z => z.id === d.id); if (x) { x.exercises = ex; rec = x; } }); if (rec) syncEntries(rec); ui.modal = null; ui.sdraft = null; paint(true); toast2('Изменения сохранены'); break; }
+    case 'ssave': saveSessEdit(); break;
     case 'plan': ui.modal = 'plan'; paint(true); break;
-    case 'addmenu': ui.modal = 'addmenu'; paint(true); break;
+    case 'addmenu': if (selDay() < todayS()) { toast2('На прошедшую дату добавить нельзя'); break; } ui.modal = 'addmenu'; paint(true); break;
+    case 'dayex': ui.q = ''; ui.modal = 'dayex'; paint(true); break;
     case 'favs': ui.modal = 'favs'; paint(true); break;
-    case 'favpick': if (isFuture()) { assignDate(id); toast2('Тренировка добавлена в план'); } else setSel(id); ui.modal = null; paint(true); break;
+    case 'favpick': assignDate(id); setSel(id); toast2('Программа добавлена на ' + dateLabel(selDay())); ui.modal = null; paint(true); break;
     case 'undate': setHub(h => { delete h.dated[selDay()]; }); paint(true); break;
     case 'repeat': { const h = hub(), x = h.sessions.find(z => z.id === id); if (!x) break; let w = h.workouts.find(z => z.id === x.workoutId); if (!w) { w = {id:uid('w'),title:x.title,src:'manual',tags:[...new Set(x.exercises.flatMap(e => e.muscles))],exercises:x.exercises.map(e => { const l = find(e.name) || {}; return {id:uid('e'),name:e.name,muscles:e.muscles,tempo:l.tempo || '2-0-1',restSec:l.rest || 90,sets:e.sets.map(z => ({id:uid('s'),type:z.type,weight:z.weight,reps:z.reps,rir:z.rir,done:false}))}; })}; setHub(hh => { hh.workouts.push(w); }); } if (isFuture()) { assignDate(w.id); toast2('Тренировка добавлена в план'); paint(true); } else { if (sess && !confirm('Текущая тренировка будет заменена. Продолжить?')) break; startSess(w); } break; }
     case 'favdel': if (confirm('Удалить программу?')) { setHub(h => { h.workouts = h.workouts.filter(x => x.id !== id); }); if (ui.sel === id) ui.sel = null; paint(true); } break;
     case 'manual': openDraft(); break;
-    case 'ai': try { const p = S.sports && S.sports.profile; if (p) { ui.ai.level = p.level === 'experienced' ? 'adv' : p.level === 'regular' ? 'mid' : 'new'; ui.ai.goal = p.goal === 'strength' ? 'strength' : 'hyper'; ui.ai.eq = /без|дом/i.test(p.equipment || '') ? 'home' : 'gym'; if (p.days && p.days.length >= 2) ui.ai.days = Math.min(5, p.days.length); } } catch (x) {} ui.modal = 'ai'; paint(true); break;
-    case 'aiset': ui.ai[t.dataset.k] = t.dataset.k === 'days' ? +v : v; paint(true); break;
-    case 'aigen': { const l = buildProgram(); setHub(h => { h.workouts.push(...l); }); if (isFuture()) assignDate(l[0].id); else setSel(l[0].id); ui.modal = null; paint(); toast2('Программа создана: ' + l.length + ' трен.'); break; }
+    case 'ai': try { const p = S.sports && S.sports.profile; if (p) { ui.ai.goal = p.goal === 'strength' ? 'strength' : 'hyper'; ui.ai.eq = /без|дом/i.test(p.equipment || '') ? 'home' : 'gym'; const mm = Number(p.minutes); if (mm) ui.ai.min = mm <= 30 ? 30 : mm <= 45 ? 45 : mm <= 60 ? 60 : 75; } } catch (x) {} ui.modal = 'ai'; paint(true); break;
+    case 'aiset': if (t.dataset.k === 'focus') { const f = ui.ai.focus, i = f.indexOf(v); if (i < 0) f.push(v); else f.splice(i, 1); } else ui.ai[t.dataset.k] = t.dataset.k === 'min' ? +v : v; paint(true); break;
+    case 'aigen': { const w = buildDay(); if (!w) { toast2('Не удалось подобрать упражнения'); break; } setHub(h => { h.workouts.push(w); h.dated[selDay()] = w.id; }); setSel(w.id); ui.modal = null; paint(); toast2('Программа добавлена на ' + dateLabel(selDay())); break; }
     case 'progress': ui.modal = 'progress'; paint(true); break;
-    case 'mclose': if (t.classList.contains('sh-modal') && ev.target !== t) break; ui.modal = null; paint(true); break;
+    case 'mclose': if (t.classList.contains('sh-modal') && ev.target !== t) break;
+      if ((ui.modal === 'manual' && ui.draft && JSON.stringify(ui.draft) !== ui.snap) || (ui.modal === 'sedit' && ui.sdraft && JSON.stringify(ui.sdraft) !== ui.ssnap)) { ui.confirmClose = true; paint(true); break; }
+      ui.modal = null; paint(true); break;
+    case 'ccancel': ui.confirmClose = false; paint(true); break;
+    case 'cdiscard': ui.confirmClose = false; ui.modal = null; ui.draft = null; ui.sdraft = null; paint(true); break;
+    case 'csave': { const was = ui.modal; ui.confirmClose = false; if (was === 'manual') saveDraft(false); else saveSessEdit(); if (ui.modal === was) paint(true); break; }
     case 'rclose': ui.modal = null; paint(true); break;
     case 'body': ui.body = v; paint(true); break;
     case 'muscle': ui.muscle = id; paint(true); break;
@@ -413,8 +448,8 @@ function onClick(ev) {
     case 'dsdel': if (ui.draft.exercises[e].sets.length > 1) ui.draft.exercises[e].sets.splice(s, 1); paint(true); break;
     case 'dsave': saveDraft(false); break;
     case 'dstart': saveDraft(true); break;
-    case 'pick': { const l = find(t.dataset.n); if (ui.modal === 'manual') ui.draft.exercises.push(mkEx(l)); else { sess.exercises.push(mkEx(l)); saveSess(); ui.modal = null; } ui.q = ''; paint(true); break; }
-    case 'pickc': { const x = newEx(ui.q.trim()); if (ui.modal === 'manual') ui.draft.exercises.push(x); else { sess.exercises.push(x); saveSess(); ui.modal = null; } ui.q = ''; paint(true); break; }
+    case 'pick': { const l = find(t.dataset.n); if (ui.modal === 'dayex') { addExDay(l.n, l); break; } if (ui.modal === 'manual') ui.draft.exercises.push(mkEx(l)); else { sess.exercises.push(mkEx(l)); saveSess(); ui.modal = null; } ui.q = ''; paint(true); break; }
+    case 'pickc': { if (ui.modal === 'dayex') { addExDay(ui.q.trim(), null); break; } const x = newEx(ui.q.trim()); if (ui.modal === 'manual') ui.draft.exercises.push(x); else { sess.exercises.push(x); saveSess(); ui.modal = null; } ui.q = ''; paint(true); break; }
     case 'stype': { if (mode() !== 'pro') break; const x = sess.exercises[e].sets[s]; x.type = x.type === 'n' ? 'w' : x.type === 'w' ? 'd' : 'n'; saveSess(); paint(true); break; }
     case 'check': {
       const ex = sess.exercises[e], x = ex.sets[s]; x.done = !x.done;
