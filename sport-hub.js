@@ -651,7 +651,7 @@ function mount() {
   if (!wasVisible) { wasVisible = true; if (!ui.modal || ui.modal === 'result') paint(); }
 }
 function init() {
-  if (!document.querySelector('link[data-sport-hub]')) { const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = new URL('sport-hub.css?v=5', document.baseURI).href; l.dataset.sportHub = 'true'; document.head.append(l); }
+  if (!document.querySelector('link[data-sport-hub]')) { const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = new URL('sport-hub.css?v=6', document.baseURI).href; l.dataset.sportHub = 'true'; document.head.append(l); }
   try { const o = window.render; if (typeof o === 'function') { window.render = function () { const r = o.apply(this, arguments); try { mount(); } catch (e) { console.warn(e); } return r; }; } } catch (e) {}
   mount();
 }
