@@ -154,7 +154,7 @@ function hero(h, w, d) {
   return `<div class="sh-card"><div class="sh-row sh-sb sh-wrap" style="margin-bottom:10px"><h2 class="sh-h" style="font-size:22px">Тренировки дня</h2><span class="sh-chip" style="padding:8px 14px">${chip}</span></div>
   <div class="sh-row sh-sb" style="gap:6px">${ringSvg(items)}<div style="text-align:center;flex:1"><div class="sh-mu" style="font-size:14px">Выполнение</div><div style="font-size:40px;font-weight:800;line-height:1.1">${pct}<span class="sh-mu" style="font-size:22px"> %</span></div><div class="sh-mu" style="font-size:14px">${isT ? 'сегодня' : dd + ' ' + RU_M[m - 1]}</div></div>
   <button data-act="addmenu" style="display:flex;flex-direction:column;align-items:center;gap:8px;flex:none;width:96px;color:var(--lime);font-weight:800;text-align:center;line-height:1.2"><span style="width:84px;height:84px;border-radius:50%;border:3px solid var(--lime);box-shadow:0 0 18px rgba(184,255,44,.45),inset 0 0 14px rgba(184,255,44,.2);display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" width="38" height="38" fill="none" stroke="#b8ff2c" stroke-width="2.6" stroke-linecap="round"><path d="M12 4v16M4 12h16"/></svg></span>Добавить тренировку</button></div>
-  <div class="sh-row" style="margin-top:12px"><button class="sh-chip" data-act="plan">Составить план недели</button><button class="sh-chip" data-act="progress">↗ Прогресс и PR</button></div></div>`;
+  <div class="sh-row" style="margin-top:12px"><button class="sh-chip" data-act="progress">↗ Прогресс и PR</button></div></div>`;
 }
 function dash() {
   const h = hub(), rec = recovery(h), pro = h.mode === 'pro';
