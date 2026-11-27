@@ -428,7 +428,7 @@ function onClick(ev) {
     case 'aigen': { const w = buildDay(); if (!w) { toast2('Не удалось подобрать упражнения'); break; } setHub(h => { h.workouts.push(w); h.dated[selDay()] = w.id; }); setSel(w.id); ui.modal = null; paint(); toast2('Программа добавлена на ' + dateLabel(selDay())); break; }
     case 'progress': ui.modal = 'progress'; paint(true); break;
     case 'mclose': if (t.classList.contains('sh-modal') && ev.target !== t) break;
-      if ((ui.modal === 'manual' && ui.draft && JSON.stringify(ui.draft) !== ui.snap) || (ui.modal === 'sedit' && ui.sdraft && JSON.stringify(ui.sdraft) !== ui.ssnap)) { ui.confirmClose = true; paint(true); break; }
+      if ((ui.modal === 'manual' && ui.draft && ui.draft.exercises.length && JSON.stringify(ui.draft) !== ui.snap) || (ui.modal === 'sedit' && ui.sdraft && JSON.stringify(ui.sdraft) !== ui.ssnap)) { ui.confirmClose = true; paint(true); break; }
       ui.modal = null; paint(true); break;
     case 'ccancel': ui.confirmClose = false; paint(true); break;
     case 'cdiscard': ui.confirmClose = false; ui.modal = null; ui.draft = null; ui.sdraft = null; paint(true); break;
