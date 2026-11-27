@@ -51,3 +51,14 @@ script.dataset.habitQuick = 'true';
 script.onerror = () => console.warn('habit-quick.js is not loaded');
 document.head.append(script);
 })();
+
+/* Loads the rebuilt sport section (training hub). */
+(() => {
+'use strict';
+if (document.querySelector('script[data-sport-hub]')) return;
+const script = document.createElement('script');
+script.src = new URL('sport-hub.js?v=1', document.baseURI).href;
+script.dataset.sportHub = 'true';
+script.onerror = () => console.warn('sport-hub.js is not loaded');
+document.head.append(script);
+})();
