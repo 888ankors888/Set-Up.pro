@@ -343,7 +343,7 @@
       return;
     }
     if(target.closest('[data-hd-reset]')){onFilterChange(null);return;}
-    /* Completion is set only by the "Отметить выполнение" button; the 7-day strip is read-only */
+    /* Completion is set only by the "Отметить выполнение" button for the date chosen in the module header (today or a past day); the 7-day strip is read-only */
     const cta=target.closest('[data-hb-cta]');
     if(cta){
       const id=cta.dataset.habit,date=cta.dataset.date;
@@ -379,6 +379,7 @@
 .hd-module .hd-add:hover{background:rgba(180,247,74,.2);border-color:var(--hb-acc)}
 .hd-module .hd-add:active{transform:scale(.97)}
 .hd-date{display:inline-flex;align-items:center;gap:4px;padding:4px;border-radius:999px;background:rgba(255,255,255,.05);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}
+html body .hd-module .hd-date{display:inline-flex!important}
 .hd-module .hd-date button{display:grid;place-items:center;width:32px;height:32px;margin:0;padding:0;border-radius:50%;background:transparent;border:0;color:var(--hb-tx);cursor:pointer;transition:background .2s,color .2s}
 .hd-module .hd-date button:hover:not(:disabled){background:rgba(180,247,74,.12);color:var(--hb-acc)}
 .hd-module .hd-date button:disabled{color:var(--hd-tx3);cursor:default;opacity:.55}
