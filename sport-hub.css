@@ -119,3 +119,15 @@
 #sport-hub .sh-adds .sh-item{background:#0a2e1f}
 #sport-hub .sh-adds .sh-seg{background:#07301f}
 #sport-hub .sh-adds input:focus,#sport-hub .sh-adds select:focus{box-shadow:0 0 0 3px rgba(150,255,60,.2),0 0 18px -3px rgba(150,255,60,.5)}
+
+#sport-hub .sh-body svg.sh-cy{width:150px;border-radius:12px;border:1px solid rgba(184,255,44,.28);box-shadow:0 0 18px rgba(184,255,44,.14),inset 0 0 14px rgba(184,255,44,.06);background:#0b0f0c}
+#sport-hub .sh-cy .sh-sil{fill:#0e1511;stroke:#b8ff2c;stroke-width:1;stroke-opacity:.85;stroke-linejoin:round;filter:drop-shadow(0 0 2.5px rgba(184,255,44,.6))}
+#sport-hub .sh-cy .sh-mp{stroke-width:.8;stroke-opacity:.9;transition:fill-opacity .2s}
+#sport-hub .sh-cy .sh-mp.sel{stroke:#fff !important;stroke-width:1.6}
+#sport-hub .sh-cy .sh-ckt{fill:none;stroke:#38e8ff;stroke-opacity:.5;stroke-width:.6;pointer-events:none}
+#sport-hub .sh-cy .sh-node{fill:#b8ff2c;pointer-events:none;filter:drop-shadow(0 0 2px #b8ff2c);animation:shpulse 2.4s ease-in-out infinite}
+#sport-hub .sh-cy .sh-scan{pointer-events:none;animation:shscan 3.6s linear infinite}
+@keyframes shpulse{0%,100%{opacity:.35}50%{opacity:1}}
+@keyframes shscan{from{transform:translateY(-14px)}to{transform:translateY(190px)}}
+@media(prefers-reduced-motion:reduce){#sport-hub .sh-cy .sh-scan,#sport-hub .sh-cy .sh-node{animation:none}}
+@media(max-width:480px){#sport-hub .sh-body svg.sh-cy{width:170px}}

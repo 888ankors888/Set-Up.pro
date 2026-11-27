@@ -116,13 +116,42 @@ const ui = {screen: sess ? 'workout' : 'dash', sel: null, body: 'front', muscle:
 const mode = () => hub().mode;
 
 /* ---------- отрисовка: дашборд ---------- */
+/* киберпанк-силуэт: левая половина, правая зеркалится; abs — по центру */
+const BODY_L = 'M50 22 L44 22 L44 28 Q34 30 27 34 Q19 37 17 46 L13 70 L11 90 Q10 98 12 104 L18 104 Q21 98 22 90 L26 68 L28 54 Q30 62 32 72 Q34 86 35 96 Q33 106 33 122 Q33 140 35 156 L36 176 Q35 182 34 186 L46 186 Q47 176 47 164 Q48 140 49 120 L50 106 Z';
 const mpath = {
- front: [['shoulders','M22 38 q-10 2 -12 14 l10 4 q2 -10 8 -12z M78 38 q10 2 12 14 l-10 4 q-2 -10 -8 -12z'],['chest','M28 40 h20 v22 h-20z M52 40 h20 v22 h-20z'],['abs','M34 64 h32 v36 h-32z'],['arms','M8 56 l10 4 -4 36 -9 -3z M92 56 l-10 4 4 36 9 -3z'],['legs','M32 104 h16 v78 h-16z M52 104 h16 v78 h-16z']],
- back: [['shoulders','M22 38 q-10 2 -12 14 l10 4 q2 -10 8 -12z M78 38 q10 2 12 14 l-10 4 q-2 -10 -8 -12z'],['back','M28 40 h44 v44 h-44z'],['arms','M8 56 l10 4 -4 36 -9 -3z M92 56 l-10 4 4 36 9 -3z'],['glutes','M30 86 h40 v20 h-40z'],['legs','M32 108 h16 v74 h-16z M52 108 h16 v74 h-16z']]
+ front: [['shoulders','M27 34 Q19 37 17 46 L21 57 Q27 54 29 45 L30 37Z',1],['chest','M31 39 Q40 37 49 40 L49 58 Q40 63 32 57 Q29 48 31 39Z',1],['abs','M41 62 H59 V94 Q50 101 41 94Z',0],['arms','M16 57 L12 72 L10 92 L17 94 L22 74 L23 58Z',1],['legs','M35 106 Q34 130 36 156 L37 180 L46 180 Q47 160 48 136 L49 108Z',1]],
+ back: [['shoulders','M27 34 Q19 37 17 46 L21 57 Q27 54 29 45 L30 37Z',1],['back','M31 38 Q40 36 49 38 L49 80 Q40 82 34 74 Q29 56 31 38Z',1],['arms','M16 57 L12 72 L10 92 L17 94 L22 74 L23 58Z',1],['glutes','M35 86 Q42 84 49 88 L49 107 Q40 111 34 104 Q32 94 35 86Z',1],['legs','M35 110 Q34 132 36 156 L37 180 L46 180 Q47 160 48 138 L49 110Z',1]]
 };
 const recCol = p => p < 40 ? '#ff5a5f' : p < 75 ? '#ffb020' : '#b8ff2c';
 function bodySvg(rec) {
-  return `<svg viewBox="0 0 100 190"><circle cx="50" cy="20" r="12" fill="#2d363d"/>${mpath[ui.body].map(([g, d]) => `<path class="sh-mp${ui.muscle === g ? ' sel' : ''}" data-act="muscle" data-id="${g}" d="${d}" style="fill:${gc(g)};fill-opacity:${.3 + rec[g] / 150}"/>`).join('')}</svg>`;
+  const NEON = '#b8ff2c', CY = '#38e8ff';
+  const mus = (g, d, mir) => { const col = gc(g), sel = ui.muscle === g, r = rec[g] == null ? 100 : rec[g];
+    const el = `<path class="sh-mp${sel ? ' sel' : ''}" data-act="muscle" data-id="${g}" d="${d}" style="fill:${col};fill-opacity:${(.2 + r / 170).toFixed(2)};stroke:${col};filter:drop-shadow(0 0 ${sel ? 5 : 2.5}px ${col})"/>`;
+    return mir ? el + `<g transform="translate(100 0) scale(-1 1)">${el}</g>` : el; };
+  const half = d => `<path d="${d}" class="sh-sil"/><g transform="translate(100 0) scale(-1 1)"><path d="${d}" class="sh-sil"/></g>`;
+  const front = ui.body === 'front';
+  const circuits = front
+    ? `<path class="sh-ckt" d="M50 28 V36 M50 42 V58 M41 62 H59 M30 62 H24 L22 74 M70 62 H76 L78 74 M42 108 L40 150 M58 108 L60 150"/>`
+    : `<path class="sh-ckt" d="M50 28 V80 M50 46 H36 M50 46 H64 M50 66 H38 M50 66 H62 M42 112 L40 150 M58 112 L60 150"/>`;
+  const nodes = [[50,36],[27,35],[73,35],[14,72],[86,72],[40,150],[60,150],[50,58]].map(([x,y],k) => `<circle class="sh-node" cx="${x}" cy="${y}" r="1.6" style="animation-delay:${(k*.35).toFixed(2)}s"/>`).join('');
+  return `<svg viewBox="0 0 100 190" class="sh-cy" role="img" aria-label="Восстановление мышц">
+  <defs><pattern id="shg" width="8" height="8" patternUnits="userSpaceOnUse"><path d="M8 0H0V8" fill="none" stroke="${NEON}" stroke-opacity=".07" stroke-width=".5"/></pattern>
+  <linearGradient id="shs" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${NEON}" stop-opacity="0"/><stop offset=".5" stop-color="${NEON}" stop-opacity=".55"/><stop offset="1" stop-color="${NEON}" stop-opacity="0"/></linearGradient>
+  <clipPath id="shc"><rect x="0" y="0" width="100" height="190"/></clipPath></defs>
+  <rect width="100" height="190" rx="8" fill="#0b0f0c"/><rect width="100" height="190" rx="8" fill="url(#shg)"/>
+  <g stroke="${NEON}" stroke-opacity=".6" stroke-width="1" fill="none"><path d="M3 12V3H12M88 3H97V12M3 178V187H12M88 187H97V178"/></g>
+  <ellipse cx="50" cy="187" rx="26" ry="2.2" fill="${NEON}" fill-opacity=".22"/>
+  <g>${half(BODY_L)}</g>
+  <ellipse cx="50" cy="13" rx="8" ry="9.5" class="sh-sil"/>
+  <path d="M43 12.5 H57 L56 16 H44Z" fill="${CY}" fill-opacity=".85" style="filter:drop-shadow(0 0 3px ${CY})"/>
+  <path d="M58 9 L62 7 V16 L58 18" fill="none" stroke="${NEON}" stroke-width=".8"/>
+  ${circuits}
+  ${(mpath[ui.body]).map(([g, d, m]) => mus(g, d, m)).join('')}
+  ${front ? `<path class="sh-ckt" d="M41 72 H59 M41 82 H59 M50 62 V94" style="stroke-opacity:.35"/>` : ''}
+  ${nodes}
+  <g clip-path="url(#shc)"><rect class="sh-scan" x="0" y="0" width="100" height="14" fill="url(#shs)"/></g>
+  <text x="6" y="187" font-size="4.2" fill="${NEON}" fill-opacity=".7" font-family="monospace">${front ? 'FRONT' : 'REAR'}</text>
+  </svg>`;
 }
 function suggest(h, rec) {
   let best = null, bs = -1;
@@ -651,7 +680,7 @@ function mount() {
   if (!wasVisible) { wasVisible = true; if (!ui.modal || ui.modal === 'result') paint(); }
 }
 function init() {
-  if (!document.querySelector('link[data-sport-hub]')) { const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = new URL('sport-hub.css?v=6', document.baseURI).href; l.dataset.sportHub = 'true'; document.head.append(l); }
+  if (!document.querySelector('link[data-sport-hub]')) { const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = new URL('sport-hub.css?v=7', document.baseURI).href; l.dataset.sportHub = 'true'; document.head.append(l); }
   try { const o = window.render; if (typeof o === 'function') { window.render = function () { const r = o.apply(this, arguments); try { mount(); } catch (e) { console.warn(e); } return r; }; } } catch (e) {}
   mount();
 }
