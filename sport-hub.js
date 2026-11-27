@@ -49,7 +49,7 @@ function seed() { return [
   mkW('Ноги и кор',['Приседания со штангой','Румынская тяга','Выпады с гантелями','Скручивания на пресс'],'plan',{meso:'Мезоцикл 1 · Неделя 1',id:'seed-2'})
 ]; }
 function rawState() { try { return JSON.parse(localStorage.getItem('nt1') || 'null'); } catch (e) { return null; } }
-function hub() { const h = (rawState() || {}).sportHub; const o = h && typeof h === 'object' ? h : {}; return {version:1,mode:o.mode === 'novice' ? 'novice' : 'pro',workouts:Array.isArray(o.workouts) ? o.workouts : seed(),sessions:Array.isArray(o.sessions) ? o.sessions : []}; }
+function hub() { const h = (rawState() || {}).sportHub; const o = h && typeof h === 'object' ? h : {}; return {version:1,mode:'pro',workouts:Array.isArray(o.workouts) ? o.workouts : seed(),sessions:Array.isArray(o.sessions) ? o.sessions : []}; }
 function commit(fn) {
   const st = rawState(); if (!st) throw Error('Сначала заполните профиль');
   fn(st); localStorage.setItem('nt1', JSON.stringify(st));
@@ -124,7 +124,7 @@ function dash() {
   const nu = nutri(), hb = habitState(), wt = weekTon(h);
   const ready = w && w.tags.length ? Math.round(w.tags.reduce((a, g) => a + rec[g], 0) / w.tags.length) : 100;
   const setsN = w ? w.exercises.reduce((a, e) => a + e.sets.length, 0) : 0, dur = w ? Math.round(w.exercises.reduce((a, e) => a + e.sets.length * (e.restSec + 40), 0) / 60) : 0;
-  let o = `<div class="sh-row" style="margin-bottom:12px;justify-content:flex-end"><div class="sh-seg" style="min-width:150px"><button data-act="mode" data-v="novice" class="${pro ? '' : 'on'}">Новичок</button><button data-act="mode" data-v="pro" class="${pro ? 'on' : ''}">Про</button></div></div>`;
+  let o = '';
   if (sess) o += `<div class="sh-card sh-syn"><div class="sh-lbl">Тренировка идёт</div><p class="sh-h" style="margin:4px 0 10px">${esc(sess.title)}</p><button class="sh-btn big" data-act="resume">Продолжить · ${fmtT(Date.now() - sess.startedAt)}</button></div>`;
   const isToday = selDay() === todayS(); let card = '';
   if (!isToday) card = dayCard(h, selDay()); else if (w) card = `<div class="sh-card"><div class="sh-row sh-sb"><span class="sh-chip on">Сегодня</span><span class="sh-chip">${w.src === 'ai' ? 'Конструктор' : w.src === 'plan' ? 'План' : 'Вручную'}</span></div>
