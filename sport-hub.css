@@ -1,4 +1,4 @@
-#sport-section>:not(#sport-hub){display:none!important}
+#sport-section>:not(#sport-hub):not(.setup-page-heading):not(#sport-calendar):not(#sport-message){display:none!important}
 #sport-hub{--bg:#090b0d;--card:#12161a;--card2:#0e1215;--bd:#222930;--lime:#b8ff2c;--tx:#f2f5f3;--mu:#8b959c;--red:#ff5a5f;--amb:#ffb020;color:var(--tx);max-width:760px;margin:0 auto;padding:6px 0 130px;font-size:14px}
 #sport-hub *{box-sizing:border-box}
 #sport-hub button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;margin:0;width:auto;min-height:0;box-shadow:none}
