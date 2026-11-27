@@ -182,7 +182,7 @@
   }
   function renderDialog(){
     const d=dialogEl(),cfg=config(),groups=groupList();
-    const previous=d.querySelector('.hb-dlg-body'),scroll=previous?previous.scrollTop:0;
+    const scroll=d.scrollTop;
     const tabs=[['list','Из списка'],['custom','Своя привычка']];
     let body;
     if(addTab==='list'){
@@ -196,16 +196,17 @@
     }else{
       const mine=customList();
       body='<form class="hb-dlg-form" data-dlg-form novalidate><label for="hb-new-name">Название привычки</label><input id="hb-new-name" name="name" type="text" maxlength="80" placeholder="Например: Читать 20 минут перед сном" autocomplete="off" required><label for="hb-new-group">Группа</label><select id="hb-new-group" name="group">'+groups.map(g=>'<option value="'+g.key+'">'+esc(g.emoji+' '+g.name)+'</option>').join('')+'</select><label for="hb-new-schedule">Как часто</label><select id="hb-new-schedule" name="schedule">'+SCHEDULE_OPTIONS.map(([v,t])=>'<option value="'+v+'">'+t+'</option>').join('')+'</select><p class="hb-dlg-error" data-dlg-error role="alert" hidden></p><button type="submit" class="hb-dlg-submit">'+iconPlus(16)+'<span>Добавить и отслеживать</span></button></form>'
-        +(mine.length?'<h3 class="hb-dlg-sub">Мои привычки</h3><ul class="hb-dlg-mine">'+mine.map(h=>{const meta=groupMeta({...h,category:(baseDefs().find(x=>x.group===h.group)||{}).category,image:(baseDefs().find(x=>x.group===h.group)||{}).image});return '<li style="--hg:'+meta.color+'"><span class="hb-dlg-mine-ico" aria-hidden="true">'+esc(meta.emoji)+'</span><span class="hb-dlg-mine-name">'+esc(h.title)+'<small>'+esc(meta.name+' · '+(schedules[h.schedule]||schedules.daily))+'</small></span><button type="button" class="hb-dlg-del" data-dlg-del="'+esc(h.id)+'" aria-label="Удалить привычку: '+esc(h.title)+'">Удалить</button></li>'}).join('')+'</ul>':'<p class="hb-dlg-note">Своя привычка появится в трекере как обычная карточка: можно отмечать дни и видеть прогресс.</p>');
+        +(mine.length?'<h3 class="hb-dlg-sub">Мои привычки</h3><ul class="hb-dlg-mine">'+mine.map(h=>{const base=baseDefs().find(x=>x.group===h.group)||{},meta=groupMeta({...h,category:base.category,image:base.image});return '<li style="--hg:'+meta.color+'"><span class="hb-dlg-mine-ico" aria-hidden="true">'+esc(meta.emoji)+'</span><span class="hb-dlg-mine-name">'+esc(h.title)+'<small>'+esc(meta.name+' · '+(schedules[h.schedule]||schedules.daily))+'</small></span><button type="button" class="hb-dlg-del" data-dlg-del="'+esc(h.id)+'" aria-label="Удалить привычку: '+esc(h.title)+'">Удалить</button></li>'}).join('')+'</ul>':'<p class="hb-dlg-note">Своя привычка появится в трекере как обычная карточка: можно отмечать дни и видеть прогресс.</p>');
     }
     d.innerHTML='<div class="hb-dlg-head"><h2 id="hb-dlg-title">Добавить привычку</h2><button type="button" class="hb-dlg-x" data-dlg-close aria-label="Закрыть">×</button></div><div class="hb-dlg-tabs" role="tablist">'+tabs.map(([id,label])=>'<button type="button" role="tab" data-dlg-tab="'+id+'" aria-selected="'+(addTab===id)+'">'+label+'</button>').join('')+'</div><div class="hb-dlg-body">'+body+'</div>';
-    const next=d.querySelector('.hb-dlg-body');if(next)next.scrollTop=scroll;
+    d.scrollTop=scroll;
   }
   function openAddDialog(tabName){
     addTab=tabName==='custom'?'custom':'list';
     renderDialog();
     const d=dialogEl();
     if(!d.open)d.showModal();
+    d.scrollTop=0;
   }
   function setBaseHabit(id,patch){
     try{
@@ -473,18 +474,19 @@
 .hb-card button:focus-visible{outline:2px solid var(--hb-acc);outline-offset:2px}
 @media(min-width:640px){.hb-days{gap:8px}.hb-day-date{font-size:11.5px}}
 @media(max-width:380px){.hb-card{padding:16px}.hb-card .hb-title{font-size:18px}.hb-ring,.hb-ring svg{width:72px;height:72px}}
-html body dialog.hb-dlg{width:min(560px,calc(100vw - 20px));max-height:calc(100vh - 32px);max-height:calc(100dvh - 32px);margin:auto;padding:0;overflow:hidden;border-radius:26px;background:rgba(8,26,21,.94);-webkit-backdrop-filter:blur(22px);backdrop-filter:blur(22px);border:1px solid var(--hb-line);box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 28px 80px -12px rgba(0,0,0,.9);color:var(--hb-tx);font-family:var(--hb-ui);flex-direction:column}
-html body dialog.hb-dlg[open]{display:flex}
+/* Add-habit dialog: the dialog itself scrolls (block layout, no flex-sized body) so iOS Safari cannot collapse it */
+html body dialog.hb-dlg{box-sizing:border-box;width:min(560px,calc(100vw - 20px))!important;max-width:calc(100vw - 20px)!important;height:auto!important;max-height:calc(100vh - 32px)!important;max-height:calc(100dvh - 32px)!important;margin:auto!important;padding:0!important;overflow-x:hidden!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;border-radius:26px;background:rgba(8,26,21,.97);-webkit-backdrop-filter:blur(22px);backdrop-filter:blur(22px);border:1px solid var(--hb-line);box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 28px 80px -12px rgba(0,0,0,.9);color:var(--hb-tx);font-family:var(--hb-ui)}
+html body dialog.hb-dlg[open]{display:block!important}
 html body dialog.hb-dlg::backdrop{background:rgba(2,10,7,.6);backdrop-filter:blur(4px)}
 .hb-dlg *{box-sizing:border-box}
-.hb-dlg-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:20px 20px 12px}
+.hb-dlg .hb-dlg-head{position:sticky;top:0;z-index:3;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 20px 12px;background:rgba(8,26,21,.98)}
 .hb-dlg .hb-dlg-head h2{margin:0;color:var(--hb-tx);font:700 22px/1.2 var(--hb-head)}
 .hb-dlg .hb-dlg-x{display:grid;place-items:center;width:36px;height:36px;margin:0;padding:0;border-radius:50%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:var(--hb-tx2);font:400 22px/1 var(--hb-ui);cursor:pointer}
 .hb-dlg .hb-dlg-x:hover{color:var(--hb-acc);border-color:var(--hb-acc)}
-.hb-dlg-tabs{display:flex;gap:6px;margin:0 20px 12px;padding:4px;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08)}
+.hb-dlg .hb-dlg-tabs{display:flex;gap:6px;margin:0 20px 12px;padding:4px;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08)}
 .hb-dlg .hb-dlg-tabs button{flex:1;margin:0;padding:9px 10px;border-radius:999px;background:transparent;border:0;color:var(--hb-tx2);font:600 14px/1.2 var(--hb-ui);cursor:pointer;transition:background .2s,color .2s}
 .hb-dlg .hb-dlg-tabs button[aria-selected=true]{background:rgba(180,247,74,.16);color:var(--hb-acc)}
-.hb-dlg-body{flex:1;min-height:0;overflow-y:auto;padding:4px 20px 22px;-webkit-overflow-scrolling:touch}
+html body dialog.hb-dlg .hb-dlg-body{display:block!important;flex:none!important;height:auto!important;max-height:none!important;overflow:visible!important;padding:4px 20px 22px}
 .hb-dlg .hb-dlg-note{margin:4px 0 12px;color:var(--hb-tx2);font:400 13px/1.5 var(--hb-ui)}
 .hb-dg{margin:0 0 8px;border-radius:16px;background:linear-gradient(135deg,var(--hg-a),rgba(255,255,255,.02));border:1px solid var(--hg-b);overflow:hidden}
 .hb-dg>summary{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px;padding:12px 14px;list-style:none;cursor:pointer}
@@ -497,9 +499,9 @@ html body dialog.hb-dlg::backdrop{background:rgba(2,10,7,.6);backdrop-filter:blu
 .hb-dh{display:flex;flex-direction:column;gap:8px;padding:10px 0;border-top:1px solid rgba(255,255,255,.08)}
 .hb-dlg .hb-dh-main{display:flex;align-items:flex-start;gap:10px;margin:0;color:var(--hb-tx);font:500 14px/1.4 var(--hb-ui);cursor:pointer}
 .hb-dlg .hb-dh-main input{flex:none;width:20px;height:20px;margin:1px 0 0;padding:0;accent-color:var(--hg)}
-.hb-dlg select,.hb-dlg input[type=text]{width:100%;margin:0;padding:11px 12px;border-radius:12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);color:var(--hb-tx);font:400 15px/1.3 var(--hb-ui)}
+.hb-dlg select,.hb-dlg input[type=text]{width:100%;margin:0;padding:11px 12px;border-radius:12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);color:var(--hb-tx);font:400 16px/1.3 var(--hb-ui)}
 .hb-dlg select option{background:#0B221C;color:#F2FBF7}
-.hb-dlg .hb-dh-sched{margin-left:30px;width:calc(100% - 30px);padding:8px 10px;font-size:13px}
+.hb-dlg .hb-dh-sched{margin-left:30px;width:calc(100% - 30px);padding:8px 10px;font-size:14px}
 .hb-dlg-form{display:flex;flex-direction:column;gap:6px}
 .hb-dlg-form label{margin:8px 0 0;color:var(--hb-tx2);font:500 13px/1.3 var(--hb-ui)}
 .hb-dlg-error{margin:6px 0 0;color:#FF8A8A;font:500 13px/1.4 var(--hb-ui)}
@@ -513,7 +515,7 @@ html body dialog.hb-dlg::backdrop{background:rgba(2,10,7,.6);backdrop-filter:blu
 .hb-dlg-mine-name small{display:block;margin-top:2px;color:var(--hb-tx2);font:400 12px/1.3 var(--hb-ui)}
 .hb-dlg .hb-dlg-del{margin:0;padding:6px 10px;border-radius:999px;background:rgba(255,138,138,.1);border:1px solid rgba(255,138,138,.35);color:#FF8A8A;font:600 12px/1.2 var(--hb-ui);cursor:pointer}
 .hb-dlg button:focus-visible,.hb-dlg input:focus-visible,.hb-dlg select:focus-visible,.hb-dlg summary:focus-visible{outline:2px solid var(--hb-acc);outline-offset:2px}
-@media(max-width:520px){html body dialog.hb-dlg{width:calc(100vw - 16px);border-radius:22px}.hb-dlg-head{padding:16px 16px 10px}.hb-dlg-tabs{margin:0 16px 10px}.hb-dlg-body{padding:4px 16px 18px}}
+@media(max-width:520px){html body dialog.hb-dlg{width:calc(100vw - 16px)!important;border-radius:22px}.hb-dlg .hb-dlg-head{padding:16px 16px 10px}.hb-dlg .hb-dlg-tabs{margin:0 16px 10px}html body dialog.hb-dlg .hb-dlg-body{padding:4px 16px 18px}}
 @media(prefers-reduced-motion:reduce){.hb-ring-arc,.hd-seg,.hd-bar i{animation:none}.hb-card .hb-cta,.hb-card .hb-day,.hb-card .hb-info,.hd-module .hd-group,.hd-bar i,.hd-module .hd-add{transition:none}}
 `;document.head.appendChild(hb);
   render();
