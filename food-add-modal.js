@@ -13,30 +13,35 @@ const say = m => { try { toast(m); } catch (e) {} };
 let favs = [];
 try { favs = JSON.parse(localStorage.getItem(FAV_KEY) || '[]').filter(f => f && f.n); } catch (e) { favs = []; }
 const saveFavs = () => { try { localStorage.setItem(FAV_KEY, JSON.stringify(favs)); } catch (e) {} };
+const AI_KEY = 'setup_ai_foods', FP = window.FoodPortions;
+if (!FP) { console.warn('food-portions.js not loaded'); return; }
+let aiFoods = [];
+try { aiFoods = JSON.parse(localStorage.getItem(AI_KEY) || '[]').filter(f => f && f.n); } catch (e) { aiFoods = []; }
+const saveAiFoods = () => { try { localStorage.setItem(AI_KEY, JSON.stringify(aiFoods.slice(-300))); } catch (e) {} };
 
 const st = { meal: 'Завтрак', date: '', view: 'search', q: '', cat: 'Все', sel: null, ext: null, stream: null, timer: null,
   ai: { text: '', rows: [], busy: false, err: '', questions: [] }, bc: { busy: false, msg: '' } };
 
 function foods() { try { return typeof FD !== 'undefined' && Array.isArray(FD) ? FD : []; } catch (e) { return []; } }
 function allFoods() {
-  const base = foods(), names = new Set(base.map(f => f.n));
+  const base = foods().concat(aiFoods), names = new Set(base.map(f => f.n));
   return base.concat(favs.filter(f => !names.has(f.n)));
 }
 function findFood(name) {
-  return foods().find(f => f.n === name) || favs.find(f => f.n === name) || (st.ext && st.ext.n === name ? st.ext : null);
+  return foods().find(f => f.n === name) || aiFoods.find(f => f.n === name) || favs.find(f => f.n === name) || (st.ext && st.ext.n === name ? st.ext : null);
 }
 const isFav = name => favs.some(f => f.n === name);
 function toggleFav(name) {
   const food = findFood(name);
   if (!food) return;
   if (isFav(name)) favs = favs.filter(f => f.n !== name);
-  else favs.push({ n: food.n, k: food.k, p: food.p, f: food.f, u: food.u });
+  else favs.push({ n: food.n, k: food.k, p: food.p, f: food.f, u: food.u, kd: food.kd, pc: food.pc, ai: food.ai });
   saveFavs();
   say(isFav(name) ? 'Добавлено в избранное' : 'Убрано из избранного');
   syncHearts();
   if (st.view === 'fav') paint();
 }
-function kindOf(f) { return f.dish || f.kind === 'dish' || f.type === 'dish' || f.kind === 'Блюдо' ? 'Блюдо' : 'Продукт'; }
+function kindOf(f) { return f.dish || f.kd === 'dish' || f.kind === 'dish' || f.type === 'dish' || f.kind === 'Блюдо' ? 'Блюдо' : 'Продукт'; }
 function catOf(f) {
   const c = f.cat || f.category || f.t;
   if (typeof c === 'string' && c.length < 24) return c;
@@ -167,7 +172,7 @@ const CSS = `
 .fam-mini{display:flex;align-items:center;gap:4px;flex:none}
 .fam-mini button{width:28px;height:28px;border-radius:8px;background:var(--bg2)!important;border:1px solid rgba(255,255,255,.1)!important;font-weight:700;display:flex;align-items:center;justify-content:center}
 .fam-mini button:hover{border-color:var(--lime)!important;color:var(--lime)}
-.fam-mini span{min-width:40px;text-align:center;font-size:12px;font-weight:700;font-variant-numeric:tabular-nums}
+.fam-mini span{min-width:56px;text-align:center;font-size:12px;font-weight:700;font-variant-numeric:tabular-nums}
 .fam-total{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;margin:10px 0;border-radius:12px;background:var(--bg2);border:1px solid var(--line);font-size:12px;color:var(--mu);font-variant-numeric:tabular-nums}
 .fam-total b{color:var(--lime);font-size:14px}
 .fam-vf{position:relative;height:178px;border-radius:18px;overflow:hidden;background:radial-gradient(circle at 50% 50%,rgba(198,248,92,.1),rgba(6,16,13,.96));border:1px solid var(--line);display:flex;align-items:center;justify-content:center;text-align:center;margin-bottom:10px;padding:12px}
@@ -260,7 +265,7 @@ function row(f, opts = {}) {
   return '<div class="fam-row" data-act="pick" data-key="' + k + '"><div class="fam-row-main"><div class="fam-row-top"><span class="fam-name">' + hl(f.n, opts.q) + '</span><span class="fam-tag' + (kind === 'Блюдо' ? ' dish' : '') + '">' + kind + '</span></div>' +
     '<div class="fam-macros">' + Math.round(f.k) + ' ккал · Б ' + n1(f.p) + ' · Ж ' + n1(f.f) + ' · У ' + n1(f.u) + ' <i>/ 100 г</i></div></div>' +
     '<button type="button" class="fam-heart' + (fav ? ' on' : '') + '" data-act="fav" data-key="' + k + '" aria-label="Избранное" aria-pressed="' + fav + '">' + heartSvg(fav) + '</button>' +
-    (opts.plus ? '<button type="button" class="fam-plus" data-act="quick" data-key="' + k + '" aria-label="Добавить 100 г" title="Добавить 100 г">+</button>' : '') + '</div>';
+    (opts.plus ? '<button type="button" class="fam-plus" data-act="quick" data-key="' + k + '" aria-label="Добавить стандартную порцию" title="Добавить стандартную порцию">+</button>' : '') + '</div>';
 }
 
 function paint() {
@@ -300,33 +305,48 @@ function openPortion(name, from) {
   const f = findFood(name);
   if (!f) return;
   stopCamera();
-  st.sel = { name, grams: 100, from: from || 'search' };
+  const p = FP.profile(f);
+  st.sel = { name, from: from || 'search', p, unit: p.def.u, qty: p.def.q, grams: FP.grams(p, p.def.u, p.def.q) };
   st.view = 'portion';
   paint();
 }
+const setQty = (sel, q) => {
+  const x = FP.unitOf(sel.p, sel.unit);
+  q = Math.max(0, Math.min(x.max, FP.round(Number(q) || 0, 2)));
+  sel.qty = q; sel.grams = FP.grams(sel.p, sel.unit, q);
+};
 function portionHtml() {
   const s = st.sel, f = s && findFood(s.name);
   if (!f) return '';
-  const kind = kindOf(f), fav = isFav(f.n);
+  const kind = kindOf(f), fav = isFav(f.n), p = s.p, x = FP.unitOf(p, s.unit), per = p.drink ? '100 мл' : '100 г';
   return '<div class="fam-sub"><button type="button" class="fam-back" data-act="back">← Назад</button>' +
     '<button type="button" class="fam-heart' + (fav ? ' on' : '') + '" data-act="fav" data-key="' + E(f.n) + '" aria-label="Избранное">' + heartSvg(fav) + '</button></div>' +
     '<div class="fam-card"><span class="fam-tag' + (kind === 'Блюдо' ? ' dish' : '') + '">' + kind + '</span><h3 class="fam-pname">' + E(f.n) + '</h3>' +
-    '<div class="fam-per">на 100 г: ' + Math.round(f.k) + ' ккал · Б ' + n1(f.p) + ' · Ж ' + n1(f.f) + ' · У ' + n1(f.u) + '</div>' +
+    '<div class="fam-per">на ' + per + ': ' + Math.round(f.k) + ' ккал · Б ' + n1(f.p) + ' · Ж ' + n1(f.f) + ' · У ' + n1(f.u) + '</div>' +
     '<div class="fam-kcal"><b id="fam-pk">0</b><span>ккал</span></div>' +
     '<div class="fam-mgrid"><div><small>Белки</small><b id="fam-pp">0</b></div><div><small>Жиры</small><b id="fam-pf">0</b></div><div><small>Углеводы</small><b id="fam-pu">0</b></div></div>' +
-    '<div class="fam-step"><button type="button" class="fam-sb" data-act="gstep" data-d="-25" aria-label="Минус 25 г">−</button><label class="fam-gwrap"><input class="fam-g" id="fam-g" type="number" inputmode="decimal" min="1" max="5000" step="5" value="' + s.grams + '" aria-label="Вес в граммах"><span>г</span></label><button type="button" class="fam-sb" data-act="gstep" data-d="25" aria-label="Плюс 25 г">+</button></div>' +
-    '<div class="fam-chips" id="fam-presets">' + [100, 150, 200, 300].map(g => '<button type="button" class="fam-chip" data-act="gset" data-g="' + g + '">' + g + ' г</button>').join('') + '</div>' +
+    '<div class="fam-step"><button type="button" class="fam-sb" data-act="gstep" data-d="-1" aria-label="Меньше">−</button><label class="fam-gwrap"><input class="fam-g" id="fam-g" type="number" inputmode="decimal" min="0" step="any" value="' + s.qty + '" aria-label="Количество"><span id="fam-gu" style="white-space:nowrap"></span></label><button type="button" class="fam-sb" data-act="gstep" data-d="1" aria-label="Больше">+</button></div>' +
+    '<div class="fam-ghint" id="fam-ghint" style="text-align:center;color:var(--mu);font-size:12px;margin-top:6px;min-height:16px"></div>' +
+    (p.units.length > 1 ? '<div class="fam-chips" id="fam-units" style="margin-bottom:0"></div>' : '') +
+    '<div class="fam-chips" id="fam-presets"></div>' +
     '<button type="button" class="fam-primary" data-act="add">Добавить в ' + E(st.meal) + '</button></div>';
 }
-function updatePortion() {
+function updatePortion(skipInput) {
   const s = st.sel, f = s && findFood(s.name);
   if (!f || !dlg) return;
-  const m = macros(f, s.grams);
+  const p = s.p, x = FP.unitOf(p, s.unit), m = macros(f, s.grams);
   const set = (id, v) => { const el = $(id); if (el) el.textContent = v; };
   set('#fam-pk', Math.round(m.k)); set('#fam-pp', n1(m.p) + ' г'); set('#fam-pf', n1(m.f) + ' г'); set('#fam-pu', n1(m.u) + ' г');
-  dlg.querySelectorAll('#fam-presets .fam-chip').forEach(c => c.classList.toggle('on', Number(c.dataset.g) === s.grams));
+  set('#fam-gu', FP.labelUnit(p, s.unit, s.qty));
+  const inp = $('#fam-g'); if (inp && !skipInput && Number(inp.value) !== s.qty) inp.value = s.qty;
+  const base = p.units.find(y => y.base), baseTxt = p.drink ? ' мл' : ' г';
+  set('#fam-ghint', x.base ? '' : '≈ ' + Math.round(s.grams / base.g) + baseTxt + (p.drink ? '' : ''));
+  const un = $('#fam-units');
+  if (un) un.innerHTML = p.units.map(y => '<button type="button" class="fam-chip' + (y.id === s.unit ? ' on' : '') + '" data-act="gunit" data-u="' + y.id + '">' + E(y.f[0]) + '</button>').join('');
+  const pr = $('#fam-presets');
+  if (pr) pr.innerHTML = (x.pres || []).map(q => '<button type="button" class="fam-chip' + (q === s.qty ? ' on' : '') + '" data-act="gset" data-q="' + q + '">' + E(x.base ? q + ' ' + x.f[0] : FP.label(p, x.id, q)) + '</button>').join('');
   const add = dlg.querySelector('[data-act="add"]');
-  if (add) add.disabled = !(s.grams > 0 && s.grams <= 5000);
+  if (add) add.disabled = !(s.qty > 0 && s.grams > 0 && s.grams <= 20000);
 }
 
 /* ----- AI ----- */
@@ -337,8 +357,8 @@ function aiHtml() {
     const f = r.name ? findFood(r.name) : null;
     const m = f ? macros(f, r.grams) : null;
     return '<div class="fam-airow' + (r.on && f ? '' : ' off') + '"><button type="button" class="fam-chk" data-act="aichk" data-i="' + i + '" aria-label="Выбрать"' + (f ? '' : ' disabled') + '><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></button>' +
-      '<div style="flex:1;min-width:0"><div class="fam-name">' + E(f ? f.n : r.label) + '</div><div class="fam-macros">' + (f ? Math.round(m.k) + ' ккал · Б ' + n1(m.p) + ' · Ж ' + n1(m.f) + ' · У ' + n1(m.u) : 'нет в каталоге — уточните описание') + '</div></div>' +
-      (f ? '<div class="fam-mini"><button type="button" data-act="aistep" data-i="' + i + '" data-d="-25" aria-label="Минус 25 г">−</button><span>' + r.grams + ' г</span><button type="button" data-act="aistep" data-i="' + i + '" data-d="25" aria-label="Плюс 25 г">+</button></div>' +
+      '<div style="flex:1;min-width:0"><div class="fam-name">' + E(f ? f.n : r.label) + '</div><div class="fam-macros">' + (f ? Math.round(m.k) + ' ккал · Б ' + n1(m.p) + ' · Ж ' + n1(m.f) + ' · У ' + n1(m.u) + ' · ' + Math.round(r.grams) + (r.p.drink ? ' мл' : ' г') + (r.ai ? ' · расчёт ИИ' : '') : 'не удалось рассчитать — уточните описание') + '</div></div>' +
+      (f ? '<div class="fam-mini"><button type="button" data-act="aistep" data-i="' + i + '" data-d="-1" aria-label="Меньше">−</button><span><button type="button" data-act="aiunit" data-i="' + i + '" title="Сменить меру" style="background:none!important;border:0!important;width:auto;height:auto;padding:0 2px;font:inherit;color:inherit;text-decoration:underline dotted">' + E(FP.label(r.p, r.unit, r.qty)) + '</button></span><button type="button" data-act="aistep" data-i="' + i + '" data-d="1" aria-label="Больше">+</button></div>' +
       '<button type="button" class="fam-heart' + (isFav(f.n) ? ' on' : '') + '" data-act="fav" data-key="' + E(f.n) + '" aria-label="Избранное" style="width:28px;height:28px">' + heartSvg(isFav(f.n)) + '</button>' : '') + '</div>';
   }).join('');
   let tk = 0, tp = 0, tf = 0, tu = 0, n = 0;
@@ -348,23 +368,52 @@ function aiHtml() {
     '<textarea class="fam-ta" id="fam-ai-text" maxlength="2000" placeholder="Опишите, что вы съели: например, овсянка с бананом и 2 яйца">' + E(a.text) + '</textarea>' +
     '<div class="fam-pchips">' + EXAMPLES.map((t, i) => '<button type="button" class="fam-pchip" data-act="aiex" data-i="' + i + '">' + E(t) + '</button>').join('') + '</div>' +
     '<button type="button" class="fam-primary" data-act="airun"' + (a.busy ? ' disabled' : '') + '>' + (a.busy ? 'Анализирую…' : 'Распознать') + '</button>' +
-    (a.busy ? '<div class="fam-load"><span class="fam-ring"></span>ИИ разбирает описание…</div>' : '') +
+    (a.busy ? '<div class="fam-load"><span class="fam-ring"></span>' + E(a.stage || 'ИИ разбирает описание…') + '</div>' : '') +
     (a.err ? '<div class="fam-err">' + E(a.err) + '</div>' : '') +
     (a.questions.length ? '<div class="fam-note">' + a.questions.map(E).join('<br>') + '</div>' : '') +
     (a.rows.length ? '<div style="margin-top:12px">' + rows + '<div class="fam-total"><span>Итого</span><span><b>' + Math.round(tk) + ' ккал</b> · Б ' + n1(tp) + ' · Ж ' + n1(tf) + ' · У ' + n1(tu) + '</span></div>' +
       '<button type="button" class="fam-primary" data-act="aiadd"' + (n ? '' : ' disabled') + '>Добавить выбранное (' + n + ')</button></div>' : '');
 }
-function bestMatch(row) {
-  try {
-    if (typeof aiCandidates === 'function') {
-      const c = aiCandidates(row)[0];
-      if (c && c.score > 0) return c.food.n;
-    }
-  } catch (e) {}
-  const w = norm(row.name).split(/[^а-яa-z0-9]+/).filter(x => x.length > 2);
-  let best = null, bs = 0;
-  foods().forEach(f => { const s = w.reduce((v, x) => v + (norm(f.n).includes(x.slice(0, 5)) ? 1 : 0), 0); if (s > bs) { bs = s; best = f.n; } });
-  return best;
+const STOP = new Set(['и', 'с', 'со', 'на', 'без', 'в', 'из', 'по']);
+function stem(w) {
+  w = norm(w);
+  for (let i = 0; i < 2; i++) if (w.length > 4) w = w.replace(/(ами|ями|ов|ев|ом|ем|ах|ях|ой|ый|ий|ая|ое|ые|ие|ую|ы|и|а|я|у|ю|е|о|ь)$/, '');
+  return w.slice(0, 5);
+}
+const tokKey = s => norm(s).replace(/\([^)]*\)/g, ' ').split(/[^а-яa-z0-9%]+/).filter(w => w && !STOP.has(w)).map(stem).sort().join(' ');
+/* Точный поиск: название (или название + приготовление) совпадает с позицией базы слово в слово. */
+function exactFind(label, prep) {
+  const keys = [tokKey(label)];
+  if (prep) keys.push(tokKey(label + ' ' + prep));
+  const all = allFoods();
+  for (const k of keys) { if (!k) continue; const hit = all.find(f => tokKey(f.n) === k); if (hit) return hit; }
+  return null;
+}
+const cap = t => { t = String(t || '').trim(); return t.charAt(0).toUpperCase() + t.slice(1); };
+function makeAiFood(it) {
+  const k0 = Number(it.kcal), p = Number(it.protein), f = Number(it.fat), u = Number(it.carbs);
+  if (![k0, p, f, u].every(Number.isFinite) || p + f + u > 101) return null;
+  const calc = 4 * p + 9 * f + 4 * u;
+  const k = calc > 0 && Math.abs(k0 - calc) > 0.35 * calc + 15 ? calc : k0;
+  const food = { n: cap(it.name), k: Math.round(k * 10) / 10, p: Math.round(p * 10) / 10, f: Math.round(f * 10) / 10, u: Math.round(u * 10) / 10, ai: 1 };
+  if (it.kind === 'drink' || it.kind === 'dish') food.kd = it.kind;
+  if (it.piece_g > 0 && it.piece_name) food.pc = { n: String(it.piece_name), g: Number(it.piece_g) };
+  return food;
+}
+async function apiPost(path, text, ctl, access) {
+  const api = typeof FOOD_API !== 'undefined' ? FOOD_API : 'https://food-pro-api.onrender.com';
+  const res = await fetch(api + path, { method: 'POST', headers: Object.assign({ 'Content-Type': 'application/json' }, access ? { Authorization: 'Bearer ' + access } : {}), body: JSON.stringify({ text }), signal: ctl.signal, credentials: 'omit', cache: 'no-store' });
+  const data = await res.json().catch(() => null);
+  if (!res.ok) throw new Error({ 401: 'Сервер требует пароль доступа.', 429: 'Слишком много запросов к ИИ. Подождите минуту.', 503: 'Сервер ещё не настроен.', 422: 'Сервер отклонил описание.', 502: 'ИИ не смог обработать запрос. Попробуйте позже.' }[res.status] || 'Ошибка сервера ' + res.status);
+  return data;
+}
+function setRowPortion(r, item) {
+  const food = findFood(r.name);
+  if (!food) return;
+  r.p = FP.profile(food);
+  const d = item ? FP.fromParsed(r.p, item) : { u: r.p.def.u, q: r.p.def.q };
+  r.unit = r.p.units.some(x => x.id === d.u) ? d.u : r.p.def.u; r.qty = d.q > 0 ? d.q : r.p.def.q;
+  r.grams = FP.grams(r.p, r.unit, r.qty);
 }
 async function runAi() {
   const a = st.ai;
@@ -372,22 +421,47 @@ async function runAi() {
   const tok = $('#fam-token'); if (tok && tok.value) { try { aiAccess = tok.value; } catch (e) {} }
   if (a.text.trim().length < 2) { a.err = 'Опишите еду: минимум два символа.'; paint(); return; }
   let access = ''; try { access = aiAccess; } catch (e) {}
-  a.busy = true; a.err = ''; a.rows = []; a.questions = []; paint();
-  const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 90000);
+  a.busy = true; a.stage = 'ИИ разбирает описание…'; a.err = ''; a.rows = []; a.questions = []; paint();
+  const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 120000);
   try {
-    const api = typeof FOOD_API !== 'undefined' ? FOOD_API : 'https://food-pro-api.onrender.com';
-    const res = await fetch(api + '/api/food/parse', { method: 'POST', headers: Object.assign({ 'Content-Type': 'application/json' }, access ? { Authorization: 'Bearer ' + access } : {}), body: JSON.stringify({ text: a.text.trim() }), signal: ctl.signal, credentials: 'omit', cache: 'no-store' });
-    const data = await res.json().catch(() => null);
-    if (!res.ok) throw new Error({ 401: 'Сервер требует пароль доступа.', 503: 'Сервер ещё не настроен.', 422: 'Сервер отклонил описание.', 502: 'ИИ не смог разобрать описание. Попробуйте позже.' }[res.status] || 'Ошибка сервера ' + res.status);
+    /* 1. разбор текста на позиции */
+    const data = await apiPost('/api/food/parse', a.text.trim(), ctl, access);
     if (!data || !Array.isArray(data.items)) throw new Error('Сервер вернул неизвестный формат ответа.');
-    a.rows = data.items.map(r => {
-      const name = bestMatch(r);
-      return { label: r.name, name, grams: Math.round(typeof r.weight_g === 'number' && r.weight_g > 0 ? r.weight_g : 100), on: !!name };
-    });
+    const items = data.items;
     a.questions = Array.isArray(data.questions) ? data.questions : [];
+    /* 2. точный поиск по базе */
+    a.rows = items.map(it => {
+      const food = exactFind(it.name, it.preparation);
+      const r = { label: it.name, prep: it.preparation || '', it, name: food ? food.n : null, on: !!food, ai: false, grams: 100, qty: 100, unit: 'g', p: FP.profile({ n: it.name }) };
+      if (food) setRowPortion(r, it);
+      return r;
+    });
     if (!a.rows.length) a.err = 'Продукты не найдены. Уточните описание.';
+    /* 3. нет в базе: считаем КБЖУ через ИИ и сохраняем как новое блюдо */
+    const missing = a.rows.filter(r => !r.name);
+    if (missing.length) {
+      a.stage = 'Нет в базе: ИИ рассчитывает КБЖУ…'; paint();
+      try {
+        const out = await apiPost('/api/food/lookup', missing.map(r => r.label + (r.prep ? '; ' + r.prep : '')).join('\n'), ctl, access);
+        const list = out && Array.isArray(out.items) ? out.items : [];
+        missing.forEach((r, i) => {
+          let it = list.length === missing.length ? list[i] : list.find(x => tokKey(x.name) === tokKey(r.label));
+          if (!it) return;
+          let food = makeAiFood(it);
+          if (!food) return;
+          const dup = exactFind(food.n, '') || exactFind(r.label, r.prep);
+          if (dup) food = dup;
+          else { aiFoods.push(food); saveAiFoods(); }
+          r.name = food.n; r.on = true; r.ai = !!food.ai;
+          setRowPortion(r, r.it);
+        });
+        if (missing.some(r => !r.name)) a.err = 'Не удалось рассчитать: ' + missing.filter(r => !r.name).map(r => r.label).join(', ') + '.';
+      } catch (e) {
+        a.err = e.name === 'AbortError' ? 'ИИ не ответил вовремя.' : 'Не удалось рассчитать КБЖУ через ИИ: ' + (e instanceof TypeError ? 'нет соединения с сервером.' : e.message);
+      }
+    }
   } catch (e) {
-    a.err = e.name === 'AbortError' ? 'Сервер не ответил за 90 секунд.' : e instanceof TypeError ? 'Нет соединения с сервером.' : e.message;
+    a.err = e.name === 'AbortError' ? 'Сервер не ответил за 2 минуты.' : e instanceof TypeError ? 'Нет соединения с сервером.' : e.message;
   } finally { clearTimeout(timer); a.busy = false; paint(); }
 }
 
@@ -496,7 +570,7 @@ function commit(items, keepOpen, message) {
   if (!keepOpen) { stopCamera(); dlg.close(); }
   day = st.date; tab = 'diary';
   try { render(); } catch (e) {}
-  say(message || (added.length > 1 ? 'Записано позиций: ' + added.length : added[0].name + ' · ' + added[0].g + ' г → ' + st.meal));
+  say(message || (added.length > 1 ? 'Записано позиций: ' + added.length : added[0].name + ' · ' + (list[0].label ? list[0].label + ' (' + added[0].g + ' г)' : added[0].g + ' г') + ' → ' + st.meal));
   return true;
 }
 
@@ -512,8 +586,8 @@ function onInput(e) {
     if (st.view !== 'search' && st.view !== 'catalog') { stopCamera(); st.view = 'search'; }
     paint();
   } else if (t.id === 'fam-g' && st.sel) {
-    const g = Number(t.value);
-    st.sel.grams = Number.isFinite(g) ? g : 0; updatePortion();
+    const q = Number(String(t.value).replace(',', '.'));
+    setQty(st.sel, Number.isFinite(q) ? q : 0); updatePortion(true);
   } else if (t.id === 'fam-ai-text') st.ai.text = t.value;
 }
 function onClick(e) {
@@ -530,17 +604,24 @@ function onClick(e) {
   }
   else if (act === 'back') { const from = st.view === 'portion' ? (st.sel && st.sel.from) || 'search' : 'search'; setView(from); }
   else if (act === 'fav') { e.stopPropagation(); toggleFav(key); }
-  else if (act === 'quick') { e.stopPropagation(); const f = findFood(key); if (f) commit([{ food: f, grams: 100 }], true); }
+  else if (act === 'quick') { e.stopPropagation(); const f = findFood(key); if (f) { const p = FP.profile(f); commit([{ food: f, grams: FP.grams(p, p.def.u, p.def.q), label: FP.label(p, p.def.u, p.def.q) }], true); } }
   else if (act === 'pick') openPortion(key, st.view === 'portion' ? 'search' : st.view);
-  else if (act === 'gstep' && st.sel) { st.sel.grams = Math.max(0, Math.min(5000, (Number(st.sel.grams) || 0) + Number(el.dataset.d))); const g = $('#fam-g'); if (g) g.value = st.sel.grams; updatePortion(); }
-  else if (act === 'gset' && st.sel) { st.sel.grams = Number(el.dataset.g); const g = $('#fam-g'); if (g) g.value = st.sel.grams; updatePortion(); }
-  else if (act === 'add' && st.sel) { const f = findFood(st.sel.name); if (f) commit([{ food: f, grams: st.sel.grams }], false); }
+  else if (act === 'gstep' && st.sel) { const x = FP.unitOf(st.sel.p, st.sel.unit); setQty(st.sel, Math.max(x.min, st.sel.qty + Number(el.dataset.d) * x.step)); updatePortion(); }
+  else if (act === 'gset' && st.sel) { setQty(st.sel, Number(el.dataset.q)); updatePortion(); }
+  else if (act === 'gunit' && st.sel) {
+    const x = FP.unitOf(st.sel.p, el.dataset.u), g = st.sel.grams;
+    st.sel.unit = x.id;
+    setQty(st.sel, x.base ? FP.round(g / x.g, 0) : Math.max(x.min, FP.round(g / x.g / x.step, 0) * x.step));
+    updatePortion();
+  }
+  else if (act === 'add' && st.sel) { const f = findFood(st.sel.name); if (f) commit([{ food: f, grams: st.sel.grams, label: FP.label(st.sel.p, st.sel.unit, st.sel.qty) }], false); }
   else if (act === 'aifrom') { st.ai.text = st.q.trim(); st.ai.rows = []; st.ai.err = ''; st.ai.questions = []; setView('ai'); setTimeout(runAi, 0); }
   else if (act === 'aiex') { st.ai.text = EXAMPLES[Number(el.dataset.i)]; const ta = $('#fam-ai-text'); if (ta) ta.value = st.ai.text; }
   else if (act === 'airun') runAi();
   else if (act === 'aichk') { const r = st.ai.rows[Number(el.dataset.i)]; if (r && r.name) { r.on = !r.on; const ta = $('#fam-ai-text'); if (ta) st.ai.text = ta.value; paint(); } }
-  else if (act === 'aistep') { const r = st.ai.rows[Number(el.dataset.i)]; if (r) { r.grams = Math.max(25, Math.min(1000, r.grams + Number(el.dataset.d))); const ta = $('#fam-ai-text'); if (ta) st.ai.text = ta.value; paint(); } }
-  else if (act === 'aiadd') { if (commit(st.ai.rows.filter(r => r.on && r.name).map(r => ({ food: findFood(r.name), grams: r.grams })), false)) { st.ai.rows = []; st.ai.text = ''; } }
+  else if (act === 'aistep') { const r = st.ai.rows[Number(el.dataset.i)]; if (r && r.p) { const x = FP.unitOf(r.p, r.unit); r.qty = Math.max(x.min, Math.min(x.max, FP.round(r.qty + Number(el.dataset.d) * x.step, 2))); r.grams = FP.grams(r.p, r.unit, r.qty); const ta = $('#fam-ai-text'); if (ta) st.ai.text = ta.value; paint(); } }
+  else if (act === 'aiunit') { const r = st.ai.rows[Number(el.dataset.i)]; if (r && r.p && r.p.units.length > 1) { const g = r.grams, k = (r.p.units.findIndex(x => x.id === r.unit) + 1) % r.p.units.length, x = r.p.units[k]; r.unit = x.id; r.qty = x.base ? Math.max(1, FP.round(g / x.g, 0)) : Math.max(x.min, FP.round(g / x.g / x.step, 0) * x.step); r.grams = FP.grams(r.p, r.unit, r.qty); const ta = $('#fam-ai-text'); if (ta) st.ai.text = ta.value; paint(); } }
+  else if (act === 'aiadd') { if (commit(st.ai.rows.filter(r => r.on && r.name).map(r => ({ food: findFood(r.name), grams: r.grams, label: FP.label(r.p, r.unit, r.qty) })), false)) { st.ai.rows = []; st.ai.text = ''; } }
   else if (act === 'snap') snap();
   else if (act === 'gallery') { const f = $('#fam-file'); if (f) { f.onchange = () => { if (f.files && f.files[0]) sendPhoto(f.files[0]); }; f.click(); } }
   else if (act === 'bcfind') lookupBarcode(($('#fam-bc-manual') || {}).value);
