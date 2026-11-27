@@ -20,7 +20,7 @@ try { aiFoods = JSON.parse(localStorage.getItem(AI_KEY) || '[]').filter(f => f &
 const saveAiFoods = () => { try { localStorage.setItem(AI_KEY, JSON.stringify(aiFoods.slice(-300))); } catch (e) {} };
 
 const st = { meal: 'Завтрак', date: '', view: 'search', q: '', cat: 'Все', sel: null, ext: null, stream: null, timer: null,
-  ai: { text: '', rows: [], busy: false, err: '', questions: [] }, bc: { busy: false, msg: '' } };
+  ai: { text: '', rows: [], busy: false, err: '', questions: [], choices: [], base: '', clar: [] }, bc: { busy: false, msg: '' } };
 
 function foods() { try { return typeof FD !== 'undefined' && Array.isArray(FD) ? FD : []; } catch (e) { return []; } }
 function allFoods() {
@@ -370,7 +370,7 @@ function aiHtml() {
     '<button type="button" class="fam-primary" data-act="airun"' + (a.busy ? ' disabled' : '') + '>' + (a.busy ? 'Анализирую…' : 'Распознать') + '</button>' +
     (a.busy ? '<div class="fam-load"><span class="fam-ring"></span>' + E(a.stage || 'ИИ разбирает описание…') + '</div>' : '') +
     (a.err ? '<div class="fam-err">' + E(a.err) + '</div>' : '') +
-    (a.questions.length ? '<div class="fam-note">' + a.questions.map(E).join('<br>') + '</div>' : '') +
+    (a.choices.length ? a.choices.map((c, ci) => '<div class="fam-note"><div style="margin-bottom:6px;font-weight:600">' + E(c.question) + '</div><div class="fam-chips" style="margin:0">' + c.options.map((o, oi) => '<button type="button" class="fam-chip" data-act="aichoice" data-c="' + ci + '" data-o="' + oi + '">' + E(o) + '</button>').join('') + '</div></div>').join('') : a.questions.length ? '<div class="fam-note">' + a.questions.map(E).join('<br>') + '</div>' : '') +
     (a.rows.length ? '<div style="margin-top:12px">' + rows + '<div class="fam-total"><span>Итого</span><span><b>' + Math.round(tk) + ' ккал</b> · Б ' + n1(tp) + ' · Ж ' + n1(tf) + ' · У ' + n1(tu) + '</span></div>' +
       '<button type="button" class="fam-primary" data-act="aiadd"' + (n ? '' : ' disabled') + '>Добавить выбранное (' + n + ')</button></div>' : '');
 }
@@ -415,20 +415,23 @@ function setRowPortion(r, item) {
   r.unit = r.p.units.some(x => x.id === d.u) ? d.u : r.p.def.u; r.qty = d.q > 0 ? d.q : r.p.def.q;
   r.grams = FP.grams(r.p, r.unit, r.qty);
 }
-async function runAi() {
+async function runAi(keep) {
   const a = st.ai;
   const ta = $('#fam-ai-text'); if (ta) a.text = ta.value;
   const tok = $('#fam-token'); if (tok && tok.value) { try { aiAccess = tok.value; } catch (e) {} }
   if (a.text.trim().length < 2) { a.err = 'Опишите еду: минимум два символа.'; paint(); return; }
   let access = ''; try { access = aiAccess; } catch (e) {}
-  a.busy = true; a.stage = 'ИИ разбирает описание…'; a.err = ''; a.rows = []; a.questions = []; paint();
+  if (keep !== true) { a.base = a.text.trim(); a.clar = []; }
+  const sendText = a.base + (a.clar.length ? '. Уточнение: ' + a.clar.join('; ') : '');
+  a.busy = true; a.stage = 'ИИ разбирает описание…'; a.err = ''; a.rows = []; a.questions = []; a.choices = []; paint();
   const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 120000);
   try {
     /* 1. разбор текста на позиции */
-    const data = await apiPost('/api/food/parse', a.text.trim(), ctl, access);
+    const data = await apiPost('/api/food/parse', sendText, ctl, access);
     if (!data || !Array.isArray(data.items)) throw new Error('Сервер вернул неизвестный формат ответа.');
     const items = data.items;
     a.questions = Array.isArray(data.questions) ? data.questions : [];
+    a.choices = (Array.isArray(data.choices) ? data.choices : []).filter(c => c && c.question && Array.isArray(c.options) && c.options.length).map(c => ({ question: String(c.question), options: c.options.map(String).slice(0, 6) })).slice(0, 3);
     /* 2. точный поиск по базе */
     a.rows = items.map(it => {
       const food = exactFind(it.name, it.preparation);
@@ -615,9 +618,10 @@ function onClick(e) {
     updatePortion();
   }
   else if (act === 'add' && st.sel) { const f = findFood(st.sel.name); if (f) commit([{ food: f, grams: st.sel.grams, label: FP.label(st.sel.p, st.sel.unit, st.sel.qty) }], false); }
-  else if (act === 'aifrom') { st.ai.text = st.q.trim(); st.ai.rows = []; st.ai.err = ''; st.ai.questions = []; setView('ai'); setTimeout(runAi, 0); }
+  else if (act === 'aifrom') { st.ai.text = st.q.trim(); st.ai.rows = []; st.ai.err = ''; st.ai.questions = []; st.ai.choices = []; setView('ai'); setTimeout(runAi, 0); }
   else if (act === 'aiex') { st.ai.text = EXAMPLES[Number(el.dataset.i)]; const ta = $('#fam-ai-text'); if (ta) ta.value = st.ai.text; }
   else if (act === 'airun') runAi();
+  else if (act === 'aichoice') { const c = st.ai.choices[Number(el.dataset.c)], o = c && c.options[Number(el.dataset.o)]; if (c && o) { st.ai.clar.push(c.question.replace(/\?$/, '') + ': ' + o); runAi(true); } }
   else if (act === 'aichk') { const r = st.ai.rows[Number(el.dataset.i)]; if (r && r.name) { r.on = !r.on; const ta = $('#fam-ai-text'); if (ta) st.ai.text = ta.value; paint(); } }
   else if (act === 'aistep') { const r = st.ai.rows[Number(el.dataset.i)]; if (r && r.p) { const x = FP.unitOf(r.p, r.unit); r.qty = Math.max(x.min, Math.min(x.max, FP.round(r.qty + Number(el.dataset.d) * x.step, 2))); r.grams = FP.grams(r.p, r.unit, r.qty); const ta = $('#fam-ai-text'); if (ta) st.ai.text = ta.value; paint(); } }
   else if (act === 'aiunit') { const r = st.ai.rows[Number(el.dataset.i)]; if (r && r.p && r.p.units.length > 1) { const g = r.grams, k = (r.p.units.findIndex(x => x.id === r.unit) + 1) % r.p.units.length, x = r.p.units[k]; r.unit = x.id; r.qty = x.base ? Math.max(1, FP.round(g / x.g, 0)) : Math.max(x.min, FP.round(g / x.g / x.step, 0) * x.step); r.grams = FP.grams(r.p, r.unit, r.qty); const ta = $('#fam-ai-text'); if (ta) st.ai.text = ta.value; paint(); } }
