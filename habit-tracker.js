@@ -105,13 +105,11 @@
     else if(id!=='13:4'&&c.target)chips.push('Ориентир: '+c.target);
     const when=isToday?'сегодня':shortDate(sel);
     const status=marked?'Выполнено: '+when:scheduled?'Запланировано: '+when:c.schedule==='flexible'?'Необязательная отметка — по возможности':'Вне расписания — можно отметить дополнительно';
-    const info=id==='0:0'?'Это ручная отметка привычки: она не добавляет воду в дневник и не проверяет выпитый объём.':'Это ручная отметка привычки: она отражает ваш самоотчёт и ничего не проверяет автоматически.';
     const cells=keys.map(k=>{const m=done(id,k),on=k===sel;return '<button type="button" class="hb-day'+(m?' is-done':'')+(on?' is-selected':'')+'" data-hb-day data-habit="'+esc(id)+'" data-date="'+k+'" aria-pressed="'+on+'" aria-label="'+esc(fmt(k))+': '+(m?'выполнено':'нет отметки')+(on?', выбранный день':', нажмите, чтобы выбрать этот день')+'"><span class="hb-day-date">'+shortDate(k)+'</span><span class="hb-day-mark" aria-hidden="true">'+(m?iconCheck(14):'—')+'</span></button>'}).join('');
     const ring='<div class="hb-ring" role="img" aria-label="Выполнено '+count+' из 7 дней"><svg viewBox="0 0 80 80" width="80" height="80" aria-hidden="true"><defs><linearGradient id="hb-g-'+uid+'" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#B4F74A"/><stop offset="1" stop-color="#92E619"/></linearGradient></defs><circle class="hb-ring-track" cx="40" cy="40" r="'+R+'" fill="none" stroke-width="7"/>'+(count?'<circle class="hb-ring-arc" cx="40" cy="40" r="'+R+'" fill="none" stroke="url(#hb-g-'+uid+')" stroke-width="7" stroke-linecap="round" stroke-dasharray="'+C+'" stroke-dashoffset="'+off+'" style="--hb-c:'+C+'"/>':'')+'</svg><div class="hb-ring-c"><b>'+count+'/7</b><small>за 7 дн.</small></div></div>';
     const ctaText=marked?'Выполнено'+(isToday?'':' · '+shortDate(sel)):'Отметить выполнение'+(isToday?'':' · '+shortDate(sel));
     return '<section class="hb-card" data-hb-habit="'+esc(id)+'" data-hb-group="'+meta.key+'" style="--hb-g:'+meta.color+';--hb-g-a:'+rgba(meta.color,.1)+';--hb-g-b:'+rgba(meta.color,.35)+'">'
-      +'<div class="hb-top"><span class="hb-badge"><span class="hb-badge-emoji" aria-hidden="true">'+esc(meta.emoji)+'</span><span class="hb-badge-text">'+esc(meta.name)+'</span></span><button type="button" class="hb-info" data-hb-info aria-expanded="false" aria-controls="hb-pop-'+uid+'" aria-label="Ручная отметка: пояснение">i</button></div>'
-      +'<div class="hb-pop" id="hb-pop-'+uid+'" role="note" hidden>'+esc(info)+'</div>'
+      +'<div class="hb-top"><span class="hb-badge"><span class="hb-badge-emoji" aria-hidden="true">'+esc(meta.emoji)+'</span><span class="hb-badge-text">'+esc(meta.name)+'</span></span><button type="button" class="hb-info" data-hb-close data-habit="'+esc(id)+'" aria-label="Закрыть трекер привычки" title="Закрыть трекер"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>'
       +'<div class="hb-head"><div class="hb-head-main"><h2 class="hb-title">'+esc(title(d,c))+'</h2><div class="hb-chips">'+chips.map(x=>'<span class="hb-chip">'+esc(x)+'</span>').join('')+'</div><p class="hb-status'+(marked?' is-done':'')+'"><span class="hb-status-dot" aria-hidden="true"></span>'+esc(status)+'</p></div>'+ring+'</div>'
       +'<button type="button" class="hb-cta'+(marked?' is-done':'')+'" data-hb-cta data-habit="'+esc(id)+'" data-date="'+sel+'" aria-pressed="'+marked+'"><span class="hb-cta-box" aria-hidden="true">'+iconCheck(16)+'</span><span>'+ctaText+'</span></button>'
       +'<div class="hb-days" role="group" aria-label="Выбор дня для отметки, последние семь дней">'+cells+'</div></section>';
@@ -240,6 +238,15 @@
     render();
     renderDialog();
   }
+  function closeTracker(id){
+    const d=active().find(x=>x.id===id);
+    const custom=customList().find(h=>h.id===id);
+    const name=custom?custom.title:(d?title(d,config()[id]||{}):'эту привычку');
+    if(!confirm('Закрыть трекер «'+name+'»?\n\nПривычка исчезнет из раздела «Привычки» и больше не будет переноситься на будущие даты. Прошлые выполнения сохранятся. Вернуть её можно кнопкой «Добавить привычку».'))return;
+    if(custom){write({...S,customHabits:customList().filter(h=>h.id!==id)});render();renderDialog();}
+    else setBaseHabit(id,{enabled:false});
+    toast('Трекер закрыт: '+name);
+  }
   function onDialogClick(event){
     const target=event.target;
     if(target===dlg){dlg.close();return;}
@@ -312,6 +319,8 @@
     const target=event.target;if(!target.closest)return;
     if(target.closest('[data-habit-settings]'))foodHabitsSettings();
     if(target.closest('[data-hb-add]')){openAddDialog('list');return;}
+    const closeBtn=target.closest('[data-hb-close]');
+    if(closeBtn){closeTracker(closeBtn.dataset.habit);return;}
     const info=target.closest('[data-hb-info]');
     if(info){
       const pop=document.getElementById(info.getAttribute('aria-controls'));
