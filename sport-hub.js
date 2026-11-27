@@ -118,6 +118,32 @@ function dayCard(h, d) {
   en.forEach(e => { o += `<div class="sh-item"><span>${esc(e.name)}</span><span class="sh-mu">${e.minutes ? e.minutes + ' мин' : ''}</span></div>`; });
   return o + '</div>';
 }
+const GCOL = {chest:'#ff7a6b',back:'#7c7cff',legs:'#ffb35c',shoulders:'#b8ff2c',arms:'#4fd1c5',abs:'#f6d860',glutes:'#e879f9'};
+function dayItems(h, d, w) {
+  const items = [];
+  h.sessions.filter(x => x.date === d).forEach(x => x.exercises.forEach(e => items.push({g:e.muscles[0],done:true})));
+  if (d === todayS()) {
+    const doneToday = h.sessions.some(x => x.date === d && x.workoutId === (w && w.id));
+    if (sess && sess.date === d) sess.exercises.forEach(e => items.push({g:e.muscles[0],done:e.sets.length > 0 && e.sets.every(z => z.done)}));
+    else if (w && !doneToday) w.exercises.forEach(e => items.push({g:e.muscles[0],done:false}));
+  }
+  return items;
+}
+function ringSvg(items) {
+  const n = items.length, R = 60, C = 2 * Math.PI * R; let o = '<svg viewBox="0 0 150 150" style="width:150px;height:150px;flex:none"><circle cx="75" cy="75" r="60" fill="none" stroke="#1f2a26" stroke-width="12"/>';
+  if (n) { const gap = n > 1 ? 7 : 0, seg = C / n; items.forEach((it, i) => { if (!it.done) return; o += `<circle cx="75" cy="75" r="60" fill="none" stroke="${GCOL[it.g] || '#b8ff2c'}" stroke-width="12" stroke-linecap="round" stroke-dasharray="${Math.max(2, seg - gap)} ${C}" transform="rotate(${-90 + i * 360 / n + gap / 2 / R * 57.3} 75 75)" style="filter:drop-shadow(0 0 4px ${GCOL[it.g] || '#b8ff2c'}88)"/>`; }); }
+  const dn = items.filter(x => x.done).length;
+  return o + `<text x="75" y="76" text-anchor="middle" fill="#fff" font-size="24" font-weight="800">${dn} / ${n}</text><text x="75" y="96" text-anchor="middle" fill="#8b959c" font-size="12">выполнено</text></svg>`;
+}
+function hero(h, w, d) {
+  const items = dayItems(h, d, w), n = items.length, dn = items.filter(x => x.done).length, pct = n ? Math.round(dn / n * 100) : 0, left = n - dn;
+  const [y, m, dd] = d.split('-').map(Number), isT = d === todayS();
+  const chip = !n ? 'Нет упражнений' : left ? 'Осталось: ' + left : 'Всё выполнено';
+  return `<div class="sh-card"><div class="sh-row sh-sb sh-wrap" style="margin-bottom:10px"><h2 class="sh-h" style="font-size:22px">Тренировки дня</h2><span class="sh-chip" style="padding:8px 14px">${chip}</span></div>
+  <div class="sh-row sh-sb" style="gap:6px">${ringSvg(items)}<div style="text-align:center;flex:1"><div class="sh-mu" style="font-size:14px">Выполнение</div><div style="font-size:40px;font-weight:800;line-height:1.1">${pct}<span class="sh-mu" style="font-size:22px"> %</span></div><div class="sh-mu" style="font-size:14px">${isT ? 'сегодня' : dd + ' ' + RU_M[m - 1]}</div></div>
+  <button data-act="addmenu" style="display:flex;flex-direction:column;align-items:center;gap:8px;flex:none;width:96px;color:var(--lime);font-weight:800;text-align:center;line-height:1.2"><span style="width:84px;height:84px;border-radius:50%;border:3px solid var(--lime);box-shadow:0 0 18px rgba(184,255,44,.45),inset 0 0 14px rgba(184,255,44,.2);display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" width="38" height="38" fill="none" stroke="#b8ff2c" stroke-width="2.6" stroke-linecap="round"><path d="M12 4v16M4 12h16"/></svg></span>Добавить тренировку</button></div>
+  <button class="sh-chip" data-act="progress" style="margin-top:12px">↗ Прогресс и PR</button></div>`;
+}
 function dash() {
   const h = hub(), rec = recovery(h), pro = h.mode === 'pro';
   const sg = suggest(h, rec); let w = h.workouts.find(x => x.id === ui.sel) || sg; if (w) ui.sel = w.id;
@@ -133,8 +159,7 @@ function dash() {
   <div class="sh-chips" style="margin:10px 0">${w.exercises.map(e => `<span class="sh-chip">${esc(e.name)}</span>`).join('')}</div>
   <div class="sh-row sh-sb" style="margin-bottom:8px"><span class="sh-lbl">Готовность мышц</span><b style="color:${recCol(ready)}">${ready}%</b></div><div class="sh-bar" style="margin-bottom:14px"><i style="width:${ready}%;background:${recCol(ready)}"></i></div>
   <button class="sh-btn big" data-act="start" data-id="${w.id}">${sess ? 'Начать заново' : 'Начать тренировку'}</button></div>`;
-  o += `<div class="sh-lbl" style="margin:4px 2px 8px">Мои тренировки</div><div class="sh-chips" style="margin-bottom:12px">${h.workouts.map(x => `<button class="sh-chip${x.id === ui.sel ? ' on' : ''}" data-act="sel" data-id="${x.id}">${esc(x.title)}</button>`).join('')}<button class="sh-chip" data-act="manual">+ Своя тренировка</button></div>`;
-  o += `<div class="sh-grid3"><button class="sh-qa" data-act="manual"><b>+</b>Создать вручную</button><button class="sh-qa" data-act="ai"><b>★</b>Конструктор программ</button><button class="sh-qa" data-act="progress"><b>↗</b>Прогресс и PR</button></div>` + card;
+  o += hero(h, w, selDay()) + card;
   const sm = ui.muscle;
   o += `<div class="sh-card"><div class="sh-row sh-sb" style="margin-bottom:10px"><h3 class="sh-h" style="font-size:16px">Восстановление мышц</h3><div class="sh-seg"><button data-act="body" data-v="front" class="${ui.body === 'front' ? 'on' : ''}">Спереди</button><button data-act="body" data-v="back" class="${ui.body === 'back' ? 'on' : ''}">Сзади</button></div></div>
   <div class="sh-body">${bodySvg(rec)}<div style="flex:1">${sm ? `<div class="sh-lbl">${GROUPS[sm]}</div><p class="sh-h" style="color:${recCol(rec[sm])}">${rec[sm]}%</p><p class="sh-mu" style="margin:4px 0 8px">${rec[sm] >= 100 ? 'Готова к нагрузке' : rec[sm] >= 75 ? 'Почти восстановилась' : 'Лучше дать отдых'}</p>${h.workouts.filter(x => x.tags.includes(sm)).slice(0, 2).map(x => `<button class="sh-chip" data-act="sel" data-id="${x.id}">${esc(x.title)}</button>`).join(' ')}` : `<p class="sh-mu">Нажмите на группу мышц, чтобы увидеть восстановление. Красный — отдыхает, лимонный — готова.</p>`}</div></div>
@@ -186,6 +211,15 @@ function exList() {
 function modalHtml() {
   const m = ui.modal; if (!m) return '';
   const pro = mode() === 'pro';
+  if (m === 'addmenu') {
+    const ic = d => `<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#b8ff2c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+    const row = (a, i, t, sub) => `<button class="sh-item" data-act="${a}" style="padding:14px"><span class="sh-row" style="gap:14px">${ic(i)}<span><b>${t}</b><br><span class="sh-mu">${sub}</span></span></span><b style="color:var(--mu)">›</b></button>`;
+    return sheet('Добавить тренировку', row('favs', '<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>', 'Избранные программы', 'Выбрать из сохранённых') + row('manual', '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/>', 'Создать свою', 'Собрать тренировку вручную') + row('ai', '<path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/>', 'Конструктор программ', 'Собрать программу по цели'));
+  }
+  if (m === 'favs') {
+    const h = hub();
+    return sheet('Избранные программы', h.workouts.length ? h.workouts.map(x => `<div class="sh-item"><button data-act="favpick" data-id="${x.id}" style="flex:1;text-align:left"><b>${esc(x.title)}</b><br><span class="sh-mu">${x.exercises.length} упр. · ${x.tags.map(g => GROUPS[g]).join(', ')}</span></button><button class="sh-chip" data-act="favdel" data-id="${x.id}">×</button></div>`).join('') : '<p class="sh-mu">Сохранённых программ пока нет.</p>');
+  }
   if (m === 'manual') {
     const d = ui.draft;
     return sheet('Новая тренировка', `<input data-d="title" value="${esc(d.title)}" placeholder="Название"><div class="sh-seg" style="margin:10px 0">${[['today','На сегодня'],['template','В шаблон'],['free','Свободная']].map(([k, t]) => `<button data-act="dstatus" data-v="${k}" class="${d.status === k ? 'on' : ''}">${t}</button>`).join('')}</div>
@@ -316,6 +350,10 @@ function onClick(ev) {
     case 'start': { const w = hub().workouts.find(x => x.id === id); if (!w) break; if (sess && !confirm('Текущая тренировка будет заменена. Продолжить?')) break; startSess(w); break; }
     case 'resume': ui.screen = 'workout'; paint(); break;
     case 'back': ui.screen = 'dash'; paint(); break;
+    case 'addmenu': ui.modal = 'addmenu'; paint(true); break;
+    case 'favs': ui.modal = 'favs'; paint(true); break;
+    case 'favpick': ui.sel = id; ui.modal = null; paint(true); break;
+    case 'favdel': if (confirm('Удалить программу?')) { setHub(h => { h.workouts = h.workouts.filter(x => x.id !== id); }); if (ui.sel === id) ui.sel = null; paint(true); } break;
     case 'manual': openDraft(); break;
     case 'ai': try { const p = S.sports && S.sports.profile; if (p) { ui.ai.level = p.level === 'experienced' ? 'adv' : p.level === 'regular' ? 'mid' : 'new'; ui.ai.goal = p.goal === 'strength' ? 'strength' : 'hyper'; ui.ai.eq = /без|дом/i.test(p.equipment || '') ? 'home' : 'gym'; if (p.days && p.days.length >= 2) ui.ai.days = Math.min(5, p.days.length); } } catch (x) {} ui.modal = 'ai'; paint(true); break;
     case 'aiset': ui.ai[t.dataset.k] = t.dataset.k === 'days' ? +v : v; paint(true); break;
