@@ -478,6 +478,7 @@ function photoHtml() {
 function barcodeHtml() {
   return '<div class="fam-sub"><button type="button" class="fam-back" data-act="back">← Назад</button><span class="fam-label">Штрихкод</span></div>' +
     '<div class="fam-vf"><video id="fam-video" playsinline muted hidden></video><i></i><i></i><i></i><i></i><div class="laser"></div><div class="fam-vf-msg" id="fam-vf-msg"><b>Наведите на штрихкод</b>EAN-13 · EAN-8 · UPC</div></div>' +
+    '<div class="fam-two" style="margin-bottom:10px"><button type="button" class="fam-ghost" data-act="bcphoto">Фото штрихкода</button><button type="button" class="fam-ghost" data-act="bctorch" id="fam-torch" hidden>Фонарик</button></div><input type="file" id="fam-bc-file" accept="image/*" hidden>' +
     '<label class="fam-label" for="fam-bc-manual">Или введите цифры вручную</label><div class="fam-two" style="grid-template-columns:1fr auto;margin-top:6px"><input class="fam-text" style="margin:0" id="fam-bc-manual" type="text" inputmode="numeric" maxlength="14" placeholder="4607148900000"><button type="button" class="fam-primary" style="width:auto;padding:0 18px" data-act="bcfind"' + (st.bc.busy ? ' disabled' : '') + '>' + (st.bc.busy ? '…' : 'Найти') + '</button></div>' +
     (st.bc.msg ? '<div class="fam-note">' + E(st.bc.msg) + '</div>' : '');
 }
@@ -485,28 +486,92 @@ function stopCamera() {
   clearInterval(st.timer); st.timer = null;
   if (st.stream) { st.stream.getTracks().forEach(t => t.stop()); st.stream = null; }
 }
+let zxLoading = null;
+function loadZxing() {
+  if (window.ZXing) return Promise.resolve(window.ZXing);
+  if (zxLoading) return zxLoading;
+  zxLoading = new Promise((res, rej) => {
+    const sc = document.createElement('script'); sc.src = 'vendor/zxing-library.min.js?v=1';
+    sc.onload = () => window.ZXing ? res(window.ZXing) : rej(new Error('zx')); sc.onerror = () => { zxLoading = null; rej(new Error('zx')); };
+    document.head.appendChild(sc);
+  });
+  return zxLoading;
+}
+function zxReader(Z) {
+  const hints = new Map();
+  hints.set(Z.DecodeHintType.POSSIBLE_FORMATS, [Z.BarcodeFormat.EAN_13, Z.BarcodeFormat.EAN_8, Z.BarcodeFormat.UPC_A, Z.BarcodeFormat.UPC_E, Z.BarcodeFormat.CODE_128]);
+  hints.set(Z.DecodeHintType.TRY_HARDER, true);
+  const r = new Z.MultiFormatReader(); r.setHints(hints);
+  return r;
+}
+function zxDecode(Z, reader, canvas) {
+  try {
+    const src = new Z.HTMLCanvasElementLuminanceSource(canvas), bmp = new Z.BinaryBitmap(new Z.HybridBinarizer(src));
+    return reader.decodeWithState(bmp).getText();
+  } catch (e) { return null; }
+}
+const bcOk = c => /^\d{8}$|^\d{12,14}$/.test(c);
 async function startCamera(scan) {
   stopCamera();
   const v = $('#fam-video'), msg = $('#fam-vf-msg');
   if (!v || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    if (msg) msg.innerHTML = '<b>Камера недоступна</b>' + (scan ? 'Введите штрихкод вручную' : 'Загрузите фото из галереи');
+    if (msg) msg.innerHTML = '<b>Камера недоступна</b>' + (scan ? 'Сфотографируйте штрихкод или введите цифры вручную' : 'Загрузите фото из галереи');
     return;
   }
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false });
+    const stream = await navigator.mediaDevices.getUserMedia({ video: scan ? { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } } : { facingMode: { ideal: 'environment' } }, audio: false });
     if (!dlg.open || (st.view !== 'photo' && st.view !== 'barcode')) { stream.getTracks().forEach(t => t.stop()); return; }
     st.stream = stream; v.srcObject = stream; v.hidden = false; await v.play().catch(() => {});
     if (msg) msg.style.display = 'none';
-    if (scan && 'BarcodeDetector' in window) {
-      const det = new BarcodeDetector({ formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e'] });
+    if (!scan) return;
+    const track = stream.getVideoTracks()[0];
+    try { const caps = track.getCapabilities ? track.getCapabilities() : {}; if (caps.focusMode && caps.focusMode.includes('continuous')) await track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] }).catch(() => {}); const tb = $('#fam-torch'); if (tb && caps.torch) tb.hidden = false; } catch (e) {}
+    let detector = null;
+    if ('BarcodeDetector' in window) {
+      try { const fm = await BarcodeDetector.getSupportedFormats(); if (fm.includes('ean_13')) detector = new BarcodeDetector({ formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e'] }); } catch (e) {}
+    }
+    const found = code => { if (!bcOk(code)) return false; clearInterval(st.timer); st.timer = null; try { navigator.vibrate && navigator.vibrate(60); } catch (e) {} lookupBarcode(code); return true; };
+    if (detector) {
       st.timer = setInterval(async () => {
-        if (!v.videoWidth) return;
-        try { const r = await det.detect(v); if (r[0] && r[0].rawValue) { clearInterval(st.timer); lookupBarcode(r[0].rawValue); } } catch (e) {}
-      }, 450);
-    } else if (scan && msg) { msg.style.display = ''; msg.innerHTML = '<b>Автосканирование не поддерживается</b>Введите цифры вручную'; }
+        if (!v.videoWidth || st.busyScan) return; st.busyScan = true;
+        try { const r = await detector.detect(v); if (r[0] && r[0].rawValue) found(r[0].rawValue); } catch (e) {} finally { st.busyScan = false; }
+      }, 300);
+    } else {
+      const Z = await loadZxing();
+      if (!dlg.open || st.view !== 'barcode' || st.stream !== stream) return;
+      const reader = zxReader(Z), cv = document.createElement('canvas'), ctx = cv.getContext('2d', { willReadFrequently: true });
+      st.timer = setInterval(() => {
+        if (!v.videoWidth || st.busyScan) return; st.busyScan = true;
+        try {
+          const vw = v.videoWidth, vh = v.videoHeight, cw = Math.round(vw * 0.9), ch = Math.round(vh * 0.5), sx = Math.round((vw - cw) / 2), sy = Math.round((vh - ch) / 2), k = Math.min(1, 960 / cw);
+          cv.width = Math.round(cw * k); cv.height = Math.round(ch * k);
+          ctx.drawImage(v, sx, sy, cw, ch, 0, 0, cv.width, cv.height);
+          const code = zxDecode(Z, reader, cv); if (code) found(code);
+        } finally { st.busyScan = false; }
+      }, 140);
+    }
   } catch (e) {
-    if (msg) { msg.style.display = ''; msg.innerHTML = '<b>Нет доступа к камере</b>' + (scan ? 'Введите штрихкод вручную' : 'Загрузите фото из галереи'); }
+    if (msg) { msg.style.display = ''; msg.innerHTML = e && e.message === 'zx' ? '<b>Сканер не загрузился</b>Сфотографируйте штрихкод или введите цифры вручную' : '<b>Нет доступа к камере</b>' + (scan ? 'Сфотографируйте штрихкод или введите цифры вручную' : 'Загрузите фото из галереи'); }
   }
+}
+async function scanBarcodeFile(file) {
+  st.bc.busy = true; st.bc.msg = 'Читаю штрихкод…'; paint();
+  try {
+    const Z = await loadZxing(), url = URL.createObjectURL(file), img = new Image();
+    await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = url; });
+    const reader = zxReader(Z); let code = null;
+    for (const k of [1, 0.6, 0.4]) {
+      const sc = Math.min(1, 1600 / Math.max(img.naturalWidth, img.naturalHeight)) * k, cv = document.createElement('canvas');
+      cv.width = Math.max(40, Math.round(img.naturalWidth * sc)); cv.height = Math.max(40, Math.round(img.naturalHeight * sc));
+      cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+      code = zxDecode(Z, reader, cv); if (code && bcOk(code)) break; code = null;
+    }
+    URL.revokeObjectURL(url);
+    st.bc.busy = false;
+    if (code) { lookupBarcode(code); return; }
+    st.bc.msg = 'Штрихкод на фото не распознан. Снимите крупнее и ровнее или введите цифры вручную.';
+  } catch (e) { st.bc.busy = false; st.bc.msg = 'Не удалось прочитать фото. Введите цифры вручную.'; }
+  if (st.view === 'barcode') paint();
 }
 function snap() {
   const v = $('#fam-video');
@@ -526,23 +591,57 @@ async function sendPhoto(file) {
   openEstimate(meal);
   try { await onPhoto(input); } catch (e) { say('Не удалось распознать фото'); }
 }
+function parseNum(v) { const n = Number(v); return Number.isFinite(n) ? n : null; }
+function packOf(q) {
+  const m = /([\d.,]+)\s*(кг|kg|гр|г|g|мл|ml|л|l)(?![а-яa-z])/i.exec(String(q || ''));
+  if (!m) return null;
+  const n = parseFloat(m[1].replace(',', '.')), u = m[2].toLowerCase();
+  if (!(n > 0)) return null;
+  const liquid = /^(мл|ml|л|l)$/.test(u), mult = /^(кг|kg|л|l)$/.test(u) ? 1000 : 1;
+  return { g: n * mult, liquid };
+}
+function offToFood(code, p) {
+  const nu = p.nutriments || {};
+  let k = parseNum(nu['energy-kcal_100g']);
+  if (k == null) { const kj = parseNum(nu['energy-kj_100g']) != null ? parseNum(nu['energy-kj_100g']) : parseNum(nu['energy_100g']); if (kj != null) k = kj / 4.184; }
+  const pr = parseNum(nu.proteins_100g), f = parseNum(nu.fat_100g), u = parseNum(nu.carbohydrates_100g);
+  const name = String(p.product_name_ru || p.product_name || p.generic_name_ru || p.generic_name || '').trim();
+  if (!name || k == null || (pr == null && f == null && u == null)) return null;
+  const brand = String(p.brands || '').split(',')[0].trim();
+  const food = { n: name, k: Math.round(k * 10) / 10, p: pr || 0, f: f || 0, u: u || 0, bc: code, ext: 1, brand };
+  const pk = packOf(p.quantity), sv = parseNum(p.serving_quantity);
+  if (pk) { food.pk = pk.g; if (pk.liquid) food.kd = 'drink'; }
+  if (sv > 0) food.pc = { n: 'порция', g: sv };
+  return food;
+}
+function rememberExt(food) {
+  const same = allFoods().find(x => String(x.bc || '') === food.bc);
+  if (same) return same;
+  let n = food.n;
+  if (allFoods().some(x => x.n === n)) n = food.n + ' (' + (food.brand || food.bc.slice(-4)) + ')';
+  const saved = Object.assign({}, food, { n });
+  delete saved.brand;
+  aiFoods.push(saved); saveAiFoods();
+  return saved;
+}
 async function lookupBarcode(raw) {
   const code = String(raw || '').replace(/\D/g, '');
   if (code.length < 8 || code.length > 14) { st.bc.msg = 'Штрихкод — от 8 до 14 цифр.'; paint(); return; }
   stopCamera(); st.bc.busy = true; st.bc.msg = 'Ищу продукт…'; paint();
-  const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 9000);
+  const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 10000);
   try {
-    const found = foods().find(f => String(f.bc || f.barcode || '') === code);
+    const norm13 = c => c.replace(/^0+/, '');
+    const found = allFoods().find(f => f.bc && norm13(String(f.bc)) === norm13(code)) || foods().find(f => String(f.barcode || '') === code);
     if (found) { st.bc.busy = false; st.bc.msg = ''; openPortion(found.n, 'barcode'); return; }
-    const res = await fetch('https://world.openfoodfacts.org/api/v2/product/' + code + '.json?fields=product_name,nutriments', { signal: ctl.signal });
+    const res = await fetch('https://world.openfoodfacts.org/api/v2/product/' + code + '.json?fields=product_name,product_name_ru,generic_name,generic_name_ru,brands,quantity,serving_quantity,nutriments', { signal: ctl.signal });
     const data = await res.json();
-    const p = data && data.product, nu = p && p.nutriments;
-    if (!p || !nu || !(nu['energy-kcal_100g'] >= 0) || !p.product_name) throw new Error('nf');
-    st.ext = { n: p.product_name, k: Number(nu['energy-kcal_100g']) || 0, p: Number(nu.proteins_100g) || 0, f: Number(nu.fat_100g) || 0, u: Number(nu.carbohydrates_100g) || 0 };
+    const food = data && data.status !== 0 && data.product ? offToFood(code, data.product) : null;
+    if (!food) throw new Error('nf');
+    const saved = rememberExt(food);
     st.bc.busy = false; st.bc.msg = '';
-    openPortion(st.ext.n, 'barcode');
+    openPortion(saved.n, 'barcode');
   } catch (e) {
-    st.bc.busy = false; st.bc.msg = e.message === 'nf' ? 'Продукт с таким штрихкодом не найден.' : 'Не удалось выполнить поиск. Проверьте соединение.';
+    st.bc.busy = false; st.bc.msg = e.message === 'nf' ? 'Продукта ' + code + ' нет в базе или в ней нет КБЖУ. Введите название в поиске: ИИ рассчитает КБЖУ.' : 'Не удалось выполнить поиск. Проверьте соединение.';
     if (st.view === 'barcode') { paint(); }
   } finally { clearTimeout(timer); }
 }
@@ -628,6 +727,8 @@ function onClick(e) {
   else if (act === 'aiadd') { if (commit(st.ai.rows.filter(r => r.on && r.name).map(r => ({ food: findFood(r.name), grams: r.grams, label: FP.label(r.p, r.unit, r.qty) })), false)) { st.ai.rows = []; st.ai.text = ''; } }
   else if (act === 'snap') snap();
   else if (act === 'gallery') { const f = $('#fam-file'); if (f) { f.onchange = () => { if (f.files && f.files[0]) sendPhoto(f.files[0]); }; f.click(); } }
+  else if (act === 'bcphoto') { const f = $('#fam-bc-file'); if (f) { f.onchange = () => { if (f.files && f.files[0]) scanBarcodeFile(f.files[0]); f.value = ''; }; f.click(); } }
+  else if (act === 'bctorch') { const tr = st.stream && st.stream.getVideoTracks()[0]; if (tr) { st.torch = !st.torch; tr.applyConstraints({ advanced: [{ torch: st.torch }] }).catch(() => {}); el.classList.toggle('on', st.torch); } }
   else if (act === 'bcfind') lookupBarcode(($('#fam-bc-manual') || {}).value);
   else if (act === 'cat') { st.cat = el.dataset.cat; paint(); }
 }

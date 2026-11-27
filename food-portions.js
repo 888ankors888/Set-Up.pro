@@ -14,7 +14,7 @@
     slice: ['ломтик', 'ломтика', 'ломтиков'], piece: ['кусок', 'куска', 'кусков'], plate: ['тарелка', 'тарелки', 'тарелок'],
     serv: ['порция', 'порции', 'порций'], handful: ['горсть', 'горсти', 'горстей'], scoop: ['шарик', 'шарика', 'шариков'],
     pot: ['баночка', 'баночки', 'баночек'], lump: ['кусочек', 'кусочка', 'кусочков'], seg: ['долька', 'дольки', 'долек'],
-    bar: ['плитка', 'плитки', 'плиток'], leaf: ['лист', 'листа', 'листов'], roll: ['ролл', 'ролла', 'роллов']
+    bar: ['плитка', 'плитки', 'плиток'], pack: ['упаковка', 'упаковки', 'упаковок'], leaf: ['лист', 'листа', 'листов'], roll: ['ролл', 'ролла', 'роллов']
   };
   const u = (id, g, extra) => Object.assign({ id, f: FORMS[id] || FORMS.pc, g, step: g >= 100 || id === 'tbsp' || id === 'tsp' ? 0.5 : 1, min: 0.5, max: 50 }, extra || {});
   const pc = g => u('pc', g);
@@ -123,10 +123,11 @@
     if (!spec) spec = fallback(food);
     const drinkSpec = !!spec.drink || (food && food.kd === 'drink');
     const units = spec.units.map(x => Object.assign({}, x));
-    if (food && food.ai && food.pc && food.pc.g > 0 && !spec.drink) {
+    if (food && (food.ai || food.ext) && food.pc && food.pc.g > 0 && !spec.drink) {
       const nm = norm(food.pc.n), hid = /ст\.?\s*л|столов/.test(nm) ? 'tbsp' : /ч\.?\s*л|чайн/.test(nm) ? 'tsp' : /ломт/.test(nm) ? 'slice' : /кус/.test(nm) ? 'piece' : /порц/.test(nm) ? 'serv' : /горст/.test(nm) ? 'handful' : 'pc';
       if (!units.some(x => x.id === hid)) units.push(u(hid, food.pc.g));
     }
+    if (food && food.pk > 0 && food.pk <= 5000 && !units.some(x => x.id === 'pack')) units.push(Object.assign(u('pack', food.pk), { pres: [0.5, 1] }));
     if (!units.some(x => x.base)) units.push(drinkSpec ? ML(1) : G());
     if (drinkSpec) {
       units.forEach(x => { if (!x.base && !x.pres) x.pres = x.g >= 300 ? [0.5, 1, 2] : [1, 2, 3]; });
