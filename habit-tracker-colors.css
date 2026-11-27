@@ -23,6 +23,11 @@ html body .hb-card button:focus-visible{outline-color:var(--hb-g)}
 html body .hd-module .hd-date{display:none}
 html body .hd-module .hd-head{margin-bottom:18px}
 
+/* Add-habit dialog: iOS Safari collapsed the flex body to 0 height (flex-basis 0% in an auto-height dialog) */
+html body dialog.hb-dlg{height:auto;min-height:0}
+html body dialog.hb-dlg .hb-dlg-head,html body dialog.hb-dlg .hb-dlg-tabs{flex:none}
+html body dialog.hb-dlg .hb-dlg-body{flex:1 1 auto;min-height:0;max-height:calc(100vh - 210px);max-height:calc(100dvh - 210px);overflow-y:auto}
+
 /* "My goals -> Habits": category cards use the same colours as the tracker (14 groups, same order) */
 #goals-questionnaire-habits .habit-categories>.habit-category:nth-child(1){--hg:#B4F74A;--hg-a:rgba(180,247,74,.10);--hg-b:rgba(180,247,74,.38)}
 #goals-questionnaire-habits .habit-categories>.habit-category:nth-child(2){--hg:#C084FC;--hg-a:rgba(192,132,252,.10);--hg-b:rgba(192,132,252,.38)}
