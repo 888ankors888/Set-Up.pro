@@ -1,10 +1,18 @@
 (() => {
   if(window.foodHabitTrackerInstalled)return;
   window.foodHabitTrackerInstalled=true;
-  let selected=today(),activeGroup=null;
+  let selected=today(),activeGroup=null,addTab='list',dlg=null;
+  const openGroups=new Set();
   const schedules={daily:'Каждый день',weekdays:'По будням',weekends:'По выходным',flexible:'По возможности'};
-  const definitions=()=>window.foodHabitDefinitions?.()||[];
-  const config=()=>window.foodHabitSettings?.()||{};
+  const SCHEDULE_OPTIONS=[['daily','Каждый день'],['weekdays','По будням'],['weekends','По выходным'],['flexible','По возможности']];
+
+  /* Habits = canonical habits from "Мои данные" + custom habits created in the tracker (S.customHabits) */
+  const baseDefs=()=>window.foodHabitDefinitions?.()||[];
+  const baseConfig=()=>window.foodHabitSettings?.()||{};
+  const customList=()=>Array.isArray(S.customHabits)?S.customHabits.filter(h=>h&&typeof h.id==='string'&&typeof h.title==='string'&&Number.isInteger(h.group)):[];
+  const customDefs=()=>customList().map(h=>{const base=baseDefs().find(d=>d.group===h.group)||{};return {id:h.id,title:h.title,category:base.category||'Своя привычка',image:base.image||'✨',group:h.group,canonical:true,custom:true}});
+  const definitions=()=>[...baseDefs(),...customDefs()];
+  const config=()=>{const out={...baseConfig()};for(const h of customList())out[h.id]={enabled:true,target:'',schedule:h.schedule||'daily',time:''};return out};
   const validDate=d=>typeof d==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(d)&&dk(dt(d))===d&&d<=today();
   const active=()=>definitions().filter(d=>config()[d.id]?.enabled===true);
   const due=(c,date)=>{const day=dt(date).getDay();return c.schedule==='daily'||c.schedule==='weekdays'&&day>=1&&day<=5||c.schedule==='weekends'&&(day===0||day===6)};
@@ -52,7 +60,7 @@
     render();
   }
 
-  /* Group meta: one emoji and one scale colour per habit group (shared by the summary and the cards).
+  /* Group meta: one emoji and one scale colour per habit group (shared by the summary, the cards and the add module).
      Matching is by name first, then by group index (the 14 groups keep their order). */
   const GROUPS=[
     ['здоровье и тело','#B4F74A','💧'],
@@ -71,6 +79,7 @@
     ['эколог','#5BD16F','🌍']
   ];
   const iconCheck=n=>'<svg viewBox="0 0 24 24" width="'+n+'" height="'+n+'" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>';
+  const iconPlus=n=>'<svg viewBox="0 0 24 24" width="'+n+'" height="'+n+'" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>';
   const rgba=(hex,a)=>{const n=parseInt(hex.slice(1),16);return 'rgba('+(n>>16&255)+','+(n>>8&255)+','+(n&255)+','+a+')'};
   function groupMeta(d){
     const key=gkey(d),name=d.category||'Группа',n=name.toLowerCase();
@@ -86,6 +95,7 @@
     const id=d.id,keys=weekKeys(),marked=done(id,selected),scheduled=due(c,selected),count=keys.filter(k=>done(id,k)).length,meta=groupMeta(d);
     const uid=id.replace(':','-'),R=34,C=Math.round(2*Math.PI*R*100)/100,off=Math.round(C*(1-count/7)*100)/100;
     const chips=[schedules[c.schedule]||'Расписание не указано'];
+    if(d.custom)chips.push('Своя привычка');
     if(c.time)chips.push('В '+c.time);
     if(id==='0:0')chips.push('Цель: '+(c.target||S.profile?.nutritionGoalSettings?.waterMl||S.waterGoal||'—')+' мл');
     else if(id!=='13:4'&&c.target)chips.push('Ориентир: '+c.target);
@@ -135,6 +145,7 @@
     const atMin=selected<=minDate(),atMax=selected>=today();
     const chev=d=>'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="'+d+'"/></svg>';
     const capsule='<div class="hd-date" role="group" aria-label="Выбор даты"><button type="button" data-hd-shift="-1" aria-label="Предыдущий день" '+(atMin?'disabled':'')+'>'+chev('m15 6-6 6 6 6')+'</button><span class="hd-date-label" aria-live="polite" aria-label="'+esc(fmt(selected))+'"><b>'+selected.slice(8)+'.'+selected.slice(5,7)+'</b><span> · '+dateTag(selected)+'</span></span><button type="button" data-hd-shift="1" aria-label="Следующий день" '+(atMax?'disabled':'')+'>'+chev('m9 6 6 6-6 6')+'</button></div>';
+    const addButton='<button type="button" class="hd-add" data-hb-add>'+iconPlus(16)+'<span>Добавить привычку</span></button>';
     const complete=s.total>0&&s.completed===s.total;
     const chip=!s.total?'<span class="hd-chip">Нет привычек по расписанию</span>':complete?'<span class="hd-chip is-complete">'+iconCheck(14)+'Все привычки выполнены</span>':'<span class="hd-chip">Осталось отметить: '+(s.total-s.completed)+'</span>';
     const left='<div class="hd-col hd-col-left">'+hdRing(s)+'<div class="hd-metrics"><p class="hd-metrics-label">Выполнение за выбранный день</p><div class="hd-percent">'+s.percent+'<span>%</span></div>'+chip+(s.extra?'<p class="hd-extra">Отметок вне расписания: '+s.extra+'</p>':'')+'</div></div>';
@@ -143,7 +154,124 @@
       return '<button type="button" class="hd-group'+(on?' is-active':'')+(dim?' is-dim':'')+'" data-hd-group="'+g.key+'" aria-pressed="'+on+'" aria-label="'+esc(g.name)+': выполнено '+g.completed+' из '+g.total+'" style="--hd-c:'+g.color+';--hd-c-a:'+rgba(g.color,.13)+';--hd-c-b:'+rgba(g.color,.5)+'"><span class="hd-group-top"><span class="hd-group-ico" aria-hidden="true">'+esc(g.emoji)+'</span><span class="hd-group-name">'+esc(g.name)+'</span><span class="hd-group-count">'+g.completed+'/'+g.total+'</span></span><span class="hd-bar" aria-hidden="true"><i style="width:'+pct+'%"></i></span></button>';
     }).join('');
     const right='<div class="hd-col hd-col-right"><div class="hd-groups-head"><h3>Группы привычек в трекере</h3>'+(activeGroup!==null?'<button type="button" class="hd-reset" data-hd-reset>Показать все</button>':'')+'</div><div class="hd-groups" role="group" aria-label="Фильтр по группам привычек">'+tiles+'</div></div>';
-    return '<section class="hd-module" aria-labelledby="hd-title"><header class="hd-head"><h2 class="hd-title" id="hd-title">Привычки дня</h2>'+capsule+'</header><div class="hd-body">'+left+right+'</div></section>';
+    return '<section class="hd-module" aria-labelledby="hd-title"><header class="hd-head"><h2 class="hd-title" id="hd-title">Привычки дня</h2>'+capsule+addButton+'</header><div class="hd-body">'+left+right+'</div></section>';
+  }
+
+  /* Add-habit module: groups and habits from "Мои данные" + own habits */
+  function groupList(){
+    const map=new Map();
+    for(const d of baseDefs()){
+      if(d.id==='13:4')continue;
+      const meta=groupMeta(d);
+      if(!map.has(meta.key))map.set(meta.key,{...meta,defs:[]});
+      map.get(meta.key).defs.push(d);
+    }
+    return [...map.values()].sort((a,b)=>a.key-b.key);
+  }
+  function dialogEl(){
+    if(dlg)return dlg;
+    dlg=document.createElement('dialog');
+    dlg.className='hb-dlg';
+    dlg.setAttribute('aria-labelledby','hb-dlg-title');
+    dlg.addEventListener('click',onDialogClick);
+    dlg.addEventListener('change',onDialogChange);
+    dlg.addEventListener('submit',onDialogSubmit);
+    dlg.addEventListener('toggle',event=>{const node=event.target;if(node.matches?.('details[data-group]')){const key=Number(node.dataset.group);if(node.open)openGroups.add(key);else openGroups.delete(key);}},true);
+    document.body.appendChild(dlg);
+    return dlg;
+  }
+  function renderDialog(){
+    const d=dialogEl(),cfg=config(),groups=groupList();
+    const previous=d.querySelector('.hb-dlg-body'),scroll=previous?previous.scrollTop:0;
+    const tabs=[['list','Из списка'],['custom','Своя привычка']];
+    let body;
+    if(addTab==='list'){
+      body='<p class="hb-dlg-note">Отметьте привычки, которые хотите отслеживать. Они сразу появятся в трекере.</p>'+groups.map(g=>{
+        const added=g.defs.filter(x=>cfg[x.id]?.enabled===true).length;
+        return '<details class="hb-dg" data-group="'+g.key+'"'+(openGroups.has(g.key)?' open':'')+' style="--hg:'+g.color+';--hg-a:'+rgba(g.color,.12)+';--hg-b:'+rgba(g.color,.4)+'"><summary><span class="hb-dg-ico" aria-hidden="true">'+esc(g.emoji)+'</span><span class="hb-dg-name">'+esc(g.name)+'</span><span class="hb-dg-count">'+(added?'Добавлено: '+added:'Выбрать')+'</span></summary><div class="hb-dg-list">'+g.defs.map(x=>{
+          const c=cfg[x.id]||{},on=c.enabled===true;
+          return '<div class="hb-dh"><label class="hb-dh-main"><input type="checkbox" data-dlg-habit="'+esc(x.id)+'" '+(on?'checked':'')+'><span>'+esc(x.title)+'</span></label>'+(on?'<select class="hb-dh-sched" data-dlg-schedule="'+esc(x.id)+'" aria-label="Как часто: '+esc(x.title)+'">'+SCHEDULE_OPTIONS.map(([v,t])=>'<option value="'+v+'"'+((c.schedule||'daily')===v?' selected':'')+'>'+t+'</option>').join('')+'</select>':'')+'</div>';
+        }).join('')+'</div></details>';
+      }).join('');
+    }else{
+      const mine=customList();
+      body='<form class="hb-dlg-form" data-dlg-form novalidate><label for="hb-new-name">Название привычки</label><input id="hb-new-name" name="name" type="text" maxlength="80" placeholder="Например: Читать 20 минут перед сном" autocomplete="off" required><label for="hb-new-group">Группа</label><select id="hb-new-group" name="group">'+groups.map(g=>'<option value="'+g.key+'">'+esc(g.emoji+' '+g.name)+'</option>').join('')+'</select><label for="hb-new-schedule">Как часто</label><select id="hb-new-schedule" name="schedule">'+SCHEDULE_OPTIONS.map(([v,t])=>'<option value="'+v+'">'+t+'</option>').join('')+'</select><p class="hb-dlg-error" data-dlg-error role="alert" hidden></p><button type="submit" class="hb-dlg-submit">'+iconPlus(16)+'<span>Добавить и отслеживать</span></button></form>'
+        +(mine.length?'<h3 class="hb-dlg-sub">Мои привычки</h3><ul class="hb-dlg-mine">'+mine.map(h=>{const meta=groupMeta({...h,category:(baseDefs().find(x=>x.group===h.group)||{}).category,image:(baseDefs().find(x=>x.group===h.group)||{}).image});return '<li style="--hg:'+meta.color+'"><span class="hb-dlg-mine-ico" aria-hidden="true">'+esc(meta.emoji)+'</span><span class="hb-dlg-mine-name">'+esc(h.title)+'<small>'+esc(meta.name+' · '+(schedules[h.schedule]||schedules.daily))+'</small></span><button type="button" class="hb-dlg-del" data-dlg-del="'+esc(h.id)+'" aria-label="Удалить привычку: '+esc(h.title)+'">Удалить</button></li>'}).join('')+'</ul>':'<p class="hb-dlg-note">Своя привычка появится в трекере как обычная карточка: можно отмечать дни и видеть прогресс.</p>');
+    }
+    d.innerHTML='<div class="hb-dlg-head"><h2 id="hb-dlg-title">Добавить привычку</h2><button type="button" class="hb-dlg-x" data-dlg-close aria-label="Закрыть">×</button></div><div class="hb-dlg-tabs" role="tablist">'+tabs.map(([id,label])=>'<button type="button" role="tab" data-dlg-tab="'+id+'" aria-selected="'+(addTab===id)+'">'+label+'</button>').join('')+'</div><div class="hb-dlg-body">'+body+'</div>';
+    const next=d.querySelector('.hb-dlg-body');if(next)next.scrollTop=scroll;
+  }
+  function openAddDialog(tabName){
+    addTab=tabName==='custom'?'custom':'list';
+    renderDialog();
+    const d=dialogEl();
+    if(!d.open)d.showModal();
+  }
+  function setBaseHabit(id,patch){
+    try{
+      if(!S.profile)throw Error('Сначала заполните анкету');
+      const profile=JSON.parse(JSON.stringify(S.profile)),items={...baseConfig()};
+      const current=items[id]||{enabled:false,target:'',schedule:'daily',time:''};
+      const next={...current,...patch};
+      if(patch.enabled&&id==='0:0'&&!next.target)next.target=String(profile.nutritionGoalSettings?.waterMl||S.waterGoal||2000);
+      items[id]=next;
+      profile.habitsV2={version:1,items};
+      write({...S,profile});
+    }catch(e){toast(e.message||'Не удалось сохранить привычку');}
+    render();
+    renderDialog();
+  }
+  function addCustom(form){
+    const error=form.querySelector('[data-dlg-error]'),name=form.elements.name.value.trim().replace(/\s+/g,' '),group=Number(form.elements.group.value),schedule=form.elements.schedule.value;
+    const fail=text=>{error.textContent=text;error.hidden=false;form.elements.name.focus();};
+    if(!name)return fail('Введите название привычки');
+    if(name.length>80)return fail('Название не длиннее 80 символов');
+    if(!Number.isInteger(group)||!SCHEDULE_OPTIONS.some(o=>o[0]===schedule))return fail('Проверьте группу и расписание');
+    const list=customList();
+    if(list.length>=30)return fail('Можно добавить не больше 30 своих привычек');
+    if(list.some(h=>h.group===group&&h.title.toLowerCase()===name.toLowerCase()))return fail('Такая привычка уже есть в этой группе');
+    const id='c:'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+    try{
+      write({...S,customHabits:[...list,{id,title:name,group,schedule,createdAt:new Date().toISOString()}]});
+    }catch(e){return fail('Не удалось сохранить привычку');}
+    toast('Привычка добавлена: '+name);
+    render();
+    renderDialog();
+    dialogEl().close();
+  }
+  function removeCustom(id){
+    const habit=customList().find(h=>h.id===id);
+    if(!habit||!confirm('Удалить привычку «'+habit.title+'»? История отметок сохранится.'))return;
+    write({...S,customHabits:customList().filter(h=>h.id!==id)});
+    render();
+    renderDialog();
+  }
+  function onDialogClick(event){
+    const target=event.target;
+    if(target===dlg){dlg.close();return;}
+    if(target.closest('[data-dlg-close]')){dlg.close();return;}
+    const tabButton=target.closest('[data-dlg-tab]');
+    if(tabButton){addTab=tabButton.dataset.dlgTab;renderDialog();dlg.querySelector('[data-dlg-tab="'+addTab+'"]')?.focus();return;}
+    const del=target.closest('[data-dlg-del]');
+    if(del)removeCustom(del.dataset.dlgDel);
+  }
+  function onDialogChange(event){
+    const input=event.target;
+    if(input.matches('[data-dlg-habit]')){
+      const id=input.dataset.dlgHabit;
+      setBaseHabit(id,{enabled:input.checked});
+      dlg.querySelector('[data-dlg-habit="'+id+'"]')?.focus();
+    }else if(input.matches('[data-dlg-schedule]')){
+      const id=input.dataset.dlgSchedule;
+      setBaseHabit(id,{schedule:input.value});
+      dlg.querySelector('[data-dlg-schedule="'+id+'"]')?.focus();
+    }
+  }
+  function onDialogSubmit(event){
+    const form=event.target.closest?.('[data-dlg-form]');
+    if(!form)return;
+    event.preventDefault();
+    addCustom(form);
   }
 
   window.foodHabitsView=function(){
@@ -151,7 +279,7 @@
     const list=active(),settings=config(),stats=hdStats(list,settings,selected);
     if(activeGroup!==null&&!stats.groups.some(g=>g.key===activeGroup))activeGroup=null;
     const shown=activeGroup===null?list:list.filter(d=>gkey(d)===activeGroup);
-    return '<h1>Привычки</h1>'+(list.length?'<div class="hd-shell">'+hdSummary(stats)+'<div class="hb-grid">'+shown.map(d=>habitCard(d,settings[d.id])).join('')+'</div></div>':'<section class="card"><h2>Пока нет выбранных привычек</h2><p>Поставьте галочки в «Мои цели → Привычки». После успешного сохранения здесь появятся трекеры.</p></section>')+'<p class="mu">Выбор и параметры берутся из раздела «Мои цели → Привычки».</p><p class="subtle">Отметки — ваш самоотчёт. Отсутствие отметки не означает невыполнение. История хранится в этом браузере; снятие галочки в анкете не удаляет прошлые отметки. Время не включает отправку уведомлений.</p><div class="habit-settings-footer"><button type="button" class="btn s" data-habit-settings>Настроить привычки</button></div>';
+    return '<h1>Привычки</h1>'+(list.length?'<div class="hd-shell">'+hdSummary(stats)+'<div class="hb-grid">'+shown.map(d=>habitCard(d,settings[d.id])).join('')+'</div></div>':'<section class="card"><h2>Пока нет выбранных привычек</h2><p>Добавьте первую привычку прямо здесь — выберите из готовых групп или создайте свою.</p><button type="button" class="btn" data-hb-add>Добавить привычку</button></section>')+'<p class="mu">Привычки можно добавлять кнопкой «Добавить привычку» или в разделе «Мои данные → Привычки».</p><p class="subtle">Отметки — ваш самоотчёт. Отсутствие отметки не означает невыполнение. История хранится в этом браузере; снятие галочки в анкете не удаляет прошлые отметки. Время не включает отправку уведомлений.</p><div class="habit-settings-footer"><button type="button" class="btn s" data-habit-settings>Настроить привычки</button></div>';
   };
   function nav(){
     if(!S.profile||editing)return;
@@ -165,6 +293,7 @@
   }
   document.addEventListener('change',event=>{
     const input=event.target;
+    if(input.closest?.('.hb-dlg'))return;
     if(input.matches?.('[data-habit-done]')){foodHabitToggle(input.dataset.habitDone,input.dataset.date);return;}
     if(input.id==='habit-tracker-date'){foodHabitsDate(input.value);return;}
     if(!input.closest?.('#goals-questionnaire-habits [data-habit]'))return;
@@ -188,6 +317,7 @@
   document.addEventListener('click',event=>{
     const target=event.target;if(!target.closest)return;
     if(target.closest('[data-habit-settings]'))foodHabitsSettings();
+    if(target.closest('[data-hb-add]')){openAddDialog('list');return;}
     const info=target.closest('[data-hb-info]');
     if(info){
       const pop=document.getElementById(info.getAttribute('aria-controls'));
@@ -241,7 +371,7 @@
   };
   const style=document.createElement('style');style.textContent='.habit-settings-footer{margin-top:24px}';document.head.appendChild(style);
 
-  /* Habit cards (.hb-) and summary module (.hd-): shared tokens in :root */
+  /* Habit cards (.hb-), summary module (.hd-) and add-habit dialog (.hb-dlg): shared tokens in :root */
   if(!document.getElementById('hb-fonts')){const link=document.createElement('link');link.id='hb-fonts';link.rel='stylesheet';link.href='https://fonts.googleapis.com/css2?family=Exo+2:wght@600;700;800&family=Inter:wght@400;500;600&display=swap';document.head.appendChild(link);}
   const hb=document.createElement('style');hb.id='hb-style';hb.textContent=`
 :root{--hb-bg:#041410;--hb-glow:#0A2B22;--hb-surface:rgba(11,34,28,.62);--hb-line:rgba(180,247,74,.16);--hb-acc:#B4F74A;--hb-acc2:#92E619;--hb-acc-glow:rgba(180,247,74,.32);--hb-tx:#F2FBF7;--hb-tx2:#8FAEA3;--hb-tx3:#5D7D72;--hb-head:'Exo 2',system-ui,sans-serif;--hb-ui:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;--hd-tx2:#93B4A8;--hd-tx3:#5F8074}
@@ -249,7 +379,10 @@
 .hd-module{padding:22px 24px;border-radius:26px;background:rgba(11,34,28,.68);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);border:1px solid var(--hb-line);box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 18px 40px -26px rgba(0,0,0,.8);color:var(--hb-tx);font-family:var(--hb-ui);box-sizing:border-box;min-width:0}
 .hd-module *{box-sizing:border-box}
 .hd-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 16px;margin-bottom:22px}
-.hd-module .hd-title{margin:0;color:var(--hb-tx);font:700 24px/1.2 var(--hb-head)}
+.hd-module .hd-title{margin:0 auto 0 0;color:var(--hb-tx);font:700 24px/1.2 var(--hb-head)}
+.hd-module .hd-add{display:inline-flex;align-items:center;gap:8px;margin:0;padding:10px 16px;border-radius:999px;background:rgba(180,247,74,.12);border:1px solid var(--hb-line);color:var(--hb-acc);font:600 14px/1.2 var(--hb-ui);cursor:pointer;box-shadow:0 0 18px -8px var(--hb-acc-glow);transition:background .2s,border-color .2s,transform .15s}
+.hd-module .hd-add:hover{background:rgba(180,247,74,.2);border-color:var(--hb-acc)}
+.hd-module .hd-add:active{transform:scale(.97)}
 .hd-date{display:inline-flex;align-items:center;gap:4px;padding:4px;border-radius:999px;background:rgba(255,255,255,.05);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}
 .hd-module .hd-date button{display:grid;place-items:center;width:32px;height:32px;margin:0;padding:0;border-radius:50%;background:transparent;border:0;color:var(--hb-tx);cursor:pointer;transition:background .2s,color .2s}
 .hd-module .hd-date button:hover:not(:disabled){background:rgba(180,247,74,.12);color:var(--hb-acc)}
@@ -340,7 +473,48 @@
 .hb-card button:focus-visible{outline:2px solid var(--hb-acc);outline-offset:2px}
 @media(min-width:640px){.hb-days{gap:8px}.hb-day-date{font-size:11.5px}}
 @media(max-width:380px){.hb-card{padding:16px}.hb-card .hb-title{font-size:18px}.hb-ring,.hb-ring svg{width:72px;height:72px}}
-@media(prefers-reduced-motion:reduce){.hb-ring-arc,.hd-seg,.hd-bar i{animation:none}.hb-card .hb-cta,.hb-card .hb-day,.hb-card .hb-info,.hd-module .hd-group,.hd-bar i{transition:none}}
+html body dialog.hb-dlg{width:min(560px,calc(100vw - 20px));max-height:calc(100vh - 32px);max-height:calc(100dvh - 32px);margin:auto;padding:0;overflow:hidden;border-radius:26px;background:rgba(8,26,21,.94);-webkit-backdrop-filter:blur(22px);backdrop-filter:blur(22px);border:1px solid var(--hb-line);box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 28px 80px -12px rgba(0,0,0,.9);color:var(--hb-tx);font-family:var(--hb-ui);flex-direction:column}
+html body dialog.hb-dlg[open]{display:flex}
+html body dialog.hb-dlg::backdrop{background:rgba(2,10,7,.6);backdrop-filter:blur(4px)}
+.hb-dlg *{box-sizing:border-box}
+.hb-dlg-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:20px 20px 12px}
+.hb-dlg .hb-dlg-head h2{margin:0;color:var(--hb-tx);font:700 22px/1.2 var(--hb-head)}
+.hb-dlg .hb-dlg-x{display:grid;place-items:center;width:36px;height:36px;margin:0;padding:0;border-radius:50%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:var(--hb-tx2);font:400 22px/1 var(--hb-ui);cursor:pointer}
+.hb-dlg .hb-dlg-x:hover{color:var(--hb-acc);border-color:var(--hb-acc)}
+.hb-dlg-tabs{display:flex;gap:6px;margin:0 20px 12px;padding:4px;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08)}
+.hb-dlg .hb-dlg-tabs button{flex:1;margin:0;padding:9px 10px;border-radius:999px;background:transparent;border:0;color:var(--hb-tx2);font:600 14px/1.2 var(--hb-ui);cursor:pointer;transition:background .2s,color .2s}
+.hb-dlg .hb-dlg-tabs button[aria-selected=true]{background:rgba(180,247,74,.16);color:var(--hb-acc)}
+.hb-dlg-body{flex:1;min-height:0;overflow-y:auto;padding:4px 20px 22px;-webkit-overflow-scrolling:touch}
+.hb-dlg .hb-dlg-note{margin:4px 0 12px;color:var(--hb-tx2);font:400 13px/1.5 var(--hb-ui)}
+.hb-dg{margin:0 0 8px;border-radius:16px;background:linear-gradient(135deg,var(--hg-a),rgba(255,255,255,.02));border:1px solid var(--hg-b);overflow:hidden}
+.hb-dg>summary{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px;padding:12px 14px;list-style:none;cursor:pointer}
+.hb-dg>summary::-webkit-details-marker{display:none}
+.hb-dg[open]{border-color:var(--hg)}
+.hb-dg-ico{display:grid;place-items:center;width:30px;height:30px;border-radius:10px;background:var(--hg-a);box-shadow:inset 0 0 0 1px var(--hg-b);font:400 16px/1 'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif}
+.hb-dg-name{min-width:0;color:var(--hb-tx);font:600 14px/1.3 var(--hb-ui);overflow-wrap:anywhere}
+.hb-dg-count{color:var(--hg);font:600 12px/1.2 var(--hb-ui);white-space:nowrap}
+.hb-dg-list{padding:0 14px 8px}
+.hb-dh{display:flex;flex-direction:column;gap:8px;padding:10px 0;border-top:1px solid rgba(255,255,255,.08)}
+.hb-dlg .hb-dh-main{display:flex;align-items:flex-start;gap:10px;margin:0;color:var(--hb-tx);font:500 14px/1.4 var(--hb-ui);cursor:pointer}
+.hb-dlg .hb-dh-main input{flex:none;width:20px;height:20px;margin:1px 0 0;padding:0;accent-color:var(--hg)}
+.hb-dlg select,.hb-dlg input[type=text]{width:100%;margin:0;padding:11px 12px;border-radius:12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);color:var(--hb-tx);font:400 15px/1.3 var(--hb-ui)}
+.hb-dlg select option{background:#0B221C;color:#F2FBF7}
+.hb-dlg .hb-dh-sched{margin-left:30px;width:calc(100% - 30px);padding:8px 10px;font-size:13px}
+.hb-dlg-form{display:flex;flex-direction:column;gap:6px}
+.hb-dlg-form label{margin:8px 0 0;color:var(--hb-tx2);font:500 13px/1.3 var(--hb-ui)}
+.hb-dlg-error{margin:6px 0 0;color:#FF8A8A;font:500 13px/1.4 var(--hb-ui)}
+.hb-dlg-error[hidden]{display:none}
+.hb-dlg .hb-dlg-submit{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:52px;margin:14px 0 0;border-radius:16px;background:linear-gradient(135deg,var(--hb-acc),var(--hb-acc2));border:0;color:#041410;font:700 15px/1 var(--hb-ui);cursor:pointer;box-shadow:0 10px 26px -10px var(--hb-acc-glow)}
+.hb-dlg .hb-dlg-sub{margin:22px 0 8px;color:var(--hd-tx2);font:600 12px/1.3 var(--hb-ui);letter-spacing:.08em;text-transform:uppercase}
+.hb-dlg-mine{display:flex;flex-direction:column;gap:8px;margin:0;padding:0;list-style:none}
+.hb-dlg-mine li{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)}
+.hb-dlg-mine-ico{font:400 18px/1 'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif}
+.hb-dlg-mine-name{min-width:0;color:var(--hb-tx);font:600 14px/1.3 var(--hb-ui);overflow-wrap:anywhere}
+.hb-dlg-mine-name small{display:block;margin-top:2px;color:var(--hb-tx2);font:400 12px/1.3 var(--hb-ui)}
+.hb-dlg .hb-dlg-del{margin:0;padding:6px 10px;border-radius:999px;background:rgba(255,138,138,.1);border:1px solid rgba(255,138,138,.35);color:#FF8A8A;font:600 12px/1.2 var(--hb-ui);cursor:pointer}
+.hb-dlg button:focus-visible,.hb-dlg input:focus-visible,.hb-dlg select:focus-visible,.hb-dlg summary:focus-visible{outline:2px solid var(--hb-acc);outline-offset:2px}
+@media(max-width:520px){html body dialog.hb-dlg{width:calc(100vw - 16px);border-radius:22px}.hb-dlg-head{padding:16px 16px 10px}.hb-dlg-tabs{margin:0 16px 10px}.hb-dlg-body{padding:4px 16px 18px}}
+@media(prefers-reduced-motion:reduce){.hb-ring-arc,.hd-seg,.hd-bar i{animation:none}.hb-card .hb-cta,.hb-card .hb-day,.hb-card .hb-info,.hd-module .hd-group,.hd-bar i,.hd-module .hd-add{transition:none}}
 `;document.head.appendChild(hb);
   render();
 })();
