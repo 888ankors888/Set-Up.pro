@@ -11,7 +11,7 @@ function aiOpen(settings=false){
  const input=document.getElementById('ai-description');if(input)aiDraft=input.value;
  if(!aiDate)aiDate=tab==='diary'?day:today();if(!aiMeal)aiMeal=mealNow();
  const d=aiDialog();aiDraw();if(!d.open)d.showModal();
- if(settings||!aiAccess){document.getElementById('ai-password').focus();return}
+ if(settings){document.getElementById('ai-password').focus();return}
  if(aiDraft.trim()&&!aiRows.length&&!aiRunning)aiParse();
 }
 function aiCandidates(row){
@@ -53,13 +53,12 @@ function aiTotals(){
 async function aiParse(){
  if(aiRunning)return;
  const text=document.getElementById('ai-text');if(text)aiDraft=text.value;
- if(!aiAccess){aiError='Введите пароль APP_ACCESS_TOKEN. Ключ GigaChat сюда не вводится.';aiDraw();return}
- if(aiDraft.trim().length<2){aiError='Опишите еду: минимум два символа.';aiDraw();return}
+  if(aiDraft.trim().length<2){aiError='Опишите еду: минимум два символа.';aiDraw();return}
  if(aiRows.length&&!confirm('Повторный разбор заменит текущие карточки и правки. Продолжить?'))return;
  aiRunning=true;aiError='';aiDraw();
  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),90000);
  try{
-  const response=await fetch(FOOD_API+'/api/food/parse',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+aiAccess},body:JSON.stringify({text:aiDraft.trim()}),signal:controller.signal,credentials:'omit',cache:'no-store'});
+  const response=await fetch(FOOD_API+'/api/food/parse',{method:'POST',headers:{'Content-Type':'application/json',...(aiAccess?{'Authorization':'Bearer '+aiAccess}:{})},body:JSON.stringify({text:aiDraft.trim()}),signal:controller.signal,credentials:'omit',cache:'no-store'});
   const result=await response.json().catch(()=>null);
   if(!response.ok){const messages={401:'Пароль доступа неверен. Проверьте APP_ACCESS_TOKEN.',503:'Сервер ещё не настроен.',422:'Сервер отклонил описание. Проверьте длину текста.',502:'GigaChat не смог разобрать описание. Попробуйте позже или уточните текст.'};throw new Error(messages[response.status]||('Ошибка сервера '+response.status))}
   if(!result||!Array.isArray(result.items)||!Array.isArray(result.questions))throw new Error('Сервер вернул неизвестный формат ответа.');

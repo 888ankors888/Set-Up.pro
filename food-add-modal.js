@@ -344,7 +344,7 @@ function aiHtml() {
   let tk = 0, tp = 0, tf = 0, tu = 0, n = 0;
   a.rows.forEach(r => { const f = r.name && findFood(r.name); if (f && r.on) { const m = macros(f, r.grams); tk += m.k; tp += m.p; tf += m.f; tu += m.u; n++; } });
   return '<div class="fam-sub"><button type="button" class="fam-back" data-act="back">← Назад</button><span class="fam-label">Поиск через ИИ</span></div>' +
-    (typeof aiAccess !== 'undefined' && !aiAccess ? '<input class="fam-text" id="fam-token" type="password" autocomplete="off" placeholder="Пароль доступа к серверу (APP_ACCESS_TOKEN)">' : '') +
+    
     '<textarea class="fam-ta" id="fam-ai-text" maxlength="2000" placeholder="Опишите, что вы съели: например, овсянка с бананом и 2 яйца">' + E(a.text) + '</textarea>' +
     '<div class="fam-pchips">' + EXAMPLES.map((t, i) => '<button type="button" class="fam-pchip" data-act="aiex" data-i="' + i + '">' + E(t) + '</button>').join('') + '</div>' +
     '<button type="button" class="fam-primary" data-act="airun"' + (a.busy ? ' disabled' : '') + '>' + (a.busy ? 'Анализирую…' : 'Распознать') + '</button>' +
@@ -372,14 +372,13 @@ async function runAi() {
   const tok = $('#fam-token'); if (tok && tok.value) { try { aiAccess = tok.value; } catch (e) {} }
   if (a.text.trim().length < 2) { a.err = 'Опишите еду: минимум два символа.'; paint(); return; }
   let access = ''; try { access = aiAccess; } catch (e) {}
-  if (!access) { a.err = 'Введите пароль доступа к серверу.'; paint(); return; }
   a.busy = true; a.err = ''; a.rows = []; a.questions = []; paint();
   const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 90000);
   try {
     const api = typeof FOOD_API !== 'undefined' ? FOOD_API : 'https://food-pro-api.onrender.com';
-    const res = await fetch(api + '/api/food/parse', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + access }, body: JSON.stringify({ text: a.text.trim() }), signal: ctl.signal, credentials: 'omit', cache: 'no-store' });
+    const res = await fetch(api + '/api/food/parse', { method: 'POST', headers: Object.assign({ 'Content-Type': 'application/json' }, access ? { Authorization: 'Bearer ' + access } : {}), body: JSON.stringify({ text: a.text.trim() }), signal: ctl.signal, credentials: 'omit', cache: 'no-store' });
     const data = await res.json().catch(() => null);
-    if (!res.ok) throw new Error({ 401: 'Пароль доступа неверен.', 503: 'Сервер ещё не настроен.', 422: 'Сервер отклонил описание.', 502: 'ИИ не смог разобрать описание. Попробуйте позже.' }[res.status] || 'Ошибка сервера ' + res.status);
+    if (!res.ok) throw new Error({ 401: 'Сервер требует пароль доступа.', 503: 'Сервер ещё не настроен.', 422: 'Сервер отклонил описание.', 502: 'ИИ не смог разобрать описание. Попробуйте позже.' }[res.status] || 'Ошибка сервера ' + res.status);
     if (!data || !Array.isArray(data.items)) throw new Error('Сервер вернул неизвестный формат ответа.');
     a.rows = data.items.map(r => {
       const name = bestMatch(r);
