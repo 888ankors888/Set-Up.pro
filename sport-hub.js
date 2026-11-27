@@ -272,6 +272,7 @@ function acHtml() {
   const pr = progList().filter(x => x.title.toLowerCase().includes(q)).slice(0, 4);
   return (pr.length ? '<div class="sh-lbl" style="margin:10px 0 0">Программы</div>' + pr.map(progRow).join('') : '') + (ex.length ? '<div class="sh-lbl" style="margin:10px 0 0">Упражнения</div>' + ex.map(x => exRow(x)).join('') : '') + `<button class="sh-item" data-act="acust"><span>Добавить своё: «${esc(ui.aq.trim())}»</span><b style="color:var(--lime)">+</b></button>`;
 }
+const addSheet = (d, b) => `<div class="sh-modal sh-addm" data-act="mclose"><div class="sh-sheet sh-adds" data-stop><div class="sh-ahead"><div><div class="sh-aeye">SPORT.PRO</div><h3 class="sh-atitle">Добавить тренировку</h3><div class="sh-adate">${d}</div></div><button class="sh-ax" data-act="mclose" aria-label="Закрыть"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></div><div class="sh-abody">${b}</div></div></div>`;
 function addHtml() {
   const d = dateLabel(selDay()), ap = ui.ap, sc = (a, i) => `<button class="sh-sq${ap === a ? ' on' : ''}" data-act="apanel" data-v="${a}" title="${({auto:'Авто-подбор программы на день',fav:'Избранное',lib:'Библиотека упражнений',prog:'Программы тренировок'})[a]}">${i}</button>`;
   const back = `<div class="sh-row sh-sb" style="margin-bottom:10px"><button class="sh-chip" data-act="aback">← Назад</button>`;
@@ -299,7 +300,7 @@ function addHtml() {
     body = '<p class="sh-mu" style="margin:2px 0 4px">Найдите упражнение или программу, либо выберите инструмент ниже.</p>';
   }
   const f = favGet(), n = f.ex.length + f.pr.length;
-  return sheet('Добавить · ' + d, `<div style="position:relative"><input data-aq placeholder="Найти упражнение или программу..." value="${esc(ui.aq)}"><div data-alist>${acHtml()}</div></div><div data-arest${ui.aq.trim() ? ' style="display:none"' : ''}><div class="sh-row sh-sqrow" style="margin:12px 0">${sc('auto', '<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 4.8L18.6 9.6l-4.8 1.8L12 16.2l-1.8-4.8-4.8-1.8 4.8-1.8L12 3Z"/><path d="M19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9L19 15Z"/></svg>')}<span style="position:relative;flex:1;display:flex">${sc('fav', heartI(ap === 'fav'))}${n ? `<b class="sh-fb">${n}</b>` : ''}</span>${sc('lib', '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5v11M17.5 6.5v11M3.5 9v6M20.5 9v6M6.5 12h11"/></svg>')}${sc('prog', '<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9.5 7H20M9.5 12H20M9.5 17H20M4.5 7h.01M4.5 12h.01M4.5 17h.01"/></svg>')}</div>${body}</div>`);
+  return addSheet(d, `<div style="position:relative"><input data-aq placeholder="Найти упражнение или программу..." value="${esc(ui.aq)}"><div data-alist>${acHtml()}</div></div><div data-arest${ui.aq.trim() ? ' style="display:none"' : ''}><div class="sh-row sh-sqrow" style="margin:12px 0">${sc('auto', '<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 4.8L18.6 9.6l-4.8 1.8L12 16.2l-1.8-4.8-4.8-1.8 4.8-1.8L12 3Z"/><path d="M19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9L19 15Z"/></svg>')}<span style="position:relative;flex:1;display:flex">${sc('fav', heartI(ap === 'fav'))}${n ? `<b class="sh-fb">${n}</b>` : ''}</span>${sc('lib', '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5v11M17.5 6.5v11M3.5 9v6M20.5 9v6M6.5 12h11"/></svg>')}${sc('prog', '<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9.5 7H20M9.5 12H20M9.5 17H20M4.5 7h.01M4.5 12h.01M4.5 17h.01"/></svg>')}</div>${body}</div>`);
 }
 
 /* ---------- ИИ-программа дня (сервер, GigaChat) ---------- */
@@ -650,7 +651,7 @@ function mount() {
   if (!wasVisible) { wasVisible = true; if (!ui.modal || ui.modal === 'result') paint(); }
 }
 function init() {
-  if (!document.querySelector('link[data-sport-hub]')) { const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = new URL('sport-hub.css?v=4', document.baseURI).href; l.dataset.sportHub = 'true'; document.head.append(l); }
+  if (!document.querySelector('link[data-sport-hub]')) { const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = new URL('sport-hub.css?v=5', document.baseURI).href; l.dataset.sportHub = 'true'; document.head.append(l); }
   try { const o = window.render; if (typeof o === 'function') { window.render = function () { const r = o.apply(this, arguments); try { mount(); } catch (e) { console.warn(e); } return r; }; } } catch (e) {}
   mount();
 }
