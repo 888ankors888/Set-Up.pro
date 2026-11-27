@@ -163,6 +163,9 @@
     const meals = document.createElement('script');
     meals.src = 'food-add-meals.js?v=local';
     document.head.appendChild(meals);
+    const pr = document.createElement('script');
+    pr.src = 'photo-result.js?v=1';
+    document.head.appendChild(pr);
   };
   document.head.appendChild(loader);
 
