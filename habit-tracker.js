@@ -2,6 +2,7 @@
   if(window.foodHabitTrackerInstalled)return;
   window.foodHabitTrackerInstalled=true;
   let selected=today(),activeGroup=null,addTab='list',dlg=null;
+  const cardDate={};
   const openGroups=new Set();
   const schedules={daily:'Каждый день',weekdays:'По будням',weekends:'По выходным',flexible:'По возможности'};
   const SCHEDULE_OPTIONS=[['daily','Каждый день'],['weekdays','По будням'],['weekends','По выходным'],['flexible','По возможности']];
@@ -20,6 +21,7 @@
   const title=(d,c)=>d.id==='13:4'?(c.target||'Своя привычка'):d.title;
   const gkey=d=>Number.isInteger(d.group)?d.group:Number(d.id.split(':')[0]);
   const minDate=()=>{const d=dt(today());d.setDate(d.getDate()-6);return dk(d)};
+  const cardSel=id=>{const v=cardDate[id];return validDate(v)&&v>=minDate()?v:today()};
   function write(next){localStorage.setItem('nt1',JSON.stringify(next));S=next;}
   window.foodHabitToggle=function(id,date){
     try{
@@ -34,7 +36,7 @@
       render();
     }catch(e){toast(e.message||'Не удалось сохранить отметку');render();}
   };
-  window.foodHabitsGo=function(){editing=false;tab='habits';selected=today();render();scrollTo(0,0)};
+  window.foodHabitsGo=function(){editing=false;tab='habits';selected=today();for(const k of Object.keys(cardDate))delete cardDate[k];render();scrollTo(0,0)};
   window.foodHabitsDate=function(date){if(!validDate(date)){toast('Выберите дату не позднее сегодняшней');return;}selected=date;render()};
   window.foodHabitsShift=function(n){if(![-1,1].includes(n))return;const date=dt(selected);date.setDate(date.getDate()+n);foodHabitsDate(dk(date))};
   window.foodHabitsSettings=function(){editing=false;tab='goals';render();document.getElementById('goals-questionnaire-habits')?.scrollIntoView({behavior:'smooth',block:'start'})};
@@ -47,10 +49,11 @@
     if(typeof hook==='function'&&hook(habitId,date,completed)===false)return;
     window.foodHabitToggle(habitId,date);
   }
-  function onDateChange(date){
+  function onDateChange(date,habitId){
     const hook=window.hbOnDateChange;
-    if(typeof hook==='function'&&hook(date)===false)return;
-    window.foodHabitsDate(date);
+    if(typeof hook==='function'&&hook(date,habitId)===false)return;
+    cardDate[habitId]=date;
+    render();
   }
   function onFilterChange(groupId){
     const next=groupId!==null&&activeGroup===groupId?null:groupId;
@@ -89,26 +92,29 @@
     if(!item)item=GROUPS[key]||['','#B4F74A','✨'];
     return {key,name,color:item[1],emoji:d.image||item[2]};
   }
-  const weekKeys=()=>{const end=selected<minDate()?selected:today();return Array.from({length:7},(_,i)=>{const date=dt(end);date.setDate(date.getDate()+i-6);return dk(date)})};
+  const weekKeys=()=>Array.from({length:7},(_,i)=>{const date=dt(today());date.setDate(date.getDate()+i-6);return dk(date)});
+  const shortDate=k=>k.slice(8)+'.'+k.slice(5,7);
 
   function habitCard(d,c){
-    const id=d.id,keys=weekKeys(),marked=done(id,selected),scheduled=due(c,selected),count=keys.filter(k=>done(id,k)).length,meta=groupMeta(d);
+    const id=d.id,keys=weekKeys(),sel=cardSel(id),isToday=sel===today(),marked=done(id,sel),scheduled=due(c,sel),count=keys.filter(k=>done(id,k)).length,meta=groupMeta(d);
     const uid=id.replace(':','-'),R=34,C=Math.round(2*Math.PI*R*100)/100,off=Math.round(C*(1-count/7)*100)/100;
     const chips=[schedules[c.schedule]||'Расписание не указано'];
     if(d.custom)chips.push('Своя привычка');
     if(c.time)chips.push('В '+c.time);
     if(id==='0:0')chips.push('Цель: '+(c.target||S.profile?.nutritionGoalSettings?.waterMl||S.waterGoal||'—')+' мл');
     else if(id!=='13:4'&&c.target)chips.push('Ориентир: '+c.target);
-    const status=marked?'Выполнено на выбранный день':scheduled?'Запланировано на выбранный день':c.schedule==='flexible'?'Необязательная отметка — по возможности':'Вне текущего расписания — можно отметить дополнительно';
+    const when=isToday?'сегодня':shortDate(sel);
+    const status=marked?'Выполнено: '+when:scheduled?'Запланировано: '+when:c.schedule==='flexible'?'Необязательная отметка — по возможности':'Вне расписания — можно отметить дополнительно';
     const info=id==='0:0'?'Это ручная отметка привычки: она не добавляет воду в дневник и не проверяет выпитый объём.':'Это ручная отметка привычки: она отражает ваш самоотчёт и ничего не проверяет автоматически.';
-    const cells=keys.map(k=>{const m=done(id,k),label=k.slice(8)+'.'+k.slice(5,7);return '<div class="hb-day'+(m?' is-done':'')+(k===selected?' is-selected':'')+'" role="listitem" aria-label="'+esc(fmt(k))+': '+(m?'выполнено':'нет отметки')+'"><span class="hb-day-date">'+label+'</span><span class="hb-day-mark" aria-hidden="true">'+(m?iconCheck(14):'—')+'</span></div>'}).join('');
+    const cells=keys.map(k=>{const m=done(id,k),on=k===sel;return '<button type="button" class="hb-day'+(m?' is-done':'')+(on?' is-selected':'')+'" data-hb-day data-habit="'+esc(id)+'" data-date="'+k+'" aria-pressed="'+on+'" aria-label="'+esc(fmt(k))+': '+(m?'выполнено':'нет отметки')+(on?', выбранный день':', нажмите, чтобы выбрать этот день')+'"><span class="hb-day-date">'+shortDate(k)+'</span><span class="hb-day-mark" aria-hidden="true">'+(m?iconCheck(14):'—')+'</span></button>'}).join('');
     const ring='<div class="hb-ring" role="img" aria-label="Выполнено '+count+' из 7 дней"><svg viewBox="0 0 80 80" width="80" height="80" aria-hidden="true"><defs><linearGradient id="hb-g-'+uid+'" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#B4F74A"/><stop offset="1" stop-color="#92E619"/></linearGradient></defs><circle class="hb-ring-track" cx="40" cy="40" r="'+R+'" fill="none" stroke-width="7"/>'+(count?'<circle class="hb-ring-arc" cx="40" cy="40" r="'+R+'" fill="none" stroke="url(#hb-g-'+uid+')" stroke-width="7" stroke-linecap="round" stroke-dasharray="'+C+'" stroke-dashoffset="'+off+'" style="--hb-c:'+C+'"/>':'')+'</svg><div class="hb-ring-c"><b>'+count+'/7</b><small>за 7 дн.</small></div></div>';
+    const ctaText=marked?'Выполнено'+(isToday?'':' · '+shortDate(sel)):'Отметить выполнение'+(isToday?'':' · '+shortDate(sel));
     return '<section class="hb-card" data-hb-habit="'+esc(id)+'" data-hb-group="'+meta.key+'" style="--hb-g:'+meta.color+';--hb-g-a:'+rgba(meta.color,.1)+';--hb-g-b:'+rgba(meta.color,.35)+'">'
       +'<div class="hb-top"><span class="hb-badge"><span class="hb-badge-emoji" aria-hidden="true">'+esc(meta.emoji)+'</span><span class="hb-badge-text">'+esc(meta.name)+'</span></span><button type="button" class="hb-info" data-hb-info aria-expanded="false" aria-controls="hb-pop-'+uid+'" aria-label="Ручная отметка: пояснение">i</button></div>'
       +'<div class="hb-pop" id="hb-pop-'+uid+'" role="note" hidden>'+esc(info)+'</div>'
       +'<div class="hb-head"><div class="hb-head-main"><h2 class="hb-title">'+esc(title(d,c))+'</h2><div class="hb-chips">'+chips.map(x=>'<span class="hb-chip">'+esc(x)+'</span>').join('')+'</div><p class="hb-status'+(marked?' is-done':'')+'"><span class="hb-status-dot" aria-hidden="true"></span>'+esc(status)+'</p></div>'+ring+'</div>'
-      +'<button type="button" class="hb-cta'+(marked?' is-done':'')+'" data-hb-cta data-habit="'+esc(id)+'" data-date="'+selected+'" aria-pressed="'+marked+'"><span class="hb-cta-box" aria-hidden="true">'+iconCheck(16)+'</span><span>'+(marked?'Выполнено':'Отметить выполнение')+'</span></button>'
-      +'<div class="hb-days" role="list" aria-label="Отметки за семь дней">'+cells+'</div></section>';
+      +'<button type="button" class="hb-cta'+(marked?' is-done':'')+'" data-hb-cta data-habit="'+esc(id)+'" data-date="'+sel+'" aria-pressed="'+marked+'"><span class="hb-cta-box" aria-hidden="true">'+iconCheck(16)+'</span><span>'+ctaText+'</span></button>'
+      +'<div class="hb-days" role="group" aria-label="Выбор дня для отметки, последние семь дней">'+cells+'</div></section>';
   }
 
   /* Summary module "Привычки дня" (Split header) */
@@ -126,12 +132,6 @@
     }
     return {groups:[...groups.values()].sort((a,b)=>a.key-b.key),total,completed,extra,percent:total?Math.round(completed/total*100):0};
   }
-  function dateTag(date){
-    if(date===today())return 'Сегодня';
-    const y=dt(today());y.setDate(y.getDate()-1);
-    if(date===dk(y))return 'Вчера';
-    return ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'][dt(date).getDay()];
-  }
   function hdRing(s){
     const R=57,C=Math.round(2*Math.PI*R*100)/100,segs=s.groups.filter(g=>g.completed>0),gap=segs.length>1?14:0;
     let pos=0,arcs='';
@@ -142,19 +142,16 @@
     return '<div class="hd-ring" role="img" aria-label="Выполнено '+s.completed+' из '+s.total+' привычек, '+s.percent+' процентов"><svg viewBox="0 0 136 136" width="136" height="136" aria-hidden="true"><circle cx="68" cy="68" r="'+R+'" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="10"/><g transform="rotate(-90 68 68)">'+arcs+'</g></svg><div class="hd-ring-c"><b>'+s.completed+' / '+s.total+'</b><small>выполнено</small></div></div>';
   }
   function hdSummary(s){
-    const atMin=selected<=minDate(),atMax=selected>=today();
-    const chev=d=>'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="'+d+'"/></svg>';
-    const capsule='<div class="hd-date" role="group" aria-label="Выбор даты"><button type="button" data-hd-shift="-1" aria-label="Предыдущий день" '+(atMin?'disabled':'')+'>'+chev('m15 6-6 6 6 6')+'</button><span class="hd-date-label" aria-live="polite" aria-label="'+esc(fmt(selected))+'"><b>'+selected.slice(8)+'.'+selected.slice(5,7)+'</b><span> · '+dateTag(selected)+'</span></span><button type="button" data-hd-shift="1" aria-label="Следующий день" '+(atMax?'disabled':'')+'>'+chev('m9 6 6 6-6 6')+'</button></div>';
     const addButton='<button type="button" class="hd-add" data-hb-add>'+iconPlus(16)+'<span>Добавить привычку</span></button>';
     const complete=s.total>0&&s.completed===s.total;
     const chip=!s.total?'<span class="hd-chip">Нет привычек по расписанию</span>':complete?'<span class="hd-chip is-complete">'+iconCheck(14)+'Все привычки выполнены</span>':'<span class="hd-chip">Осталось отметить: '+(s.total-s.completed)+'</span>';
-    const left='<div class="hd-col hd-col-left">'+hdRing(s)+'<div class="hd-metrics"><p class="hd-metrics-label">Выполнение за выбранный день</p><div class="hd-percent">'+s.percent+'<span>%</span></div>'+chip+(s.extra?'<p class="hd-extra">Отметок вне расписания: '+s.extra+'</p>':'')+'</div></div>';
+    const left='<div class="hd-col hd-col-left">'+hdRing(s)+'<div class="hd-metrics"><p class="hd-metrics-label">Выполнение сегодня</p><div class="hd-percent">'+s.percent+'<span>%</span></div>'+chip+(s.extra?'<p class="hd-extra">Отметок вне расписания: '+s.extra+'</p>':'')+'</div></div>';
     const tiles=s.groups.map(g=>{
       const pct=g.total?Math.round(g.completed/g.total*100):0,on=activeGroup===g.key,dim=activeGroup!==null&&!on;
       return '<button type="button" class="hd-group'+(on?' is-active':'')+(dim?' is-dim':'')+'" data-hd-group="'+g.key+'" aria-pressed="'+on+'" aria-label="'+esc(g.name)+': выполнено '+g.completed+' из '+g.total+'" style="--hd-c:'+g.color+';--hd-c-a:'+rgba(g.color,.13)+';--hd-c-b:'+rgba(g.color,.5)+'"><span class="hd-group-top"><span class="hd-group-ico" aria-hidden="true">'+esc(g.emoji)+'</span><span class="hd-group-name">'+esc(g.name)+'</span><span class="hd-group-count">'+g.completed+'/'+g.total+'</span></span><span class="hd-bar" aria-hidden="true"><i style="width:'+pct+'%"></i></span></button>';
     }).join('');
     const right='<div class="hd-col hd-col-right"><div class="hd-groups-head"><h3>Группы привычек в трекере</h3>'+(activeGroup!==null?'<button type="button" class="hd-reset" data-hd-reset>Показать все</button>':'')+'</div><div class="hd-groups" role="group" aria-label="Фильтр по группам привычек">'+tiles+'</div></div>';
-    return '<section class="hd-module" aria-labelledby="hd-title"><header class="hd-head"><h2 class="hd-title" id="hd-title">Привычки дня</h2>'+capsule+addButton+'</header><div class="hd-body">'+left+right+'</div></section>';
+    return '<section class="hd-module" aria-labelledby="hd-title"><header class="hd-head"><h2 class="hd-title" id="hd-title">Привычки дня</h2>'+addButton+'</header><div class="hd-body">'+left+right+'</div></section>';
   }
 
   /* Add-habit module: groups and habits from "Мои данные" + own habits */
@@ -277,7 +274,7 @@
 
   window.foodHabitsView=function(){
     if(!validDate(selected))selected=today();
-    const list=active(),settings=config(),stats=hdStats(list,settings,selected);
+    const list=active(),settings=config(),stats=hdStats(list,settings,today());
     if(activeGroup!==null&&!stats.groups.some(g=>g.key===activeGroup))activeGroup=null;
     const shown=activeGroup===null?list:list.filter(d=>gkey(d)===activeGroup);
     return '<h1>Привычки</h1>'+(list.length?'<div class="hd-shell">'+hdSummary(stats)+'<div class="hb-grid">'+shown.map(d=>habitCard(d,settings[d.id])).join('')+'</div></div>':'<section class="card"><h2>Пока нет выбранных привычек</h2><p>Добавьте первую привычку прямо здесь — выберите из готовых групп или создайте свою.</p><button type="button" class="btn" data-hb-add>Добавить привычку</button></section>')+'<div class="habit-settings-footer"><button type="button" class="btn s" data-habit-settings>Настроить привычки</button></div>';
@@ -326,15 +323,6 @@
       return;
     }
     if(!target.closest('.hb-pop'))closePops();
-    const shift=target.closest('[data-hd-shift]');
-    if(shift){
-      const n=Number(shift.dataset.hdShift),date=dt(selected);date.setDate(date.getDate()+n);
-      const key=dk(date);
-      if(key>today()||key<minDate())return;
-      onDateChange(key);
-      document.querySelector('[data-hd-shift="'+n+'"]:not(:disabled)')?.focus({preventScroll:true});
-      return;
-    }
     const group=target.closest('[data-hd-group]');
     if(group){
       const key=Number(group.dataset.hdGroup);
@@ -343,7 +331,15 @@
       return;
     }
     if(target.closest('[data-hd-reset]')){onFilterChange(null);return;}
-    /* Completion is set only by the "Отметить выполнение" button for the date chosen in the module header (today or a past day); the 7-day strip is read-only */
+    /* A tap on a date in the card only SELECTS the day for that habit; the mark is set by the "Отметить выполнение" button (today or past days only) */
+    const day=target.closest('[data-hb-day]');
+    if(day){
+      const id=day.dataset.habit,date=day.dataset.date;
+      if(!validDate(date)||date<minDate())return;
+      onDateChange(date,id);
+      document.querySelector('[data-hb-day][data-habit="'+id+'"][data-date="'+date+'"]')?.focus({preventScroll:true});
+      return;
+    }
     const cta=target.closest('[data-hb-cta]');
     if(cta){
       const id=cta.dataset.habit,date=cta.dataset.date;
@@ -378,13 +374,6 @@
 .hd-module .hd-add{display:inline-flex;align-items:center;gap:8px;margin:0;padding:10px 16px;border-radius:999px;background:rgba(180,247,74,.12);border:1px solid var(--hb-line);color:var(--hb-acc);font:600 14px/1.2 var(--hb-ui);cursor:pointer;box-shadow:0 0 18px -8px var(--hb-acc-glow);transition:background .2s,border-color .2s,transform .15s}
 .hd-module .hd-add:hover{background:rgba(180,247,74,.2);border-color:var(--hb-acc)}
 .hd-module .hd-add:active{transform:scale(.97)}
-.hd-date{display:inline-flex;align-items:center;gap:4px;padding:4px;border-radius:999px;background:rgba(255,255,255,.05);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}
-html body .hd-module .hd-date{display:inline-flex!important}
-.hd-module .hd-date button{display:grid;place-items:center;width:32px;height:32px;margin:0;padding:0;border-radius:50%;background:transparent;border:0;color:var(--hb-tx);cursor:pointer;transition:background .2s,color .2s}
-.hd-module .hd-date button:hover:not(:disabled){background:rgba(180,247,74,.12);color:var(--hb-acc)}
-.hd-module .hd-date button:disabled{color:var(--hd-tx3);cursor:default;opacity:.55}
-.hd-date-label{min-width:112px;padding:0 6px;text-align:center;white-space:nowrap;color:var(--hd-tx2);font:500 13px/1 var(--hb-ui)}
-.hd-date-label b{color:var(--hb-tx);font:700 15px/1 var(--hb-head);font-variant-numeric:tabular-nums}
 .hd-body{display:grid;grid-template-columns:1.1fr 1fr;gap:0}
 .hd-col{min-width:0}
 .hd-col-left{display:flex;align-items:center;flex-wrap:wrap;gap:20px 24px;padding-right:28px}
@@ -422,7 +411,7 @@ html body .hd-module .hd-date{display:inline-flex!important}
 @keyframes hd-bar-in{from{width:0}}
 .hd-module button:focus-visible{outline:2px solid var(--hb-acc);outline-offset:2px}
 @media(max-width:859px){.hd-module{padding:18px 16px}.hd-module .hd-title{font-size:22px}.hd-body{grid-template-columns:minmax(0,1fr)}.hd-col-left{padding:0 0 22px;border-bottom:1px solid rgba(255,255,255,.08)}.hd-col-right{padding:22px 0 0;border-left:0}}
-@media(max-width:400px){.hd-date-label{min-width:96px}.hd-percent{font-size:40px}}
+@media(max-width:400px){.hd-percent{font-size:40px}}
 .hb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(360px,100%),1fr));gap:16px}
 .hb-card{position:relative;display:flex;flex-direction:column;gap:16px;min-width:0;padding:18px;border-radius:26px;background:var(--hb-surface);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);border:1px solid var(--hb-line);box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 18px 40px -26px rgba(0,0,0,.8);color:var(--hb-tx);font-family:var(--hb-ui);box-sizing:border-box}
 .hb-card *{box-sizing:border-box}
@@ -458,7 +447,9 @@ html body .hd-module .hd-date{display:inline-flex!important}
 .hb-card .hb-cta.is-done{background:linear-gradient(135deg,var(--hb-acc),var(--hb-acc2));border-color:transparent;color:#041410;box-shadow:0 10px 26px -10px var(--hb-acc-glow),inset 0 1px 0 rgba(255,255,255,.35)}
 .hb-cta.is-done .hb-cta-box{border-color:rgba(4,20,16,.55);color:#041410}
 .hb-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
-.hb-card .hb-day{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0;padding:8px 0 7px;border-radius:12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);color:var(--hb-tx2);font-family:var(--hb-ui);cursor:default;pointer-events:none;-webkit-user-select:none;user-select:none}
+.hb-card .hb-day{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0;margin:0;padding:8px 0 7px;border-radius:12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);color:var(--hb-tx2);font-family:var(--hb-ui);cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background .2s,border-color .2s,color .2s,transform .15s}
+.hb-card .hb-day:hover{border-color:var(--hb-line);background:rgba(180,247,74,.06)}
+.hb-card .hb-day:active{transform:scale(.95)}
 .hb-day-date{font:500 10.5px/1 var(--hb-ui);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
 .hb-day-mark{display:grid;place-items:center;height:16px;font:600 14px/1 var(--hb-ui);color:var(--hb-tx3)}
 .hb-card .hb-day.is-done{background:rgba(180,247,74,.1);color:var(--hb-acc)}
@@ -509,7 +500,7 @@ html body dialog.hb-dlg .hb-dlg-body{display:block!important;flex:none!important
 .hb-dlg .hb-dlg-del{margin:0;padding:6px 10px;border-radius:999px;background:rgba(255,138,138,.1);border:1px solid rgba(255,138,138,.35);color:#FF8A8A;font:600 12px/1.2 var(--hb-ui);cursor:pointer}
 .hb-dlg button:focus-visible,.hb-dlg input:focus-visible,.hb-dlg select:focus-visible,.hb-dlg summary:focus-visible{outline:2px solid var(--hb-acc);outline-offset:2px}
 @media(max-width:520px){html body dialog.hb-dlg{width:calc(100vw - 16px)!important;border-radius:22px}.hb-dlg .hb-dlg-head{padding:16px 16px 10px}.hb-dlg .hb-dlg-tabs{margin:0 16px 10px}html body dialog.hb-dlg .hb-dlg-body{padding:4px 16px 18px}}
-@media(prefers-reduced-motion:reduce){.hb-ring-arc,.hd-seg,.hd-bar i{animation:none}.hb-card .hb-cta,.hb-card .hb-info,.hd-module .hd-group,.hd-bar i,.hd-module .hd-add{transition:none}}
+@media(prefers-reduced-motion:reduce){.hb-ring-arc,.hd-seg,.hd-bar i{animation:none}.hb-card .hb-cta,.hb-card .hb-day,.hb-card .hb-info,.hd-module .hd-group,.hd-bar i,.hd-module .hd-add{transition:none}}
 `;document.head.appendChild(hb);
   render();
 })();
