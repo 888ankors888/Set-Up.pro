@@ -120,11 +120,11 @@ function dayCard(h, d) {
   let o = `<div class="sh-card"><div class="sh-row sh-sb"><span class="sh-chip on">${dd} ${RU_M[m - 1]} ${y}</span><span class="sh-chip">${future ? 'Будущая дата' : 'Выполнено'}</span></div>`;
   const pw = future ? (planOf(h, d) && planOf(h, d) !== 'rest' ? h.workouts.find(x => x.id === planOf(h, d)) : null) : null;
   if (future && h.dated[d]) o += `<button class="sh-chip" style="margin-top:10px" data-act="undate">Убрать из плана на эту дату</button>`;
-  if (future && pw) o += `<h3 class="sh-h" style="margin:12px 0 6px">По плану: ${esc(pw.title)}</h3>` + pw.exercises.map(e => `<div class="sh-item"><span>${esc(e.name)}</span><span class="sh-mu">${e.sets.length} подх.</span></div>`).join('');
+  if (future && pw) o += `<div class="sh-row sh-sb" style="margin:12px 0 6px"><h3 class="sh-h">По плану: ${esc(pw.title)}</h3><button class="sh-chip" data-act="editw" data-id="${pw.id}">Изменить</button></div>` + pw.exercises.map(e => `<div class="sh-item"><span>${esc(e.name)}</span><span class="sh-mu">${e.sets.length} подх.</span></div>`).join('');
   else if (future && planOf(h, d) === 'rest') o += '<p class="sh-mu" style="margin-top:12px">По плану день отдыха.</p>';
   else if (!ss.length && !en.length) o += `<p class="sh-mu" style="margin-top:12px">${future ? 'Эта дата ещё не наступила.' : 'В этот день тренировок не записано.'}</p>`;
   ss.forEach(x => { const t = x.exercises.reduce((a, e) => a + e.sets.reduce((b, s) => b + (s.type === 'w' ? 0 : s.weight * s.reps), 0), 0), n = x.exercises.reduce((a, e) => a + e.sets.length, 0);
-    o += `<h3 class="sh-h" style="margin:12px 0 6px">${esc(x.title)}</h3><div class="sh-row sh-wrap sh-mu"><span>${x.minutes} мин</span><span>·</span><span>${n} подх.</span><span>·</span><span>${fmtN(t)} кг</span></div>` + x.exercises.map(e => `<div class="sh-item"><span>${esc(e.name)}</span><span class="sh-mu">${e.sets.filter(s => s.type !== 'w').map(s => s.weight + '×' + s.reps).join(', ')}</span></div>`).join('') + `<button class="sh-btn big" style="margin-top:12px" data-act="repeat" data-id="${x.id}">Повторить тренировку</button>`; });
+    o += `<h3 class="sh-h" style="margin:12px 0 6px">${esc(x.title)}</h3><div class="sh-row sh-wrap sh-mu"><span>${x.minutes} мин</span><span>·</span><span>${n} подх.</span><span>·</span><span>${fmtN(t)} кг</span></div>` + x.exercises.map(e => `<div class="sh-item"><span>${esc(e.name)}</span><span class="sh-mu">${e.sets.filter(s => s.type !== 'w').map(s => s.weight + '×' + s.reps).join(', ')}</span></div>`).join('') + `<div class="sh-row" style="margin-top:12px"><button class="sh-btn" style="flex:1" data-act="repeat" data-id="${x.id}">Повторить</button><button class="sh-btn ghost" style="flex:1" data-act="sedit" data-id="${x.id}">Изменить</button></div>`; });
   en.forEach(e => { o += `<div class="sh-item"><span>${esc(e.name)}</span><span class="sh-mu">${e.minutes ? e.minutes + ' мин' : ''}</span></div>`; });
   return o + '</div>';
 }
@@ -165,7 +165,7 @@ function dash() {
   let o = '';
   if (sess) o += `<div class="sh-card sh-syn"><div class="sh-lbl">Тренировка идёт</div><p class="sh-h" style="margin:4px 0 10px">${esc(sess.title)}</p><button class="sh-btn big" data-act="resume">Продолжить · ${fmtT(Date.now() - sess.startedAt)}</button></div>`;
   const isToday = selDay() === todayS(); let card = '';
-  if (!isToday) card = dayCard(h, selDay()); else if (!w && rest) card = `<div class="sh-card"><span class="sh-chip on">По плану</span><h3 class="sh-h" style="margin:10px 0 6px">День отдыха</h3><p class="sh-mu" style="margin-bottom:12px">Сегодня по плану восстановление. Можно выбрать тренировку вручную.</p><button class="sh-btn ghost big" data-act="favs">Выбрать программу</button></div>`; else if (w) card = `<div class="sh-card"><div class="sh-row sh-sb"><span class="sh-chip on">${planned && w === planned ? 'По плану' : 'Сегодня'}</span><span class="sh-chip">${w.src === 'ai' ? 'Конструктор' : w.src === 'plan' ? 'План' : 'Вручную'}</span></div>
+  if (!isToday) card = dayCard(h, selDay()); else if (!w && rest) card = `<div class="sh-card"><span class="sh-chip on">По плану</span><h3 class="sh-h" style="margin:10px 0 6px">День отдыха</h3><p class="sh-mu" style="margin-bottom:12px">Сегодня по плану восстановление. Можно выбрать тренировку вручную.</p><button class="sh-btn ghost big" data-act="favs">Выбрать программу</button></div>`; else if (w) card = `<div class="sh-card"><div class="sh-row sh-sb"><span class="sh-chip on">${planned && w === planned ? 'По плану' : 'Сегодня'}</span><span class="sh-row"><span class="sh-chip">${w.src === 'ai' ? 'Конструктор' : w.src === 'plan' ? 'План' : 'Вручную'}</span><button class="sh-chip" data-act="editw" data-id="${w.id}">Изменить</button></span></div>
   ${w.meso ? `<p class="sh-mu" style="margin-top:10px">${esc(w.meso)}</p>` : ''}<h3 class="sh-h" style="margin:4px 0 8px">${esc(w.title)}</h3>
   <div class="sh-row sh-wrap sh-mu"><span>~${dur} мин</span><span>·</span><span>${w.exercises.length} упр.</span><span>·</span><span>${setsN} подх.</span><span>·</span><span>${fmtN(wTon(w))} кг</span></div>
   <div class="sh-chips" style="margin:10px 0">${w.exercises.map(e => `<span class="sh-chip">${esc(e.name)}</span>`).join('')}</div>
@@ -233,16 +233,20 @@ function modalHtml() {
     const h = hub(), t = wdOf(todayS());
     return sheet('План недели', `<p class="sh-mu" style="margin-bottom:6px">Назначьте программу на каждый день. По плану она появится в карточке дня, и её можно сразу запустить.</p>${WDL.map((n2, i) => `<div class="sh-item"><b style="min-width:110px;${String(i) === t ? 'color:var(--lime)' : ''}">${n2}</b><select data-plan="${i}"><option value="">Не задано</option><option value="rest"${h.plan[i] === 'rest' ? ' selected' : ''}>День отдыха</option>${h.workouts.map(x => `<option value="${x.id}"${h.plan[i] === x.id ? ' selected' : ''}>${esc(x.title)}</option>`).join('')}</select></div>`).join('')}<div class="sh-row" style="margin-top:14px"><button class="sh-btn ghost" style="flex:1" data-act="manual">Создать программу</button><button class="sh-btn" style="flex:1" data-act="rclose">Готово</button></div>`);
   }
+  if (m === 'sedit') {
+    const d = ui.sdraft;
+    return sheet('Изменить выполненную', d.exercises.map((e, i) => `<div class="sh-ex"><div class="sh-row sh-sb"><b>${esc(e.name)}</b><button class="sh-chip" data-act="sxrem" data-e="${i}">Удалить</button></div>${e.sets.map((z, j) => `<div class="sh-set novice" style="grid-template-columns:24px 1fr 1fr 34px"><span class="t">${j + 1}</span><input inputmode="decimal" data-sf="weight" data-e="${i}" data-s="${j}" value="${esc(z.weight)}" placeholder="кг"><input inputmode="numeric" data-sf="reps" data-e="${i}" data-s="${j}" value="${esc(z.reps)}" placeholder="повт."><button class="sh-chip" data-act="ssdel" data-e="${i}" data-s="${j}">×</button></div>`).join('')}</div>`).join('') + `<div class="sh-row" style="margin-top:12px"><button class="sh-btn ghost" style="flex:1" data-act="sdelall">Удалить тренировку</button><button class="sh-btn" style="flex:1" data-act="ssave">Сохранить</button></div>`);
+  }
   if (m === 'favs') {
     const h = hub();
     return sheet('Избранные программы', (h.workouts.length ? h.workouts.map(x => `<div class="sh-item"><button data-act="favpick" data-id="${x.id}" style="flex:1;text-align:left"><b>${esc(x.title)}</b><br><span class="sh-mu">${x.exercises.length} упр. · ${x.tags.map(g => GROUPS[g]).join(', ')}</span></button><button class="sh-chip" data-act="favdel" data-id="${x.id}">×</button></div>`).join('') : '<p class="sh-mu">Сохранённых программ пока нет.</p>') + (h.sessions.length ? '<div class="sh-lbl" style="margin:16px 0 4px">Повторить недавние</div>' + h.sessions.slice(-5).reverse().map(x => `<div class="sh-item"><span><b>${esc(x.title)}</b><br><span class="sh-mu">${x.date}</span></span><button class="sh-chip" data-act="repeat" data-id="${x.id}">Повторить</button></div>`).join('') : ''));
   }
   if (m === 'manual') {
     const d = ui.draft;
-    return sheet('Новая тренировка', `<input data-d="title" value="${esc(d.title)}" placeholder="Название"><div class="sh-seg" style="margin:10px 0">${[['today','На сегодня'],['template','В шаблон'],['free','Свободная']].map(([k, t]) => `<button data-act="dstatus" data-v="${k}" class="${d.status === k ? 'on' : ''}">${t}</button>`).join('')}</div>
+    return sheet(d.editId ? 'Изменить тренировку' : 'Новая тренировка', `<input data-d="title" value="${esc(d.title)}" placeholder="Название">${d.editId ? `<div class="sh-seg" style="margin:10px 0">${[['date','Только для этой даты'],['all','Везде']].map(([k, t]) => `<button data-act="dscope" data-v="${k}" class="${d.scope === k ? 'on' : ''}">${t}</button>`).join('')}</div>` : `<div class="sh-seg" style="margin:10px 0">${[['today','На сегодня'],['template','В шаблон'],['free','Свободная']].map(([k, t]) => `<button data-act="dstatus" data-v="${k}" class="${d.status === k ? 'on' : ''}">${t}</button>`).join('')}</div>`}
     ${d.exercises.map((e, i) => `<div class="sh-ex"><div class="sh-row sh-sb"><b>${esc(e.name)}</b><span class="sh-row"><button class="sh-chip" data-act="dup" data-e="${i}">↑</button><button class="sh-chip" data-act="ddown" data-e="${i}">↓</button><button class="sh-chip" data-act="drem" data-e="${i}">×</button></span></div>${e.sets.map((s, j) => `<div class="sh-set novice" style="grid-template-columns:24px 1fr 1fr 34px"><span class="t">${j + 1}</span><input inputmode="decimal" data-df="weight" data-e="${i}" data-s="${j}" value="${esc(s.weight)}" placeholder="кг"><input inputmode="numeric" data-df="reps" data-e="${i}" data-s="${j}" value="${esc(s.reps)}" placeholder="повт."><button class="sh-chip" data-act="dsdel" data-e="${i}" data-s="${j}">×</button></div>`).join('')}<button class="sh-chip" style="margin-top:8px" data-act="dsadd" data-e="${i}">+ Подход</button></div>`).join('')}
     <div class="sh-lbl" style="margin:12px 0 6px">Библиотека упражнений</div><input data-q placeholder="Поиск или свое упражнение" value="${esc(ui.q)}"><div data-exlist>${exList()}</div>
-    <div class="sh-row" style="margin-top:14px"><button class="sh-btn ghost" style="flex:1" data-act="dsave">${d.status === 'free' ? 'Закрыть' : 'Сохранить'}</button>${isFuture() ? '' : '<button class="sh-btn" style="flex:1" data-act="dstart">Сохранить и начать</button>'}</div>`);
+    <div class="sh-row" style="margin-top:14px"><button class="sh-btn ghost" style="flex:1" data-act="dsave">${!d.editId && d.status === 'free' ? 'Закрыть' : 'Сохранить'}</button>${isFuture() ? '' : '<button class="sh-btn" style="flex:1" data-act="dstart">Сохранить и начать</button>'}</div>`);
   }
   if (m === 'ai') {
     const a = ui.ai, sel = (k, arr) => `<div class="sh-seg" style="margin-bottom:12px">${arr.map(([v, t]) => `<button data-act="aiset" data-k="${k}" data-v="${v}" class="${String(a[k]) === String(v) ? 'on' : ''}">${t}</button>`).join('')}</div>`;
@@ -325,16 +329,20 @@ function buildProgram() {
     w.exercises.forEach(e => { const l = find(e.name); const reps = a.goal === 'strength' ? 5 : a.goal === 'recomp' ? 12 : l.r; e.sets.forEach(s => { if (s.type === 'n') { s.reps = reps; s.weight = l.w ? r05(l.w * mult) : 0; } }); if (a.goal === 'strength' && l.rest < 150) e.restSec = l.rest + 30; }); return w; });
   return out;
 }
+function syncEntries(rec) {
+  try { commit(st => {
+    const W = window.FoodWorkoutsStore; if (!st.workouts && W) st.workouts = W.empty(); if (!st.workouts) return;
+    const backup = JSON.stringify(st.workouts), pre = 'hub-' + rec.id + '-', total = rec.exercises.reduce((a, e) => a + e.sets.length, 0);
+    st.workouts.entries = st.workouts.entries.filter(e => !String(e.id).startsWith(pre));
+    rec.exercises.forEach((e, i) => { const ws = e.sets.filter(x => x.type !== 'w'), use = ws.length ? ws : e.sets; st.workouts.entries.push({id:pre + i,kind:'strength',name:e.name,minutes:Math.min(1440, Math.max(1, Math.round(rec.minutes * e.sets.length / total))),sets:use.length,reps:Math.max(1, Math.round(use.reduce((a, x) => a + x.reps, 0) / use.length)),weight:Math.min(10000, Math.max(...use.map(x => x.weight))),muscleGroup:null,notes:'Тренировка: ' + rec.title,date:rec.date}); });
+    try { if (W && W.validate) W.validate(st.workouts); } catch (e) { st.workouts = JSON.parse(backup); }
+  }); } catch (e) {}
+}
 function finish() {
   const min = Math.max(1, Math.round((Date.now() - sess.startedAt) / 6e4)), ton = sessTon(sess), kcal = kcalOf(min), total = sessSets(sess);
   const rec = {id:sess.id,workoutId:sess.workoutId,title:sess.title,date:sess.date,startedAt:sess.startedAt,endedAt:Date.now(),minutes:min,exercises:sess.exercises.map(e => ({name:e.name,muscles:e.muscles,sets:doneSets(e).map(s => ({type:s.type,weight:num(s.weight),reps:Math.round(num(s.reps)),rir:Math.round(num(s.rir))}))})).filter(e => e.sets.length)};
   setHub(h => { h.sessions.push(rec); });
-  try { commit(st => {
-    const W = window.FoodWorkoutsStore; if (!st.workouts && W) st.workouts = W.empty(); if (!st.workouts) return;
-    const backup = JSON.stringify(st.workouts);
-    rec.exercises.forEach((e, i) => { const ws = e.sets.filter(s => s.type !== 'w'), use = ws.length ? ws : e.sets; st.workouts.entries.push({id:'hub-' + rec.id + '-' + i,kind:'strength',name:e.name,minutes:Math.min(1440, Math.max(1, Math.round(min * e.sets.length / total))),sets:use.length,reps:Math.max(1, Math.round(use.reduce((a, s) => a + s.reps, 0) / use.length)),weight:Math.min(10000, Math.max(...use.map(s => s.weight))),muscleGroup:null,notes:'Тренировка: ' + rec.title,date:rec.date}); });
-    try { if (W && W.validate) W.validate(st.workouts); } catch (e) { st.workouts = JSON.parse(backup); }
-  }); } catch (e) {}
+  syncEntries(rec);
   markHabit(false);
   sess = null; saveSess(); ui.result = {min, ton, kcal}; ui.modal = 'result'; ui.screen = 'dash'; paint(); scrollTo(0, 0);
 }
@@ -351,9 +359,12 @@ function openDraft(d) { ui.draft = d || {title:'Своя тренировка',s
 function saveDraft(start) {
   const d = ui.draft; if (!d.exercises.length) return toast2('Добавьте хотя бы одно упражнение');
   const w = {id:uid('w'),title:(d.title || 'Своя тренировка').trim(),src:'manual',tags:[...new Set(d.exercises.flatMap(e => e.muscles))],exercises:d.exercises.map(e => ({...e,sets:e.sets.map(s => ({...s,weight:num(s.weight),reps:Math.round(num(s.reps)) || 1}))}))};
-  if (d.status !== 'free') { setHub(h => { h.workouts.push(w); }); if (isFuture()) assignDate(w.id); else setSel(w.id); }
+  if (d.editId) {
+    if (d.scope === 'all') { w.id = d.editId; const old = hub().workouts.find(x => x.id === d.editId); if (old) { w.src = old.src; if (old.meso) w.meso = old.meso; } setHub(h => { h.workouts = h.workouts.map(x => x.id === d.editId ? w : x); }); setSel(w.id); }
+    else { setHub(h => { h.workouts.push(w); h.dated[selDay()] = w.id; }); setSel(w.id); }
+  } else if (d.status !== 'free') { setHub(h => { h.workouts.push(w); }); if (isFuture()) assignDate(w.id); else setSel(w.id); }
   ui.modal = null; ui.draft = null;
-  if (start && !isFuture()) startSess(w); else { paint(); toast2(d.status === 'free' ? 'Черновик закрыт' : 'Тренировка сохранена'); }
+  if (start && !isFuture()) startSess(w); else { paint(); toast2(d.status === 'free' ? 'Черновик закрыт' : d.editId ? 'Изменения сохранены' : 'Тренировка сохранена'); }
 }
 function newEx(name, groups, l) { return l ? mkEx(l) : {id:uid('e'),name,muscles:groups || ['chest'],tempo:'2-0-1',restSec:90,sets:[0,1,2].map(() => ({id:uid('s'),type:'n',weight:0,reps:10,rir:2,done:false}))}; }
 
@@ -367,6 +378,13 @@ function onClick(ev) {
     case 'start': { const w = hub().workouts.find(x => x.id === id); if (!w) break; if (sess && !confirm('Текущая тренировка будет заменена. Продолжить?')) break; startSess(w); break; }
     case 'resume': ui.screen = 'workout'; paint(); break;
     case 'back': ui.screen = 'dash'; paint(); break;
+    case 'editw': { const w = hub().workouts.find(x => x.id === id); if (!w) break; openDraft({title:w.title,status:'template',editId:w.id,scope:'date',exercises:JSON.parse(JSON.stringify(w.exercises)).map(e => { e.sets.forEach(z => { z.done = false; }); return e; })}); break; }
+    case 'dscope': ui.draft.scope = v; paint(true); break;
+    case 'sedit': { const x = hub().sessions.find(z => z.id === id); if (!x) break; ui.sdraft = {id, exercises:JSON.parse(JSON.stringify(x.exercises))}; ui.modal = 'sedit'; paint(true); break; }
+    case 'sxrem': ui.sdraft.exercises.splice(e, 1); paint(true); break;
+    case 'ssdel': ui.sdraft.exercises[e].sets.splice(s, 1); if (!ui.sdraft.exercises[e].sets.length) ui.sdraft.exercises.splice(e, 1); paint(true); break;
+    case 'sdelall': if (!confirm('Удалить тренировку из истории и дневника?')) break; { const sid = ui.sdraft.id, x = hub().sessions.find(z => z.id === sid); setHub(h => { h.sessions = h.sessions.filter(z => z.id !== sid); }); if (x) syncEntries({...x, exercises:[]}); } ui.modal = null; ui.sdraft = null; paint(); toast2('Тренировка удалена'); break;
+    case 'ssave': { const d = ui.sdraft; d.exercises.forEach(x => { x.sets = x.sets.map(z => ({...z, weight:Math.min(10000, Math.max(0, num(z.weight))), reps:Math.max(1, Math.round(num(z.reps)) || 1)})); }); const ex = d.exercises.filter(x => x.sets.length); if (!ex.length) return toast2('Оставьте хотя бы один подход или удалите тренировку'); let rec = null; setHub(h => { const x = h.sessions.find(z => z.id === d.id); if (x) { x.exercises = ex; rec = x; } }); if (rec) syncEntries(rec); ui.modal = null; ui.sdraft = null; paint(true); toast2('Изменения сохранены'); break; }
     case 'plan': ui.modal = 'plan'; paint(true); break;
     case 'addmenu': ui.modal = 'addmenu'; paint(true); break;
     case 'favs': ui.modal = 'favs'; paint(true); break;
@@ -421,6 +439,7 @@ function onInput(ev) {
   if (t.matches('[data-q]')) { ui.q = t.value; const l = root.querySelector('[data-exlist]'); if (l) l.innerHTML = exList(); return; }
   if (t.dataset.plan !== undefined) { const k = t.dataset.plan, val = t.value; setHub(h => { if (val) h.plan[k] = val; else delete h.plan[k]; }); return; }
   if (t.dataset.d === 'title') { ui.draft.title = t.value; return; }
+  if (t.dataset.sf) { ui.sdraft.exercises[+t.dataset.e].sets[+t.dataset.s][t.dataset.sf] = t.value; return; }
   if (t.dataset.df) { ui.draft.exercises[+t.dataset.e].sets[+t.dataset.s][t.dataset.df] = t.value; return; }
   if (t.dataset.f && sess) { const x = sess.exercises[+t.dataset.e].sets[+t.dataset.s]; x[t.dataset.f] = t.value; saveSess(); stats(); }
 }
