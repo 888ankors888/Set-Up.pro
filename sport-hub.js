@@ -278,7 +278,7 @@ function addHtml() {
   let body = '';
   if (ap === 'auto') {
     const a = ui.ai, sel = (k, arr) => `<div class="sh-seg" style="margin-bottom:12px">${arr.map(([v, t]) => `<button data-act="aiset" data-k="${k}" data-v="${v}" class="${String(a[k]) === String(v) ? 'on' : ''}">${t}</button>`).join('')}</div>`;
-    body = back + `<span class="sh-chip">Без нейросети · алгоритм</span></div><p class="sh-mu" style="margin-bottom:12px">Программа собирается по вашим параметрам и восстановлению мышц.</p><div class="sh-lbl">Цель</div>${sel('goal', [['hyper','Гипертрофия'],['strength','Сила'],['recomp','Рекомпозиция']])}<div class="sh-lbl">Оборудование</div>${sel('eq', [['gym','Зал'],['home','Дома']])}<div class="sh-lbl">Время, мин</div>${sel('min', [[30,'30'],[45,'45'],[60,'60'],[75,'75']])}<div class="sh-lbl" style="margin-bottom:6px">Акцент на мышцы (пусто — по восстановлению)</div><div class="sh-row sh-wrap" style="margin-bottom:14px">${Object.keys(GROUPS).map(g => `<button class="sh-chip" style="${a.focus.includes(g) ? 'background:' + gc(g) + ';color:#000;border-color:' + gc(g) : gtint(g)}" data-act="aiset" data-k="focus" data-v="${g}">${GROUPS[g]}</button>`).join('')}</div><button class="sh-btn big" data-act="aigen">Собрать программу</button>`;
+    body = back + `<span class="sh-chip">Алгоритм или ИИ</span></div><p class="sh-mu" style="margin-bottom:12px">Задайте параметры: программу соберёт встроенный алгоритм по восстановлению мышц либо ИИ на сервере.</p><div class="sh-lbl">Цель</div>${sel('goal', [['hyper','Гипертрофия'],['strength','Сила'],['recomp','Рекомпозиция']])}<div class="sh-lbl">Оборудование</div>${sel('eq', [['gym','Зал'],['home','Дома']])}<div class="sh-lbl">Время, мин</div>${sel('min', [[30,'30'],[45,'45'],[60,'60'],[75,'75']])}<div class="sh-lbl" style="margin-bottom:6px">Акцент на мышцы (пусто — по восстановлению)</div><div class="sh-row sh-wrap" style="margin-bottom:14px">${Object.keys(GROUPS).map(g => `<button class="sh-chip" style="${a.focus.includes(g) ? 'background:' + gc(g) + ';color:#000;border-color:' + gc(g) : gtint(g)}" data-act="aiset" data-k="focus" data-v="${g}">${GROUPS[g]}</button>`).join('')}</div><button class="sh-btn big" data-act="aigen">Собрать программу (алгоритм)</button><button class="sh-btn ghost big" style="margin-top:8px;border-color:rgba(184,255,44,.5);color:var(--lime)" data-act="aireal"${ui.aiBusy ? ' disabled' : ''}>${ui.aiBusy ? 'ИИ подбирает программу…' : 'Собрать через ИИ'}</button>${ui.aiErr ? `<p style="color:var(--red);margin-top:10px;font-size:13px">${esc(ui.aiErr)}</p>` : ''}<p class="sh-mu" style="margin-top:8px">ИИ работает через сервер приложения, ответ может занять до минуты.</p>`;
   } else if (ap === 'fav') {
     const f = favGet(), exs = f.ex.map(find).filter(Boolean), prs = progList().filter(x => f.pr.includes(x.id));
     body = back + `<b>Избранное · ${exs.length + prs.length}</b></div>` + (exs.length + prs.length ? (prs.length ? '<div class="sh-lbl">Программы</div>' + prs.map(progRow).join('') : '') + (exs.length ? '<div class="sh-lbl" style="margin-top:12px">Упражнения</div>' + exs.map(x => exRow(x)).join('') : '') : '<p class="sh-mu">Пока пусто. Отмечайте упражнения и программы сердечком, и они появятся здесь.</p>');
@@ -300,6 +300,53 @@ function addHtml() {
   }
   const f = favGet(), n = f.ex.length + f.pr.length;
   return sheet('Добавить · ' + d, `<div style="position:relative"><input data-aq placeholder="Найти упражнение или программу..." value="${esc(ui.aq)}"><div data-alist>${acHtml()}</div></div><div data-arest${ui.aq.trim() ? ' style="display:none"' : ''}><div class="sh-row sh-sqrow" style="margin:12px 0">${sc('auto', '<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 4.8L18.6 9.6l-4.8 1.8L12 16.2l-1.8-4.8-4.8-1.8 4.8-1.8L12 3Z"/><path d="M19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9L19 15Z"/></svg>')}<span style="position:relative;flex:1;display:flex">${sc('fav', heartI(ap === 'fav'))}${n ? `<b class="sh-fb">${n}</b>` : ''}</span>${sc('lib', '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5v11M17.5 6.5v11M3.5 9v6M20.5 9v6M6.5 12h11"/></svg>')}${sc('prog', '<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9.5 7H20M9.5 12H20M9.5 17H20M4.5 7h.01M4.5 12h.01M4.5 17h.01"/></svg>')}</div>${body}</div>`);
+}
+
+/* ---------- ИИ-программа дня (сервер, GigaChat) ---------- */
+const AI_API = 'https://food-pro-api.onrender.com/api/sports/day-plan';
+const AIG = {chest:['chest'],back:['back'],shoulders:['shoulders'],arms:['biceps','triceps'],legs:['legs'],glutes:['glutes'],abs:['core']};
+const AIM = {chest:'chest',back:'back',shoulders:'shoulders',biceps:'arms',triceps:'arms',legs:'legs',glutes:'glutes',core:'abs'};
+function aiMatch(name, m) {
+  const n = name.toLowerCase(), pool = LIB.filter(x => !m || x.m === m);
+  let r = LIB.find(x => n.includes(x.n.toLowerCase()) || x.n.toLowerCase().includes(n)); if (r) return r;
+  const stems = n.split(/[^а-яёa-z]+/).filter(z => z.length >= 5).map(z => z.slice(0, 5));
+  return pool.find(x => stems.some(z => x.n.toLowerCase().includes(z))) || null;
+}
+async function aiGenerate() {
+  const a = ui.ai, d = selDay(), h = hub(), pf = (S && S.profile) || {}, sp = (S && S.sports && S.sports.profile) || {};
+  if (ui.aiBusy) return;
+  if (!confirm('Отправить на сервер ИИ цель, возраст, уровень, оборудование и выбранные мышцы для подбора программы? Имя и прочие данные не передаются.')) return;
+  const dl = n => new Date(Date.now() - n * 864e5).toISOString().slice(0, 10), since = dl(28);
+  const body = {date:d, age:Math.min(85, Math.max(18, Math.round(Number(pf.age)) || 30)), level:['beginner','regular','experienced'].includes(sp.level) ? sp.level : 'regular',
+    goal:a.goal === 'strength' ? 'strength' : 'muscle', body_goal:a.goal === 'recomp' ? 'recomp' : (['lose','gain','maintain'].includes(pf.goal) ? pf.goal : 'maintain'),
+    restrictions:['none','yes','unsure'].includes(sp.restrictions) ? sp.restrictions : 'none', health_flag:false, injury:'no', cardio:'no', limitations:false,
+    minutes:a.min, profile_minutes:Math.min(90, Math.max(10, Number(sp.minutes) || a.min)), place:a.eq === 'home' ? 'home' : 'gym', equipment:a.eq === 'home' ? 'Без инвентаря, гантели' : 'Зал: штанги, гантели, тренажёры',
+    kinds:['strength'], intensity:'moderate', wellbeing:'ready', existing_minutes:0,
+    strength_dates:[...new Set(h.sessions.map(x => x.date).filter(x => x >= since))].slice(-28)};
+  const groups = a.focus.flatMap(g => AIG[g] || []); if (groups.length) body.groups = groups;
+  ui.aiBusy = true; ui.aiErr = ''; paint(true);
+  try {
+    let res = null;
+    for (let i = 0; i < 3; i++) {
+      const ctl = new AbortController(), tm = setTimeout(() => ctl.abort(), 120000);
+      try { res = await fetch(AI_API, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body), signal:ctl.signal, credentials:'omit'}); } finally { clearTimeout(tm); }
+      if (res.status !== 502 && res.status !== 503 && !(res.status === 500)) break;
+    }
+    if (res.status === 429) throw new Error('Слишком много запросов. Подождите минуту и повторите.');
+    let j = null; try { j = await res.json(); } catch (e) {}
+    if (!res.ok) throw new Error(typeof (j && j.detail) === 'string' ? j.detail : 'ИИ не смог собрать программу, повторите попытку.');
+    const acts = (j.activities || []).filter(x => x.kind === 'strength' && x.name);
+    if (!acts.length) throw new Error('ИИ не вернул силовых упражнений. Попробуйте другие параметры.');
+    const ex = acts.slice(0, 10).map(x => {
+      const m = AIM[x.muscleGroup] || null, l = aiMatch(x.name, m), mu = m || (l && l.m) || (a.focus[0]) || 'chest';
+      const sets = Math.min(8, Math.max(1, x.sets || 3)), reps = Math.min(50, Math.max(1, x.reps || 10)), wt = x.weight != null ? num(x.weight) : (l ? l.w : 0);
+      return {id:uid('e'), name:x.name, muscles:[mu], tempo:(l && l.tempo) || '2-0-1', restSec:(l && l.rest) || 90, note:x.notes || '', sets:Array.from({length:sets}, () => ({id:uid('s'), type:'n', weight:wt, reps, rir:2, done:false}))};
+    });
+    const w = {id:uid('w'), title:'Программа на ' + dateLabel(d), src:'ai', tags:[...new Set(ex.flatMap(e => e.muscles))], exercises:ex, forDate:d, meso:'ИИ · ' + (j.summary || '')};
+    setHub(hh => { hh.workouts.push(w); hh.dated[d] = w.id; }); setSel(w.id);
+    ui.aiBusy = false; ui.modal = null; paint(); toast2('Программа от ИИ добавлена на ' + dateLabel(d));
+    if (Array.isArray(j.warnings) && j.warnings.length) setTimeout(() => toast2(j.warnings[0]), 2500);
+  } catch (e) { ui.aiBusy = false; ui.aiErr = e.name === 'AbortError' ? 'Сервер долго не отвечает. Повторите попытку.' : (e.message && !/fetch|network/i.test(e.message) ? e.message : 'Нет связи с сервером ИИ. Проверьте интернет и повторите.'); paint(true); }
 }
 function modalHtml() {
   const m = ui.modal; if (!m) return '';
@@ -501,7 +548,7 @@ function onClick(ev) {
     case 'repdel': setHub(h => { h.repeats = h.repeats.filter(x => x.id !== id); }); paint(true); break;
     case 'presetpick': { const pr = PRESETS.find(x => x.id === id); setHub(h => { if (!h.workouts.some(x => x.id === id)) h.workouts.push(mkW(pr.title, pr.names, 'preset', {id, meso:'Готовая программа'})); h.dated[selDay()] = id; }); setSel(id); ui.modal = null; paint(true); toast2('Программа добавлена на ' + dateLabel(selDay())); break; }
     case 'plan': ui.modal = 'plan'; paint(true); break;
-    case 'addmenu': if (selDay() < todayS()) { toast2('На прошедшую дату добавить нельзя'); break; } ui.modal = 'addmenu'; ui.ap = null; ui.aq = ''; ui.np = {name:'', sel:[]}; paint(true); break;
+    case 'addmenu': if (selDay() < todayS()) { toast2('На прошедшую дату добавить нельзя'); break; } ui.modal = 'addmenu'; ui.ap = null; ui.aq = ''; ui.aiErr = ''; ui.np = {name:'', sel:[]}; paint(true); break;
     case 'apanel': if (v === 'auto') { try { const p = S.sports && S.sports.profile; if (p) { ui.ai.goal = p.goal === 'strength' ? 'strength' : 'hyper'; ui.ai.eq = /без|дом/i.test(p.equipment || '') ? 'home' : 'gym'; const mm = Number(p.minutes); if (mm) ui.ai.min = mm <= 30 ? 30 : mm <= 45 ? 45 : mm <= 60 ? 60 : 75; } } catch (x) {} } ui.ap = ui.ap === v ? null : v; ui.back = null; paint(true); break;
     case 'aback': ui.ap = ui.back || null; ui.back = null; paint(true); break;
     case 'libm': ui.libm = v; paint(true); break;
@@ -530,6 +577,7 @@ function onClick(ev) {
     case 'manual': openDraft(); break;
     case 'ai': try { const p = S.sports && S.sports.profile; if (p) { ui.ai.goal = p.goal === 'strength' ? 'strength' : 'hyper'; ui.ai.eq = /без|дом/i.test(p.equipment || '') ? 'home' : 'gym'; const mm = Number(p.minutes); if (mm) ui.ai.min = mm <= 30 ? 30 : mm <= 45 ? 45 : mm <= 60 ? 60 : 75; } } catch (x) {} ui.modal = 'ai'; paint(true); break;
     case 'aiset': if (t.dataset.k === 'focus') { const f = ui.ai.focus, i = f.indexOf(v); if (i < 0) f.push(v); else f.splice(i, 1); } else ui.ai[t.dataset.k] = t.dataset.k === 'min' ? +v : v; paint(true); break;
+    case 'aireal': aiGenerate(); break;
     case 'aigen': { const w = buildDay(); if (!w) { toast2('Не удалось подобрать упражнения'); break; } setHub(h => { h.workouts.push(w); h.dated[selDay()] = w.id; }); setSel(w.id); ui.modal = null; paint(); toast2('Программа добавлена на ' + dateLabel(selDay())); break; }
     case 'progress': ui.modal = 'progress'; paint(true); break;
     case 'mclose': if (t.classList.contains('sh-modal') && ev.target !== t) break;
