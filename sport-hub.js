@@ -88,7 +88,7 @@ function habitState() {
 }
 
 /* ---------- состояние UI ---------- */
-let root = null, sess = loadSess(), ticker = null, wasVisible = false;
+let lastDay = '', root = null, sess = loadSess(), ticker = null, wasVisible = false;
 const ui = {screen: sess ? 'workout' : 'dash', sel: null, body: 'front', muscle: null, day: (new Date().getDay() + 6) % 7, modal: null, draft: null, q: '', result: null, ai: {goal:'hyper',level:'mid',eq:'gym',days:3}};
 const mode = () => hub().mode;
 
@@ -106,22 +106,35 @@ function suggest(h, rec) {
   for (const w of h.workouts) { const t = w.tags.length ? w.tags : ['legs']; const v = t.reduce((a, g) => a + (rec[g] ?? 100), 0) / t.length; if (v > bs) { bs = v; best = w; } }
   return best;
 }
+const selDay = () => { try { return /^\d{4}-\d{2}-\d{2}$/.test(day) ? day : todayS(); } catch (e) { return todayS(); } };
+const RU_M = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+function dayCard(h, d) {
+  const ss = h.sessions.filter(x => x.date === d), en = ((rawState() || {}).workouts?.entries || []).filter(e => e.date === d && !String(e.id).startsWith('hub-'));
+  const [y, m, dd] = d.split('-').map(Number), future = d > todayS();
+  let o = `<div class="sh-card"><div class="sh-row sh-sb"><span class="sh-chip on">${dd} ${RU_M[m - 1]} ${y}</span><span class="sh-chip">${future ? 'Будущая дата' : 'Выполнено'}</span></div>`;
+  if (!ss.length && !en.length) o += `<p class="sh-mu" style="margin-top:12px">${future ? 'Эта дата ещё не наступила.' : 'В этот день тренировок не записано.'}</p>`;
+  ss.forEach(x => { const t = x.exercises.reduce((a, e) => a + e.sets.reduce((b, s) => b + (s.type === 'w' ? 0 : s.weight * s.reps), 0), 0), n = x.exercises.reduce((a, e) => a + e.sets.length, 0);
+    o += `<h3 class="sh-h" style="margin:12px 0 6px">${esc(x.title)}</h3><div class="sh-row sh-wrap sh-mu"><span>${x.minutes} мин</span><span>·</span><span>${n} подх.</span><span>·</span><span>${fmtN(t)} кг</span></div>` + x.exercises.map(e => `<div class="sh-item"><span>${esc(e.name)}</span><span class="sh-mu">${e.sets.filter(s => s.type !== 'w').map(s => s.weight + '×' + s.reps).join(', ')}</span></div>`).join(''); });
+  en.forEach(e => { o += `<div class="sh-item"><span>${esc(e.name)}</span><span class="sh-mu">${e.minutes ? e.minutes + ' мин' : ''}</span></div>`; });
+  return o + '</div>';
+}
 function dash() {
   const h = hub(), rec = recovery(h), pro = h.mode === 'pro';
   const sg = suggest(h, rec); let w = h.workouts.find(x => x.id === ui.sel) || sg; if (w) ui.sel = w.id;
   const nu = nutri(), hb = habitState(), wt = weekTon(h);
   const ready = w && w.tags.length ? Math.round(w.tags.reduce((a, g) => a + rec[g], 0) / w.tags.length) : 100;
   const setsN = w ? w.exercises.reduce((a, e) => a + e.sets.length, 0) : 0, dur = w ? Math.round(w.exercises.reduce((a, e) => a + e.sets.length * (e.restSec + 40), 0) / 60) : 0;
-  let o = `<div class="sh-row sh-sb" style="margin-bottom:12px"><div><h2 class="sh-h">Спорт</h2><p class="sh-mu">Тренировки, восстановление, питание и привычки</p></div><div class="sh-seg" style="min-width:150px"><button data-act="mode" data-v="novice" class="${pro ? '' : 'on'}">Новичок</button><button data-act="mode" data-v="pro" class="${pro ? 'on' : ''}">Про</button></div></div>`;
+  let o = `<div class="sh-row" style="margin-bottom:12px;justify-content:flex-end"><div class="sh-seg" style="min-width:150px"><button data-act="mode" data-v="novice" class="${pro ? '' : 'on'}">Новичок</button><button data-act="mode" data-v="pro" class="${pro ? 'on' : ''}">Про</button></div></div>`;
   if (sess) o += `<div class="sh-card sh-syn"><div class="sh-lbl">Тренировка идёт</div><p class="sh-h" style="margin:4px 0 10px">${esc(sess.title)}</p><button class="sh-btn big" data-act="resume">Продолжить · ${fmtT(Date.now() - sess.startedAt)}</button></div>`;
-  if (w) o += `<div class="sh-card"><div class="sh-row sh-sb"><span class="sh-chip on">Сегодня</span><span class="sh-chip">${w.src === 'ai' ? 'Конструктор' : w.src === 'plan' ? 'План' : 'Вручную'}</span></div>
+  const isToday = selDay() === todayS(); let card = '';
+  if (!isToday) card = dayCard(h, selDay()); else if (w) card = `<div class="sh-card"><div class="sh-row sh-sb"><span class="sh-chip on">Сегодня</span><span class="sh-chip">${w.src === 'ai' ? 'Конструктор' : w.src === 'plan' ? 'План' : 'Вручную'}</span></div>
   ${w.meso ? `<p class="sh-mu" style="margin-top:10px">${esc(w.meso)}</p>` : ''}<h3 class="sh-h" style="margin:4px 0 8px">${esc(w.title)}</h3>
   <div class="sh-row sh-wrap sh-mu"><span>~${dur} мин</span><span>·</span><span>${w.exercises.length} упр.</span><span>·</span><span>${setsN} подх.</span><span>·</span><span>${fmtN(wTon(w))} кг</span></div>
   <div class="sh-chips" style="margin:10px 0">${w.exercises.map(e => `<span class="sh-chip">${esc(e.name)}</span>`).join('')}</div>
   <div class="sh-row sh-sb" style="margin-bottom:8px"><span class="sh-lbl">Готовность мышц</span><b style="color:${recCol(ready)}">${ready}%</b></div><div class="sh-bar" style="margin-bottom:14px"><i style="width:${ready}%;background:${recCol(ready)}"></i></div>
   <button class="sh-btn big" data-act="start" data-id="${w.id}">${sess ? 'Начать заново' : 'Начать тренировку'}</button></div>`;
   o += `<div class="sh-lbl" style="margin:4px 2px 8px">Мои тренировки</div><div class="sh-chips" style="margin-bottom:12px">${h.workouts.map(x => `<button class="sh-chip${x.id === ui.sel ? ' on' : ''}" data-act="sel" data-id="${x.id}">${esc(x.title)}</button>`).join('')}<button class="sh-chip" data-act="manual">+ Своя тренировка</button></div>`;
-  o += `<div class="sh-grid3"><button class="sh-qa" data-act="manual"><b>+</b>Создать вручную</button><button class="sh-qa" data-act="ai"><b>★</b>Конструктор программ</button><button class="sh-qa" data-act="progress"><b>↗</b>Прогресс и PR</button></div>`;
+  o += `<div class="sh-grid3"><button class="sh-qa" data-act="manual"><b>+</b>Создать вручную</button><button class="sh-qa" data-act="ai"><b>★</b>Конструктор программ</button><button class="sh-qa" data-act="progress"><b>↗</b>Прогресс и PR</button></div>` + card;
   const sm = ui.muscle;
   o += `<div class="sh-card"><div class="sh-row sh-sb" style="margin-bottom:10px"><h3 class="sh-h" style="font-size:16px">Восстановление мышц</h3><div class="sh-seg"><button data-act="body" data-v="front" class="${ui.body === 'front' ? 'on' : ''}">Спереди</button><button data-act="body" data-v="back" class="${ui.body === 'back' ? 'on' : ''}">Сзади</button></div></div>
   <div class="sh-body">${bodySvg(rec)}<div style="flex:1">${sm ? `<div class="sh-lbl">${GROUPS[sm]}</div><p class="sh-h" style="color:${recCol(rec[sm])}">${rec[sm]}%</p><p class="sh-mu" style="margin:4px 0 8px">${rec[sm] >= 100 ? 'Готова к нагрузке' : rec[sm] >= 75 ? 'Почти восстановилась' : 'Лучше дать отдых'}</p>${h.workouts.filter(x => x.tags.includes(sm)).slice(0, 2).map(x => `<button class="sh-chip" data-act="sel" data-id="${x.id}">${esc(x.title)}</button>`).join(' ')}` : `<p class="sh-mu">Нажмите на группу мышц, чтобы увидеть восстановление. Красный — отдыхает, лимонный — готова.</p>`}</div></div>
@@ -364,6 +377,8 @@ function mount() {
     root.addEventListener('click', onClick); root.addEventListener('input', onInput); root.addEventListener('submit', onSubmit);
   }
   if (!sec.contains(root)) { sec.append(root); wasVisible = false; }
+  const dnow = selDay(); const chg = lastDay && lastDay !== dnow; lastDay = dnow;
+  if (chg && wasVisible && ui.screen === 'dash' && !ui.modal) paint(true);
   if (!wasVisible) { wasVisible = true; if (!ui.modal || ui.modal === 'result') paint(); }
 }
 function init() {
