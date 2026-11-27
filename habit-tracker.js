@@ -280,7 +280,7 @@
     const list=active(),settings=config(),stats=hdStats(list,settings,selected);
     if(activeGroup!==null&&!stats.groups.some(g=>g.key===activeGroup))activeGroup=null;
     const shown=activeGroup===null?list:list.filter(d=>gkey(d)===activeGroup);
-    return '<h1>Привычки</h1>'+(list.length?'<div class="hd-shell">'+hdSummary(stats)+'<div class="hb-grid">'+shown.map(d=>habitCard(d,settings[d.id])).join('')+'</div></div>':'<section class="card"><h2>Пока нет выбранных привычек</h2><p>Добавьте первую привычку прямо здесь — выберите из готовых групп или создайте свою.</p><button type="button" class="btn" data-hb-add>Добавить привычку</button></section>')+'<p class="mu">Привычки можно добавлять кнопкой «Добавить привычку» или в разделе «Мои данные → Привычки».</p><p class="subtle">Отметки — ваш самоотчёт. Отсутствие отметки не означает невыполнение. История хранится в этом браузере; снятие галочки в анкете не удаляет прошлые отметки. Время не включает отправку уведомлений.</p><div class="habit-settings-footer"><button type="button" class="btn s" data-habit-settings>Настроить привычки</button></div>';
+    return '<h1>Привычки</h1>'+(list.length?'<div class="hd-shell">'+hdSummary(stats)+'<div class="hb-grid">'+shown.map(d=>habitCard(d,settings[d.id])).join('')+'</div></div>':'<section class="card"><h2>Пока нет выбранных привычек</h2><p>Добавьте первую привычку прямо здесь — выберите из готовых групп или создайте свою.</p><button type="button" class="btn" data-hb-add>Добавить привычку</button></section>')+'<div class="habit-settings-footer"><button type="button" class="btn s" data-habit-settings>Настроить привычки</button></div>';
   };
   function nav(){
     if(!S.profile||editing)return;
