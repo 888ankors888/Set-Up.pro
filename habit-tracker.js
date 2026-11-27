@@ -101,14 +101,14 @@
     else if(id!=='13:4'&&c.target)chips.push('Ориентир: '+c.target);
     const status=marked?'Выполнено на выбранный день':scheduled?'Запланировано на выбранный день':c.schedule==='flexible'?'Необязательная отметка — по возможности':'Вне текущего расписания — можно отметить дополнительно';
     const info=id==='0:0'?'Это ручная отметка привычки: она не добавляет воду в дневник и не проверяет выпитый объём.':'Это ручная отметка привычки: она отражает ваш самоотчёт и ничего не проверяет автоматически.';
-    const cells=keys.map(k=>{const m=done(id,k),label=k.slice(8)+'.'+k.slice(5,7);return '<button type="button" class="hb-day'+(m?' is-done':'')+(k===selected?' is-selected':'')+'" data-hb-day data-habit="'+esc(id)+'" data-date="'+k+'" aria-pressed="'+m+'" aria-label="'+esc(fmt(k))+': '+(m?'выполнено, нажмите, чтобы снять отметку':'нет отметки, нажмите, чтобы отметить')+'"><span class="hb-day-date">'+label+'</span><span class="hb-day-mark" aria-hidden="true">'+(m?iconCheck(14):'—')+'</span></button>'}).join('');
+    const cells=keys.map(k=>{const m=done(id,k),label=k.slice(8)+'.'+k.slice(5,7);return '<div class="hb-day'+(m?' is-done':'')+(k===selected?' is-selected':'')+'" role="listitem" aria-label="'+esc(fmt(k))+': '+(m?'выполнено':'нет отметки')+'"><span class="hb-day-date">'+label+'</span><span class="hb-day-mark" aria-hidden="true">'+(m?iconCheck(14):'—')+'</span></div>'}).join('');
     const ring='<div class="hb-ring" role="img" aria-label="Выполнено '+count+' из 7 дней"><svg viewBox="0 0 80 80" width="80" height="80" aria-hidden="true"><defs><linearGradient id="hb-g-'+uid+'" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#B4F74A"/><stop offset="1" stop-color="#92E619"/></linearGradient></defs><circle class="hb-ring-track" cx="40" cy="40" r="'+R+'" fill="none" stroke-width="7"/>'+(count?'<circle class="hb-ring-arc" cx="40" cy="40" r="'+R+'" fill="none" stroke="url(#hb-g-'+uid+')" stroke-width="7" stroke-linecap="round" stroke-dasharray="'+C+'" stroke-dashoffset="'+off+'" style="--hb-c:'+C+'"/>':'')+'</svg><div class="hb-ring-c"><b>'+count+'/7</b><small>за 7 дн.</small></div></div>';
     return '<section class="hb-card" data-hb-habit="'+esc(id)+'" data-hb-group="'+meta.key+'" style="--hb-g:'+meta.color+';--hb-g-a:'+rgba(meta.color,.1)+';--hb-g-b:'+rgba(meta.color,.35)+'">'
       +'<div class="hb-top"><span class="hb-badge"><span class="hb-badge-emoji" aria-hidden="true">'+esc(meta.emoji)+'</span><span class="hb-badge-text">'+esc(meta.name)+'</span></span><button type="button" class="hb-info" data-hb-info aria-expanded="false" aria-controls="hb-pop-'+uid+'" aria-label="Ручная отметка: пояснение">i</button></div>'
       +'<div class="hb-pop" id="hb-pop-'+uid+'" role="note" hidden>'+esc(info)+'</div>'
       +'<div class="hb-head"><div class="hb-head-main"><h2 class="hb-title">'+esc(title(d,c))+'</h2><div class="hb-chips">'+chips.map(x=>'<span class="hb-chip">'+esc(x)+'</span>').join('')+'</div><p class="hb-status'+(marked?' is-done':'')+'"><span class="hb-status-dot" aria-hidden="true"></span>'+esc(status)+'</p></div>'+ring+'</div>'
       +'<button type="button" class="hb-cta'+(marked?' is-done':'')+'" data-hb-cta data-habit="'+esc(id)+'" data-date="'+selected+'" aria-pressed="'+marked+'"><span class="hb-cta-box" aria-hidden="true">'+iconCheck(16)+'</span><span>'+(marked?'Выполнено':'Отметить выполнение')+'</span></button>'
-      +'<div class="hb-days" role="group" aria-label="Отметки за семь дней">'+cells+'</div></section>';
+      +'<div class="hb-days" role="list" aria-label="Отметки за семь дней">'+cells+'</div></section>';
   }
 
   /* Summary module "Привычки дня" (Split header) */
@@ -343,13 +343,7 @@
       return;
     }
     if(target.closest('[data-hd-reset]')){onFilterChange(null);return;}
-    const day=target.closest('[data-hb-day]');
-    if(day){
-      const id=day.dataset.habit,date=day.dataset.date;
-      onToggleDay(id,date,day.getAttribute('aria-pressed')!=='true');
-      document.querySelector('[data-hb-day][data-habit="'+id+'"][data-date="'+date+'"]')?.focus({preventScroll:true});
-      return;
-    }
+    /* Completion is set only by the "Отметить выполнение" button; the 7-day strip is read-only */
     const cta=target.closest('[data-hb-cta]');
     if(cta){
       const id=cta.dataset.habit,date=cta.dataset.date;
@@ -463,9 +457,7 @@
 .hb-card .hb-cta.is-done{background:linear-gradient(135deg,var(--hb-acc),var(--hb-acc2));border-color:transparent;color:#041410;box-shadow:0 10px 26px -10px var(--hb-acc-glow),inset 0 1px 0 rgba(255,255,255,.35)}
 .hb-cta.is-done .hb-cta-box{border-color:rgba(4,20,16,.55);color:#041410}
 .hb-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
-.hb-card .hb-day{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0;padding:8px 0 7px;border-radius:12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);color:var(--hb-tx2);font-family:var(--hb-ui);cursor:pointer;transition:background .2s,border-color .2s,color .2s,transform .15s}
-.hb-card .hb-day:hover{border-color:var(--hb-line);background:rgba(180,247,74,.06)}
-.hb-card .hb-day:active{transform:scale(.95)}
+.hb-card .hb-day{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0;padding:8px 0 7px;border-radius:12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);color:var(--hb-tx2);font-family:var(--hb-ui);cursor:default;pointer-events:none;-webkit-user-select:none;user-select:none}
 .hb-day-date{font:500 10.5px/1 var(--hb-ui);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
 .hb-day-mark{display:grid;place-items:center;height:16px;font:600 14px/1 var(--hb-ui);color:var(--hb-tx3)}
 .hb-card .hb-day.is-done{background:rgba(180,247,74,.1);color:var(--hb-acc)}
@@ -516,7 +508,7 @@ html body dialog.hb-dlg .hb-dlg-body{display:block!important;flex:none!important
 .hb-dlg .hb-dlg-del{margin:0;padding:6px 10px;border-radius:999px;background:rgba(255,138,138,.1);border:1px solid rgba(255,138,138,.35);color:#FF8A8A;font:600 12px/1.2 var(--hb-ui);cursor:pointer}
 .hb-dlg button:focus-visible,.hb-dlg input:focus-visible,.hb-dlg select:focus-visible,.hb-dlg summary:focus-visible{outline:2px solid var(--hb-acc);outline-offset:2px}
 @media(max-width:520px){html body dialog.hb-dlg{width:calc(100vw - 16px)!important;border-radius:22px}.hb-dlg .hb-dlg-head{padding:16px 16px 10px}.hb-dlg .hb-dlg-tabs{margin:0 16px 10px}html body dialog.hb-dlg .hb-dlg-body{padding:4px 16px 18px}}
-@media(prefers-reduced-motion:reduce){.hb-ring-arc,.hd-seg,.hd-bar i{animation:none}.hb-card .hb-cta,.hb-card .hb-day,.hb-card .hb-info,.hd-module .hd-group,.hd-bar i,.hd-module .hd-add{transition:none}}
+@media(prefers-reduced-motion:reduce){.hb-ring-arc,.hd-seg,.hd-bar i{animation:none}.hb-card .hb-cta,.hb-card .hb-info,.hd-module .hd-group,.hd-bar i,.hd-module .hd-add{transition:none}}
 `;document.head.appendChild(hb);
   render();
 })();
