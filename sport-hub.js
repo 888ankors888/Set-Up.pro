@@ -263,6 +263,10 @@ function modalHtml() {
     const row = (a, i, t, sub) => `<button class="sh-item" data-act="${a}" style="padding:14px"><span class="sh-row" style="gap:14px">${ic(i)}<span><b>${t}</b><br><span class="sh-mu">${sub}</span></span></span><b style="color:var(--mu)">›</b></button>`;
     return sheet('Добавить на ' + dateLabel(selDay()), row('dayex', '<path d="M6 7v10M18 7v10M3 10v4M21 10v4M6 12h12"/>', 'Добавить упражнения', 'Выбрать из библиотеки') + row('favs', '<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>', 'Добавить программу тренировок', 'Готовую или новую на выбранный день') + row('ai', '<path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/>', 'Программа на день: авто-подбор', 'По цели и мышцам, без нейросети'));
   }
+  if (m === 'delmenu') {
+    const row = (a, t, sub) => `<button class="sh-item" data-act="${a}" style="padding:14px"><span><b>${t}</b><br><span class="sh-mu">${sub}</span></span><b style="color:var(--mu)">›</b></button>`;
+    return sheet('Удалить тренировку', row('delone', 'Только эту дату', 'Остальные запланированные останутся') + row('delall', 'Эту и все запланированные', 'Повторения и дублирующиеся даты вперёд'));
+  }
   if (m === 'plan') {
     const h = hub(), t = wdOf(todayS());
     return sheet('План недели', `<p class="sh-mu" style="margin-bottom:6px">Назначьте программу на каждый день. По плану она появится в карточке дня, и её можно сразу запустить.</p>${WDL.map((n2, i) => `<div class="sh-item"><b style="min-width:110px;${String(i) === t ? 'color:var(--lime)' : ''}">${n2}</b><select data-plan="${i}"><option value="">Не задано</option><option value="rest"${h.plan[i] === 'rest' ? ' selected' : ''}>День отдыха</option>${h.workouts.filter(z => !z.forDate).map(x => `<option value="${x.id}"${h.plan[i] === x.id ? ' selected' : ''}>${esc(x.title)}</option>`).join('')}</select></div>`).join('')}<div class="sh-row" style="margin-top:14px"><button class="sh-btn ghost" style="flex:1" data-act="manual">Создать программу</button><button class="sh-btn" style="flex:1" data-act="rclose">Готово</button></div>`);
@@ -463,7 +467,12 @@ function onClick(ev) {
     case 'dayex': ui.q = ''; ui.modal = 'dayex'; paint(true); break;
     case 'favs': ui.modal = 'favs'; paint(true); break;
     case 'favpick': assignDate(id); setSel(id); toast2('Программа добавлена на ' + dateLabel(selDay())); ui.modal = null; paint(true); break;
-    case 'delplan': if (!confirm('Удалить тренировку из плана на эту дату?')) break; setHub(h => { h.dated[selDay()] = 'rest'; }); paint(true); break;
+    case 'delplan': { const h = hub(), d = selDay(), wid = planOf(h, d); if (!wid || wid === 'rest') break;
+      const dup = h.repeats.some(r => r.wid === wid) || Object.keys(h.dated).some(k => k > d && h.dated[k] === wid) || Object.keys(h.plan).some(k => h.plan[k] === wid);
+      if (dup) { ui.modal = 'delmenu'; paint(true); break; }
+      if (!confirm('Удалить тренировку из плана на эту дату?')) break; setHub(x => { x.dated[d] = 'rest'; }); paint(true); break; }
+    case 'delone': { const d = selDay(); setHub(x => { x.dated[d] = 'rest'; }); ui.modal = null; paint(true); toast2('Удалена тренировка на эту дату'); break; }
+    case 'delall': { const d = selDay(); setHub(x => { const wid = planOf(x, d); x.repeats = x.repeats.filter(r => r.wid !== wid); Object.keys(x.dated).forEach(k => { if (k >= d && x.dated[k] === wid) delete x.dated[k]; }); Object.keys(x.plan).forEach(k => { if (x.plan[k] === wid) x.plan[k] = 'rest'; }); x.dated[d] = 'rest'; }); ui.modal = null; paint(true); toast2('Удалены эта и все будущие тренировки'); break; }
     case 'undate': setHub(h => { delete h.dated[selDay()]; }); paint(true); break;
     case 'repeat': { const h = hub(), x = h.sessions.find(z => z.id === id); if (!x) break; let w = h.workouts.find(z => z.id === x.workoutId); if (!w) { w = {id:uid('w'),title:x.title,src:'manual',tags:[...new Set(x.exercises.flatMap(e => e.muscles))],exercises:x.exercises.map(e => { const l = find(e.name) || {}; return {id:uid('e'),name:e.name,muscles:e.muscles,tempo:l.tempo || '2-0-1',restSec:l.rest || 90,sets:e.sets.map(z => ({id:uid('s'),type:z.type,weight:z.weight,reps:z.reps,rir:z.rir,done:false}))}; })}; setHub(hh => { hh.workouts.push(w); }); } if (isFuture()) { assignDate(w.id); toast2('Тренировка добавлена в план'); paint(true); } else { if (sess && !confirm('Текущая тренировка будет заменена. Продолжить?')) break; startSess(w); } break; }
     case 'favdel': if (confirm('Удалить программу?')) { setHub(h => { h.workouts = h.workouts.filter(x => x.id !== id); h.repeats = h.repeats.filter(x => x.wid !== id); }); if (ui.sel === id) ui.sel = null; paint(true); } break;
