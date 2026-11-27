@@ -40,3 +40,14 @@ function start() {
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once: true });
 else start();
 })();
+
+/* Loads the quick habit check-in window (opened from the "+" quick menu). */
+(() => {
+'use strict';
+if (document.querySelector('script[data-habit-quick]')) return;
+const script = document.createElement('script');
+script.src = new URL('habit-quick.js?v=1', document.baseURI).href;
+script.dataset.habitQuick = 'true';
+script.onerror = () => console.warn('habit-quick.js is not loaded');
+document.head.append(script);
+})();
