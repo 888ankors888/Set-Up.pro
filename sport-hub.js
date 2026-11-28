@@ -149,6 +149,25 @@ function bodySvg(rec) {
   <text x="8" y="412" font-size="8" fill="${NEON}" fill-opacity=".7" font-family="monospace">${front ? 'FRONT' : 'REAR'}</text>
   </svg>`;
 }
+
+function pvList(x, wk) {
+  if (!ui.pve || ui.pve.id !== x.id) {
+    const list = x.names.map((n, i) => { const l = find(n); const src = wk && wk.exercises[i]; const ex = src ? JSON.parse(JSON.stringify(src)) : (l ? mkEx(l) : newEx(n, [x.tags[0]], null)); ex.sets.forEach(z => { z.done = false; }); return ex; });
+    ui.pve = {id: x.id, list}; ui.pved = null;
+  }
+  return ui.pve.list;
+}
+function pvRows(x, wk) {
+  const list = pvList(x, wk);
+  if (!list.length) return '<p class="sh-mu" style="margin:10px 0">Упражнений не осталось. Закройте окно и откройте программу заново.</p>';
+  const st = (i, k, lab, val) => `<div class="sh-row sh-sb" style="margin-top:10px"><span class="sh-lbl">${lab}</span><span class="sh-row" style="gap:10px"><button class="sh-sq sm" data-act="pvs" data-i="${i}" data-k="${k}" data-d="-1">−</button><b style="min-width:70px;text-align:center">${val}</b><button class="sh-sq sm" data-act="pvs" data-i="${i}" data-k="${k}" data-d="1">+</button></span></div>`;
+  return list.map((e, i) => {
+    const m = e.muscles[0], n = e.sets.length, r = e.sets[0] ? e.sets[0].reps : 0, w = e.sets[0] ? num(e.sets[0].weight) : 0, open = ui.pved === i;
+    return `<div class="sh-item" style="border-left:3px solid ${gc(m)};flex-wrap:wrap"><span style="flex:1;min-width:0">${i + 1}. ${esc(e.name)}<br><span class="sh-mu">${gtxt(m)} · ${n} × ${r}${w ? ' · ' + w + ' кг' : ''}</span></span>` +
+      `<span class="sh-row" style="gap:6px;flex:none"><button class="sh-chip${open ? ' on' : ''}" data-act="pved" data-i="${i}">${open ? 'Готово' : 'Изменить'}</button><button class="sh-chip" data-act="pvdel" data-i="${i}" style="color:var(--red);border-color:rgba(255,90,95,.4)">Удалить</button></span>` +
+      (open ? `<div style="width:100%;margin-top:4px">${st(i, 'sets', 'Подходы', n)}${st(i, 'reps', 'Повторения', r)}${st(i, 'w', 'Вес', w ? w + ' кг' : 'свой вес')}</div>` : '') + `</div>`;
+  }).join('');
+}
 function suggest(h, rec) {
   let best = null, bs = 101;
   for (const w of h.workouts.filter(z => !z.forDate)) { const t = w.tags.length ? w.tags : ['legs']; const v = t.reduce((a, g) => a + (rec[g] ?? 0), 0) / t.length; if (v < bs) { bs = v; best = w; } }
@@ -320,7 +339,7 @@ function addHtml() {
   } else if (ap === 'pv') {
     const x = progList().find(z => z.id === ui.pv); if (!x) { ui.ap = null; return addHtml(); }
     const on = favGet().pr.includes(x.id), h = hub(), wk = h.workouts.find(z => z.id === x.id);
-    body = back + `<span class="sh-chip">${x.mine ? 'Моя программа' : 'Готовая программа'}</span></div><div class="sh-row sh-sb"><h3 class="sh-h">${esc(x.title)}</h3><button class="sh-chip" data-act="afav" data-k="pr" data-v="${esc(x.id)}" style="line-height:0;padding:7px 9px">${heartI(on)}</button></div><div style="margin:6px 0 10px">${x.tags.map(gtxt).join(', ')}</div>` + x.names.map((n, i) => { const l = find(n), m = l ? l.m : (x.tags[0]), e = wk && wk.exercises[i]; return `<div class="sh-item" style="border-left:3px solid ${gc(m)}"><span>${i + 1}. ${esc(n)}<br><span class="sh-mu">${gtxt(m)}${e ? ' · ' + e.sets.length + ' подх.' : ''}</span></span></div>`; }).join('') + `<button class="sh-btn big" style="margin-top:14px" data-act="${x.mine ? 'favpick' : 'presetpick'}" data-id="${esc(x.id)}">Добавить на ${d}</button>`;
+    body = back + `<span class="sh-chip">${x.mine ? 'Моя программа' : 'Готовая программа'}</span></div><div class="sh-row sh-sb"><h3 class="sh-h">${esc(x.title)}</h3><button class="sh-chip" data-act="afav" data-k="pr" data-v="${esc(x.id)}" style="line-height:0;padding:7px 9px">${heartI(on)}</button></div><div style="margin:6px 0 10px">${x.tags.map(gtxt).join(', ')}</div>` + pvRows(x, wk) + `<button class="sh-btn big" style="margin-top:14px" data-act="pvadd" data-id="${esc(x.id)}">Добавить на ${d}</button>`;
   } else {
     body = '<p class="sh-mu" style="margin:2px 0 4px">Найдите упражнение или программу, либо выберите инструмент ниже.</p>';
   }
@@ -572,6 +591,22 @@ function onClick(ev) {
     case 'repset': { const r = ui.rep, k = t.dataset.k; if (k === 'wd') { const i = +v, j = r.wd.indexOf(i); if (j < 0) r.wd.push(i); else r.wd.splice(j, 1); } else r[k] = k === 'every' && v === 'wd' ? 'wd' : +v; paint(true); break; }
     case 'repsave': { const r = ui.rep; if (r.every === 'wd' && !r.wd.length) { toast2('Выберите хотя бы один день недели'); break; } const st = selDay(), u = r.len ? (() => { const d = dtl(st); d.setDate(d.getDate() + r.len * 7 - 1); return dkey(d); })() : null; setHub(h => { h.repeats.push({id:uid('r'), wid:r.wid, start:st, every:r.every === 'wd' ? null : r.every, wd:r.every === 'wd' ? r.wd.slice().sort() : null, until:u}); }); toast2('Повторение включено'); ui.modal = null; paint(true); break; }
     case 'repdel': setHub(h => { h.repeats = h.repeats.filter(x => x.id !== id); }); paint(true); break;
+    case 'pved': { const i = +t.dataset.i; ui.pved = ui.pved === i ? null : i; paint(true); break; }
+    case 'pvdel': { const i = +t.dataset.i; if (ui.pve) { ui.pve.list.splice(i, 1); ui.pved = null; } paint(true); break; }
+    case 'pvs': { const ex = ui.pve && ui.pve.list[+t.dataset.i]; if (!ex) break; const k = t.dataset.k, dl = +t.dataset.d;
+      if (k === 'sets') { if (dl > 0) { const l = ex.sets[ex.sets.length - 1]; ex.sets.push(Object.assign({}, l, {id:uid('s'), done:false})); } else if (ex.sets.length > 1) ex.sets.pop(); }
+      else if (k === 'reps') ex.sets.forEach(z => { z.reps = Math.max(1, num(z.reps) + dl); });
+      else ex.sets.forEach(z => { z.weight = Math.max(0, Math.round((num(z.weight) + dl * 2.5) * 10) / 10); });
+      paint(true); break; }
+    case 'pvadd': { const x = progList().find(z => z.id === id); if (!x) break; const pe = ui.pve;
+      if (pe && pe.id === id) {
+        if (!pe.list.length) { toast2('В программе не осталось упражнений'); break; }
+        const ex = JSON.parse(JSON.stringify(pe.list)); ex.forEach(q => { q.id = uid('e'); q.sets.forEach(z => { z.id = uid('s'); z.done = false; }); });
+        const w = {id:uid('w'), title:x.title, src:'manual', tags:[...new Set(ex.flatMap(q => q.muscles))], exercises:ex, forDate:selDay(), meso:'Изменённая программа'};
+        setHub(hh => { hh.workouts.push(w); hh.dated[selDay()] = w.id; }); setSel(w.id);
+      } else if (x.mine) { assignDate(id); setSel(id); }
+      else { const pr = PRESETS.find(z => z.id === id); if (!pr) break; setHub(hh => { if (!hh.workouts.some(z => z.id === id)) hh.workouts.push(mkW(pr.title, pr.names, 'preset', {id, meso:'Готовая программа'})); hh.dated[selDay()] = id; }); setSel(id); }
+      ui.pve = null; ui.pved = null; ui.modal = null; paint(true); toast2('Программа добавлена на ' + dateLabel(selDay())); break; }
     case 'presetpick': { const pr = PRESETS.find(x => x.id === id); setHub(h => { if (!h.workouts.some(x => x.id === id)) h.workouts.push(mkW(pr.title, pr.names, 'preset', {id, meso:'Готовая программа'})); h.dated[selDay()] = id; }); setSel(id); ui.modal = null; paint(true); toast2('Программа добавлена на ' + dateLabel(selDay())); break; }
     case 'plan': ui.modal = 'plan'; paint(true); break;
     case 'addmenu': if (selDay() < todayS()) { toast2('На прошедшую дату добавить нельзя'); break; } ui.modal = 'addmenu'; ui.ap = null; ui.aq = ''; ui.aiErr = ''; ui.np = {name:'', sel:[]}; paint(true); break;
@@ -584,7 +619,7 @@ function onClick(ev) {
     case 'cfgbw': { const l = find(ui.cfg.n); ui.cfg.w = ui.cfg.w ? 0 : (l.w || 20); paint(true); break; }
     case 'cfgadd': { const c = ui.cfg, l = find(c.n), ex = newEx(c.n, [l.m], l); ex.sets = Array.from({length:c.sets}, () => ({id:uid('s'),type:'n',weight:c.w,reps:c.reps,rir:2,done:false})); addExDay(c.n, l, ex); ui.ap = ui.back || null; ui.back = null; ui.cfg = null; paint(true); break; }
     case 'afav': favToggle(t.dataset.k, t.dataset.v); paint(true); break;
-    case 'apv': ui.pv = id; ui.back = ui.aq.trim() ? null : ui.ap; ui.aq = ''; ui.ap = 'pv'; paint(true); break;
+    case 'apv': ui.pve = null; ui.pved = null; ui.pv = id; ui.back = ui.aq.trim() ? null : ui.ap; ui.aq = ''; ui.ap = 'pv'; paint(true); break;
     case 'acust': { const nm = ui.aq.trim(); if (!nm) break; addExDay(nm, null); ui.aq = ''; paint(true); break; }
     case 'npt': { const n2 = t.dataset.n, i = ui.np.sel.indexOf(n2); if (i < 0) ui.np.sel.push(n2); else ui.np.sel.splice(i, 1); paint(true); break; }
     case 'npsave': { const np = ui.np; if (!np.name.trim() || !np.sel.length) break; const w = mkW(np.name.trim(), np.sel, 'manual'); setHub(h => { h.workouts.push(w); h.dated[selDay()] = w.id; }); setSel(w.id); ui.modal = null; ui.np = {name:'', sel:[]}; paint(true); toast2('Программа сохранена и добавлена на ' + dateLabel(selDay())); break; }
