@@ -1,8 +1,14 @@
-/* Цвет фона блоков по разделу: питание зелёный (как был), спорт бирюзовый, привычки фиолетовый */
-html:root:root:root:root body:has(#nav .setup-sphere-layer.is-on[data-sphere="sport"]) :is(.card,.welcome){background:linear-gradient(140deg,#0c4f60,#07323f)!important;border-color:rgba(56,232,255,.45)!important}
-html:root:root:root:root body:has(#nav .setup-sphere-layer.is-on[data-sphere="sport"]) .card .card{background:#062a35!important}
-html:root:root:root:root body:has(#nav .setup-sphere-layer.is-on[data-sphere="sport"]) #sport-hub{--card:#0b4352;--card2:#08313d;--bd:rgba(56,232,255,.4)}
-html:root:root:root:root body:has(#nav .setup-sphere-layer.is-on[data-sphere="sport"]) #sport-hub .sh-top{background:rgba(5,24,31,.95)}
-html:root:root:root:root body:has(#nav .setup-sphere-layer.is-on[data-sphere="tracker"]) :is(.card,.welcome){background:linear-gradient(140deg,#40225f,#2a1542)!important;border-color:rgba(187,107,217,.5)!important}
-html:root:root:root:root body:has(#nav .setup-sphere-layer.is-on[data-sphere="tracker"]) .card .card{background:#220f38!important}
-html:root:root:root:root body:has(#nav .setup-sphere-layer.is-on[data-sphere="tracker"]){--hb-surface:rgba(64,34,95,.7);--hb-line:rgba(187,107,217,.45);--hb-glow:#3a1d5c}
+/* Фон блоков по разделу: полупрозрачный градиент с оттенком раздела.
+   питание лаймово-зелёный, спорт бирюзовый, привычки фиолетовый */
+html:root:root:root:root body:has(#nav .setup-sphere-layer.is-on[data-sphere="eat"]) :is(.card,.welcome){background:radial-gradient(120% 90% at 0% 0%,rgba(184,255,44,.16),transparent 60%),linear-gradient(140deg,rgba(18,84,66,.62),rgba(7,44,38,.5))!important;border-color:rgba(184,255,44,.3)!important;-webkit-backdrop-filter:blur(14px) saturate(130%);backdrop-filter:blur(14px) saturate(130%)}
+html:root:root:root:root body:has(#nav .setup-sphere-layer.is-on[data-sphere="eat"]) .card .card{background:rgba(5,34,29,.45)!important}
+
+html:root:root:root:root body:has(#nav .setup-sphere-layer.is-on[data-sphere="sport"]) :is(.card,.welcome){background:radial-gradient(120% 90% at 0% 0%,rgba(56,232,255,.2),transparent 60%),linear-gradient(140deg,rgba(12,96,118,.6),rgba(6,44,58,.46))!important;border-color:rgba(56,232,255,.45)!important;-webkit-backdrop-filter:blur(14px) saturate(130%);backdrop-filter:blur(14px) saturate(130%)}
+html:root:root:root:root body:has(#nav .setup-sphere-layer.is-on[data-sphere="sport"]) .card .card{background:rgba(5,38,50,.45)!important}
+html:root:root:root:root body:has(#nav .setup-sphere-layer.is-on[data-sphere="sport"]) #sport-hub{--card:rgba(11,76,94,.5);--card2:rgba(8,52,66,.5);--bd:rgba(56,232,255,.4)}
+html:root:root:root:root body:has(#nav .setup-sphere-layer.is-on[data-sphere="sport"]) #sport-hub :is(.sh-card,.sh-ex,.sh-qa,.sh-stat){background:radial-gradient(120% 100% at 0% 0%,rgba(56,232,255,.18),transparent 62%),linear-gradient(140deg,rgba(12,92,112,.55),rgba(6,44,58,.42));-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+html:root:root:root:root body:has(#nav .setup-sphere-layer.is-on[data-sphere="sport"]) #sport-hub .sh-top{background:rgba(5,24,31,.8)}
+
+html:root:root:root:root body:has(#nav .setup-sphere-layer.is-on[data-sphere="tracker"]) :is(.card,.welcome){background:radial-gradient(120% 90% at 0% 0%,rgba(187,107,217,.24),transparent 60%),linear-gradient(140deg,rgba(80,40,118,.6),rgba(36,18,62,.46))!important;border-color:rgba(187,107,217,.5)!important;-webkit-backdrop-filter:blur(14px) saturate(130%);backdrop-filter:blur(14px) saturate(130%)}
+html:root:root:root:root body:has(#nav .setup-sphere-layer.is-on[data-sphere="tracker"]) .card .card{background:rgba(30,14,52,.45)!important}
+html:root:root:root:root body:has(#nav .setup-sphere-layer.is-on[data-sphere="tracker"]){--hb-surface:rgba(70,36,104,.5);--hb-line:rgba(187,107,217,.45);--hb-glow:#3a1d5c}
