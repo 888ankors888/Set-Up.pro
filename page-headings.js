@@ -11,7 +11,7 @@ const ICONS = {
 };
 const css = `
 html:root:root:root:root body :is(.setup-page-heading,[data-setup-section-header],[data-setup-sport-header]) h1{display:none!important}
-html:root:root:root:root body :is(.setup-page-heading,[data-setup-section-header],[data-setup-sport-header]){display:flex!important;align-items:center;gap:12px;margin:2px 0 14px!important;padding:0!important}
+html:root:root:root:root body :is(.setup-page-heading,[data-setup-section-header],[data-setup-sport-header]){display:flex!important;align-items:center;gap:12px;margin:-16px 0 14px!important;padding:0!important}
 html:root:root:root:root body :is(.setup-page-heading,[data-setup-section-header],[data-setup-sport-header])>div:not(.eyebrow){display:contents}
 html:root:root:root:root body .eyebrow[data-ph]{position:relative;display:inline-flex!important;align-items:center;gap:10px;flex:none;margin:0!important;padding:6px 16px 6px 7px;border-radius:999px;border:1px solid rgba(184,255,44,.38);background:linear-gradient(100deg,rgba(184,255,44,.16),rgba(56,232,255,.05) 70%,rgba(184,255,44,.02));box-shadow:0 0 20px rgba(184,255,44,.2),inset 0 0 14px rgba(184,255,44,.07);color:#d6ff6e!important;font-size:12px!important;font-weight:800;letter-spacing:.16em;text-transform:uppercase;text-shadow:0 0 12px rgba(184,255,44,.55);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);white-space:nowrap}
 .eyebrow[data-ph]::before{content:"";flex:none;width:26px;height:26px;border-radius:50%;background-color:#c8f560;background-repeat:no-repeat;background-position:center;background-size:15px;box-shadow:0 0 14px rgba(184,255,44,.7)}
@@ -19,7 +19,9 @@ html:root:root:root:root body .eyebrow[data-ph]{position:relative;display:inline
 .eyebrow[data-ph=eat]::before{background-image:${ICONS.eat}}
 .eyebrow[data-ph=habit]::before{background-image:${ICONS.habit}}
 .eyebrow[data-ph]::after{content:"";position:absolute;right:-6px;top:50%;width:7px;height:7px;margin-top:-3.5px;border-radius:50%;background:#b8ff2c;box-shadow:0 0 10px #b8ff2c;animation:phpulse 2.6s ease-in-out infinite;display:none}
+:is(.setup-page-heading,[data-setup-section-header],[data-setup-sport-header]):has(>.eyebrow[data-ph])::before{content:"";flex:1;min-width:20px;height:1px;background:linear-gradient(270deg,rgba(184,255,44,.55),rgba(56,232,255,.18) 60%,transparent)}
 :is(.setup-page-heading,[data-setup-section-header],[data-setup-sport-header]):has(>.eyebrow[data-ph])::after{content:"";flex:1;min-width:20px;height:1px;background:linear-gradient(90deg,rgba(184,255,44,.55),rgba(56,232,255,.18) 60%,transparent)}
+:is(.setup-page-heading):has(>div>.eyebrow[data-ph])>div::before{content:"";flex:1;min-width:20px;height:1px;background:linear-gradient(270deg,rgba(184,255,44,.55),rgba(56,232,255,.18) 60%,transparent)}
 :is(.setup-page-heading):has(>div>.eyebrow[data-ph])>div::after{content:"";flex:1;min-width:20px;height:1px;background:linear-gradient(90deg,rgba(184,255,44,.55),rgba(56,232,255,.18) 60%,transparent)}
 html:root:root:root:root body .setup-page-heading>.tag{margin-left:auto;flex:none}
 @keyframes phpulse{0%,100%{opacity:.4}50%{opacity:1}}
