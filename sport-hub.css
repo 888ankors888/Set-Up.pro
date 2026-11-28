@@ -157,3 +157,5 @@
 #sport-hub .sh-dmenu{margin-top:8px;padding-top:8px;display:flex;flex-direction:column;gap:6px}
 #sport-hub .sh-dset{border:1px solid var(--bd);border-radius:12px;padding:6px 8px;background:rgba(0,0,0,.18);border-bottom:1px solid var(--bd)}
 #sport-hub .sh-dset .sh-sq.sm{width:30px;height:30px;border-radius:9px;font-size:17px}
+#sport-hub .sh-pbar{flex:1;height:8px;border-radius:6px;background:rgba(255,255,255,.08);display:block;overflow:hidden}
+#sport-hub .sh-pbar u{display:block;height:100%;border-radius:6px;text-decoration:none}

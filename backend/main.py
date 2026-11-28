@@ -228,6 +228,9 @@ install_combined_routes(app)
 from nutrition_goal_api import install_nutrition_goal_routes
 install_nutrition_goal_routes(app)
 
+from workout_review_api import install_workout_review_routes
+install_workout_review_routes(app)
+
 
 # Only public frontend assets; never serve backend, tests, or hidden files.
 _FRONTEND_ROOT = Path(__file__).resolve().parent.parent

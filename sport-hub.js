@@ -423,9 +423,70 @@ function maybeAsk() {
   if (!sess || !sess.dash) return;
   if (!allDone(sess)) { sess.asked = false; saveSess(); return; }
   if (sess.asked) return; sess.asked = true; saveSess();
-  setTimeout(() => { if (sess && sess.dash && allDone(sess) && confirm('Все упражнения выполнены. Сохранить тренировку?')) { ui.dopen = null; ui.swOpen = false; finish(); } }, 60);
+  setTimeout(() => { if (sess && sess.dash && allDone(sess)) openResult(); }, 60);
 }
-function dashMin() { const ms = swMs(); return ms >= 30000 ? Math.max(1, Math.round(ms / 6e4)) : Math.max(1, sess.estMin || 30); }
+function estDone(ss) { const sec = ss.exercises.reduce((a, e) => { const ws = e.sets.filter(z => z.done && z.type !== 'w'), wm = e.sets.filter(z => z.done && z.type === 'w').length; if (!ws.length && !wm) return a; const n = ws.length || 1, r = ws[0] ? num(ws[0].reps) : 10; return a + 50 + wm * 85 + n * (Math.round(r * 3.5) + 5) + Math.max(0, n - 1) * (e.restSec || 60); }, 0); return Math.max(1, Math.round(sec / 60)); }
+function dashMin() { const ms = swMs(); return ms >= 30000 ? Math.max(1, Math.round(ms / 6e4)) : estDone(sess); }
+
+function wProg(ss) {
+  const h = hub(), out = [];
+  for (const e of ss.exercises) {
+    const ws = e.sets.filter(z => z.done && z.type !== 'w'); if (!ws.length) continue;
+    const m = (arr) => ({top:Math.max(0, ...arr.map(z => num(z.weight))), reps:arr.reduce((a, z) => a + num(z.reps), 0), maxReps:Math.max(0, ...arr.map(z => num(z.reps))), ton:arr.reduce((a, z) => a + num(z.weight) * num(z.reps), 0), e1:Math.max(0, ...arr.map(z => e1rm(num(z.weight), num(z.reps))))});
+    const t = m(ws); let prev = null, hist = {top:0, maxReps:0, e1:0}, seen = false;
+    for (let i = h.sessions.length - 1; i >= 0; i--) { const sx = h.sessions[i]; if (sx.id === ss.id) continue; const ex = sx.exercises.find(z => z.name === e.name); if (!ex) continue; const sets = ex.sets.filter(z => z.type !== 'w'); if (!sets.length) continue; const pm = m(sets); seen = true; if (!prev) prev = Object.assign({date:sx.date}, pm); hist.top = Math.max(hist.top, pm.top); hist.maxReps = Math.max(hist.maxReps, pm.maxReps); hist.e1 = Math.max(hist.e1, pm.e1); }
+    const bw = t.top <= 0, metric = x => bw ? x.reps : x.ton, pr = seen && (bw ? t.maxReps > hist.maxReps : (t.e1 > hist.e1 + 0.01 || t.top > hist.top));
+    out.push({name:e.name, group:e.muscles[0], sets:ws.length, t, prev, bw, pr, first:!seen, val:metric(t), pval:prev ? metric(prev) : 0, delta:prev && metric(prev) > 0 ? Math.round((metric(t) / metric(prev) - 1) * 100) : null});
+  }
+  return out;
+}
+function progHtml(list) {
+  if (!list.length) return '';
+  return '<div class="sh-lbl" style="margin:14px 0 6px">Прогресс и рекорды</div>' + list.map(p => {
+    const mx = Math.max(p.val, p.pval, 1), unit = p.bw ? 'повт.' : 'кг', f = v => fmtN(v) + ' ' + unit, c = gc(p.group);
+    return `<div class="sh-dset" style="margin-bottom:6px"><div class="sh-row sh-sb"><b style="font-size:14px">${esc(p.name)}</b>${p.pr ? '<span class="sh-chip on" style="padding:2px 8px;font-size:12px">PR</span>' : p.first ? '<span class="sh-mu" style="font-size:12px">первая запись</span>' : ''}</div>`
+      + (p.prev ? `<div class="sh-row" style="gap:8px;margin-top:6px"><span class="sh-mu" style="width:54px;font-size:12px">Прошлая</span><i class="sh-pbar"><u style="width:${p.pval / mx * 100}%;background:${c}55"></u></i><span class="sh-mu" style="font-size:12px;min-width:70px;text-align:right">${f(p.pval)}</span></div>` : '')
+      + `<div class="sh-row" style="gap:8px;margin-top:4px"><span class="sh-mu" style="width:54px;font-size:12px">Сегодня</span><i class="sh-pbar"><u style="width:${p.val / mx * 100}%;background:${c}"></u></i><span style="font-size:12px;min-width:70px;text-align:right">${f(p.val)}</span></div>`
+      + `<div class="sh-mu" style="font-size:12px;margin-top:4px">${p.sets} подх. · лучший ${p.bw ? p.t.maxReps + ' повт.' : p.t.top + ' кг'}${p.delta !== null ? ' · ' + (p.delta >= 0 ? '+' : '') + p.delta + '% к прошлой' : ''}</div></div>`;
+  }).join('');
+}
+function openResult() { if (!sess || !sess.dash) return; ui.dopen = null; ui.swOpen = false; ui.rev = ui.rev && ui.rev.sid === sess.id ? ui.rev : null; ui.modal = 'result'; paint(true); }
+function resultPreview() {
+  if (!sess) return {min:0, ton:0, kcal:0, src:'plan'};
+  const used = swMs() >= 30000, min = dashMin(); return {min, ton:sessTon(sess), kcal:kcalOf(min), src:used ? 'timer' : 'plan'};
+}
+function revHtml() {
+  const r = ui.rev; if (!r) return '';
+  if (r.busy) return '<div class="sh-dset" style="margin-top:10px"><p class="sh-mu">ИИ анализирует тренировку, это может занять до минуты…</p></div>';
+  if (r.err) return `<div class="sh-dset" style="margin-top:10px"><p style="color:var(--red);font-size:13px">${esc(r.err)}</p></div>`;
+  const d = r.data, li = a => (a || []).map(x => `<li style="margin:3px 0">${esc(x)}</li>`).join('');
+  return `<div class="sh-dset" style="margin-top:10px"><div class="sh-lbl" style="margin-bottom:4px">Сводка</div><p style="font-size:14px;line-height:1.4">${esc(d.summary)}</p>${d.vs_previous ? `<div class="sh-lbl" style="margin:10px 0 4px">В сравнении с прошлыми</div><p style="font-size:14px;line-height:1.4">${esc(d.vs_previous)}</p>` : ''}<div class="sh-lbl" style="margin:10px 0 4px">Тренировки на эту неделю</div><ul style="padding-left:18px;font-size:14px;line-height:1.4">${li(d.week)}</ul><div class="sh-lbl" style="margin:10px 0 4px">Питание и вода</div><ul style="padding-left:18px;font-size:14px;line-height:1.4">${li(d.nutrition)}</ul>${(d.warnings || []).length ? `<ul style="padding-left:18px;font-size:13px;color:var(--amb);margin-top:8px">${li(d.warnings)}</ul>` : ''}<p class="sh-mu" style="font-size:12px;margin-top:8px">Это ориентиры, а не медицинская рекомендация.</p></div>`;
+}
+async function reviewRun() {
+  if (!sess || !sess.dash || (ui.rev && ui.rev.busy)) return;
+  if (!confirm('Отправить на сервер ИИ данные анкеты (возраст, пол, вес, рост, цель), итоги этой и последних тренировок и данные питания за сегодня? Имя и контакты не передаются.')) return;
+  const h = hub(), pf = (S && S.profile) || {}, sp = (S && S.sports && S.sports.profile) || {}, pv = resultPreview(), nu = nutri(), prog = wProg(sess);
+  const nn = (v, lo, hi) => { v = num(v); return v >= lo && v <= hi ? v : null; };
+  const wd = (new Date().getDay() + 6) % 7, cl = (v, mx) => Math.min(mx, Math.max(0, num(v)));
+  const body = {date:todayS(), weekday:wd,
+    profile:{age:nn(pf.age, 10, 100) === null ? null : Math.round(nn(pf.age, 10, 100)), sex:String(pf.sex || '').slice(0, 10), weight:nn(pf.w, 20, 400), height:nn(pf.h, 80, 250), body_goal:String(pf.goal || '').slice(0, 20), sport_goal:String(sp.goal || '').slice(0, 20), level:String(sp.level || '').slice(0, 20), minutes:null},
+    title:String(sess.title || '').slice(0, 120), minutes:Math.min(600, pv.min), time_source:pv.src, tonnage:cl(pv.ton, 1e6),
+    exercises:prog.slice(0, 20).map(p => ({name:p.name.slice(0, 120), group:String(p.group || '').slice(0, 20), sets:p.sets, top_weight:cl(p.t.top, 1000), reps:Math.min(1000, Math.round(p.t.reps)), tonnage:cl(p.t.ton, 1e5), prev_tonnage:p.prev ? cl(p.prev.ton, 1e5) : null, pr:!!p.pr})),
+    history:h.sessions.filter(x => x.id !== sess.id).slice(-8).map(x => ({date:String(x.date).slice(0, 10), title:String(x.title || '').slice(0, 120), minutes:Math.min(600, Math.round(num(x.minutes))), tonnage:cl(x.exercises.reduce((a, e) => a + e.sets.reduce((b, z) => b + num(z.weight) * num(z.reps), 0), 0), 1e6), sets:Math.min(500, x.exercises.reduce((a, e) => a + e.sets.length, 0)), groups:[...new Set(x.exercises.flatMap(e => e.muscles || []))].slice(0, 9).map(String)})),
+    week_dates:[...new Set(h.sessions.filter(x => x.date >= dkey(weekStart()) && x.id !== sess.id).map(x => x.date))].slice(0, 7).concat([todayS()]).slice(0, 7)};
+  if (nu && nu.t) body.nutrition = {kcal_eaten:cl(nu.e && (nu.e.k || nu.e.kcal), 2e4), kcal_target:cl(nu.t.kcal || nu.t.k, 2e4), protein_eaten:cl(nu.e && nu.e.p, 1000), protein_target:cl(nu.t.p, 1000), water_ml:cl(S.water && S.water[todayS()], 2e4)};
+  ui.rev = {sid:sess.id, busy:true}; paint(true);
+  try {
+    let res; const ctl = new AbortController(), tm = setTimeout(() => ctl.abort(), 120000);
+    try { res = await fetch(AI_API.replace('/day-plan', '/workout-review'), {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body), signal:ctl.signal, credentials:'omit'}); } finally { clearTimeout(tm); }
+    let j = null; try { j = await res.json(); } catch (e) {}
+    if (res.status === 429) throw new Error('Слишком много запросов. Подождите минуту и повторите.');
+    if (res.status === 404) throw new Error('Сервер ИИ ещё обновляется. Повторите через несколько минут.');
+    if (!res.ok) throw new Error(typeof (j && j.detail) === 'string' ? j.detail : 'ИИ не смог подготовить разбор, повторите попытку.');
+    ui.rev = {sid:sess ? sess.id : '', data:j};
+  } catch (e) { ui.rev = {sid:sess ? sess.id : '', err:e.name === 'AbortError' ? 'Сервер долго не отвечает. Повторите попытку.' : (e.message && !/fetch|network|load failed/i.test(e.message) ? e.message : 'Нет связи с сервером ИИ. Проверьте интернет и повторите.')}; }
+  paint(true);
+}
 function dash() {
   const h = hub(), rec = recovery(h), pro = h.mode === 'pro';
   const sg = suggest(h, rec); const dsel = selDay(), pv = planOf(h, dsel), planned = pv && pv !== 'rest' ? h.workouts.find(x => x.id === pv) : null, rest = pv === 'rest';
@@ -657,6 +718,17 @@ function modalHtml() {
     return sheet('Завершить тренировку', `<div class="sh-stats"><div class="sh-stat"><b>${min}</b>мин</div><div class="sh-stat"><b>${fmtN(sessTon(sess))}</b>кг</div><div class="sh-stat"><b>${n}</b>подх.</div></div><p class="sh-mu" style="margin-bottom:12px">Примерно ${kcalOf(min)} ккал. Привычка «${esc(habitState().title)}» отметится автоматически.</p>${n ? '' : '<p style="color:var(--amb);margin-bottom:12px">Нет выполненных подходов — сохранять нечего.</p>'}<button class="sh-btn big" data-act="fsave" ${n ? '' : 'disabled'}>Сохранить и завершить</button><button class="sh-btn ghost big" style="margin-top:8px" data-act="mclose">Вернуться к тренировке</button>`);
   }
   if (m === 'result') {
+    if (sess && sess.dash) {
+      const r = resultPreview(), hb = habitState(), pg = wProg(sess), ai = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 4.8L18.6 9.6l-4.8 1.8L12 16.2l-1.8-4.8-4.8-1.8 4.8-1.8L12 3Z"/><path d="M19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9L19 15Z"/></svg>';
+      return sheet(sess.saved ? 'Тренировка сохранена' : 'Итоги тренировки', `<div class="sh-stats"><div class="sh-stat"><b>${r.min}</b>мин</div><div class="sh-stat"><b>${fmtN(r.ton)}</b>кг</div><div class="sh-stat"><b>${r.kcal}</b>ккал</div></div>
+    <p class="sh-mu" style="margin-top:6px">${r.src === 'timer' ? 'Время взято с секундомера.' : 'Время рассчитано по подходам, повторениям и отдыху между упражнениями.'}</p>${progHtml(pg) || '<p class="sh-mu" style="margin-top:10px">Отметьте подходы, и здесь появятся прогресс и рекорды.</p>'}
+    <div class="sh-row" style="gap:8px;margin-top:12px"><button class="sh-btn ghost big" style="flex:1;margin:0" data-act="water" data-v="250">+250 мл воды</button><button class="sh-btn ghost big" style="flex:1;margin:0" data-act="water" data-v="500">+500 мл воды</button></div>
+    <button class="sh-btn ghost big" style="margin-top:8px" data-act="food">Добавить перекус</button>
+    ${!hb.enabled ? '<button class="sh-btn ghost big" style="margin-top:8px" data-act="henable">Включить привычку и отметить</button>' : ''}
+    <div class="sh-row" style="gap:8px;margin-top:12px"><button class="sh-btn big" style="flex:1;margin:0" data-act="rsave">${sess.saved ? 'Обновить запись' : 'Сохранить тренировку'}</button><button class="sh-sq sh-aibtn" data-act="rai" title="Разбор тренировки от ИИ" aria-label="Разбор тренировки от ИИ" style="width:56px;height:56px;flex:none;border-radius:16px;color:var(--lime)">${ai}</button></div>${revHtml()}`);
+    }
+  }
+  if (m === 'result') {
     const r = ui.result, hb = habitState();
     return sheet('Тренировка сохранена', `<div class="sh-stats"><div class="sh-stat"><b>${r.min}</b>мин</div><div class="sh-stat"><b>${fmtN(r.ton)}</b>кг</div><div class="sh-stat"><b>${r.kcal}</b>ккал</div></div>
     <p class="sh-mu">Запись добавлена в дневник тренировок.</p>
@@ -798,12 +870,14 @@ function saveSessEdit() { const d = ui.sdraft; d.exercises.forEach(x => { x.sets
 function finish() {
   if (sess.dash) { if (sess.tm && sess.tm.since) { sess.tm.acc += Date.now() - sess.tm.since; sess.tm.since = null; } const m0 = dashMin(); sess.startedAt = Date.now() - m0 * 6e4; }
   const min = Math.max(1, Math.round((Date.now() - sess.startedAt) / 6e4)), ton = sessTon(sess), kcal = kcalOf(min), total = sessSets(sess);
-  const rec = {id:sess.id,workoutId:sess.workoutId,title:sess.title,date:sess.date,startedAt:sess.startedAt,endedAt:Date.now(),minutes:min,exercises:sess.exercises.map(e => ({name:e.name,muscles:e.muscles,sets:doneSets(e).map(s => ({type:s.type,weight:num(s.weight),reps:Math.round(num(s.reps)),rir:Math.round(num(s.rir))}))})).filter(e => e.sets.length)};
+  const rec = {id:sess.id,workoutId:sess.workoutId,title:sess.title,date:sess.date,startedAt:sess.startedAt,endedAt:Date.now(),minutes:min,dash:!!sess.dash, pr:sess.dash ? wProg(sess).filter(x => x.pr).map(x => x.name) : [], timeSrc:sess.dash ? (swMs() >= 30000 ? 'timer' : 'plan') : 'clock', exercises:sess.exercises.map(e => ({name:e.name,muscles:e.muscles,sets:doneSets(e).map(s => ({type:s.type,weight:num(s.weight),reps:Math.round(num(s.reps)),rir:Math.round(num(s.rir))}))})).filter(e => e.sets.length)};
   setHub(h => { h.sessions = h.sessions.filter(x => x.id !== rec.id); h.sessions.push(rec); });
   syncEntries(rec);
   markHabit(false);
   if (sess.dash) { sess.saved = true; sess.asked = true; } else sess = null;
-  saveSess(); ui.result = {min, ton, kcal}; ui.modal = 'result'; ui.screen = 'dash'; paint(); scrollTo(0, 0);
+  saveSess(); ui.screen = 'dash';
+  if (rec.dash) { ui.modal = null; ui.rev = null; paint(true); toast2('Тренировка сохранена: ' + min + ' мин' + (rec.pr && rec.pr.length ? ', рекорды: ' + rec.pr.length : '')); return; }
+  ui.result = {min, ton, kcal}; ui.modal = 'result'; paint(); scrollTo(0, 0);
 }
 function markHabit(enable) {
   try { commit(st => {
@@ -813,7 +887,7 @@ function markHabit(enable) {
     t.records[d][HABIT] = {done:true,updatedAt:new Date().toISOString(),title:habitState().title,schedule:c.schedule || 'daily',time:c.time || '',target:c.target || ''};
   }); } catch (e) { toast2('Не удалось отметить привычку'); }
 }
-function addWater() { try { commit(st => { st.water = st.water || {}; st.water[todayS()] = (Number(st.water[todayS()]) || 0) + 500; }); toast2('Добавлено 500 мл воды'); } catch (e) { toast2('Не удалось добавить воду'); } }
+function addWater(ml) { ml = ml || 500; try { commit(st => { st.water = st.water || {}; st.water[todayS()] = (Number(st.water[todayS()]) || 0) + 500; }); toast2('Добавлено ' + ml + ' мл воды'); } catch (e) { toast2('Не удалось добавить воду'); } }
 function openDraft(d) { ui.draft = d || {title:'Своя тренировка',status:'today',exercises:[]}; ui.snap = JSON.stringify(ui.draft); ui.confirmClose = false; ui.q = ''; ui.modal = 'manual'; paint(true); }
 function saveDraft(start) {
   const d = ui.draft; if (!d.exercises.length) return toast2('Добавьте хотя бы одно упражнение');
@@ -841,10 +915,12 @@ function onClick(ev) {
     case 'dtog': { const w = hub().workouts.find(x => x.id === id), ss = dSess(w), z = ss && ss.exercises[e] && ss.exercises[e].sets[s]; if (!z) break; z.done = !z.done; ss.saved = false; saveSess(); paint(true); maybeAsk(); break; }
     case 'dexall': { const w = hub().workouts.find(x => x.id === id), ss = dSess(w), ex = ss && ss.exercises[e]; if (!ex) break; const all = ex.sets.every(z => z.done); ex.sets.forEach(z => { z.done = !all; }); if (!all) ui.dopen = null; saveSess(); paint(true); break; }
     case 'dchk': { const w = hub().workouts.find(x => x.id === id), ss = dashSess(w), ex = ss && ss.exercises[e]; if (!ex) break; const all = ex.sets.every(z => z.done); ex.sets.forEach(z => { z.done = !all; }); ss.saved = false; saveSess(); paint(true); maybeAsk(); break; }
+    case 'rsave': if (!sess || !sess.dash) break; if (!sessSets(sess)) { toast2('Отметьте выполненные упражнения'); break; } finish(); break;
+    case 'rai': reviewRun(); break;
     case 'dswo': ui.swOpen = !ui.swOpen; paint(true); break;
     case 'dsw': { const w = hub().workouts.find(x => x.id === id), ss = dashSess(w); if (!ss) break; if (ss.tm.since) { ss.tm.acc += Date.now() - ss.tm.since; ss.tm.since = null; } else ss.tm.since = Date.now(); saveSess(); paint(true); break; }
     case 'dswr': { const w = hub().workouts.find(x => x.id === id), ss = dSess(w); if (!ss) break; ss.tm = {acc:0, since:null}; saveSess(); paint(true); break; }
-    case 'dfin': { const w = hub().workouts.find(x => x.id === id), ss = dSess(w); if (!ss || !sessSets(ss)) { toast2('Отметьте выполненные упражнения'); break; } ui.dopen = null; ui.swOpen = false; finish(); break; }
+    case 'dfin': { const w = hub().workouts.find(x => x.id === id), ss = dSess(w); if (!ss || !sessSets(ss)) { toast2('Отметьте выполненные упражнения'); break; } openResult(); break; }
     case 'resume': ui.screen = 'workout'; paint(); break;
     case 'back': ui.screen = 'dash'; paint(); break;
     case 'editw': { const w = hub().workouts.find(x => x.id === id); if (!w) break; openDraft({title:w.title,status:'template',editId:w.id,scope:'date',exercises:JSON.parse(JSON.stringify(w.exercises)).map(e => { e.sets.forEach(z => { z.done = false; }); return e; })}); break; }
@@ -934,7 +1010,7 @@ function onClick(ev) {
     case 'day': ui.day = +v; paint(true); break;
     case 'food': try { window.foodOpenMealWindow('Перекус'); } catch (x) { toast2('Окно питания недоступно'); } break;
     case 'henable': markHabit(true); paint(true); break;
-    case 'water': addWater(); break;
+    case 'water': addWater(+v || 500); break;
     case 'dstatus': ui.draft.status = v; paint(true); break;
     case 'dup': { const l = ui.draft.exercises; if (e > 0) [l[e - 1], l[e]] = [l[e], l[e - 1]]; paint(true); break; }
     case 'ddown': { const l = ui.draft.exercises; if (e < l.length - 1) [l[e + 1], l[e]] = [l[e], l[e + 1]]; paint(true); break; }
@@ -992,7 +1068,7 @@ function mount() {
   if (!wasVisible) { wasVisible = true; if (!ui.modal || ui.modal === 'result') paint(); }
 }
 function init() {
-  if (!document.querySelector('link[data-sport-hub]')) { const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = new URL('sport-hub.css?v=12', document.baseURI).href; l.dataset.sportHub = 'true'; document.head.append(l); }
+  if (!document.querySelector('link[data-sport-hub]')) { const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = new URL('sport-hub.css?v=13', document.baseURI).href; l.dataset.sportHub = 'true'; document.head.append(l); }
   try { const o = window.render; if (typeof o === 'function') { window.render = function () { const r = o.apply(this, arguments); try { mount(); } catch (e) { console.warn(e); } return r; }; } } catch (e) {}
   mount();
 }
