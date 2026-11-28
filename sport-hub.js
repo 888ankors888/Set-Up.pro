@@ -414,9 +414,16 @@ function dashList(w) {
   }).join('');
   return sw + rows;
 }
+const allDone = ss => ss.exercises.length > 0 && ss.exercises.every(e => e.sets.length && e.sets.every(z => z.done));
 function dashBtn(w) {
-  const ss = dSess(w), n = ss ? ss.exercises.filter(e => e.sets.length && e.sets.every(z => z.done)).length : 0;
-  return `<p class="sh-mu" style="margin:10px 0 8px">Выполнено упражнений: ${n} из ${w.exercises.length}</p><button class="sh-btn big" data-act="dfin" data-id="${w.id}">Тренировка выполнена</button>`;
+  const ss = dSess(w), n = ss ? ss.exercises.filter(e => e.sets.length && e.sets.every(z => z.done)).length : 0, on = ss && (ss.saved || allDone(ss));
+  return `<p class="sh-mu" style="margin:10px 0 8px">Выполнено упражнений: ${n} из ${w.exercises.length}${ss && ss.saved ? ' · сохранено' : ''}</p><button class="sh-btn big${on ? '' : ' ghost'}" data-act="dfin" data-id="${w.id}">Тренировка выполнена${ss && ss.saved ? ' ✓' : ''}</button>`;
+}
+function maybeAsk() {
+  if (!sess || !sess.dash) return;
+  if (!allDone(sess)) { sess.asked = false; saveSess(); return; }
+  if (sess.asked) return; sess.asked = true; saveSess();
+  setTimeout(() => { if (sess && sess.dash && allDone(sess) && confirm('Все упражнения выполнены. Сохранить тренировку?')) { ui.dopen = null; ui.swOpen = false; finish(); } }, 60);
 }
 function dashMin() { const ms = swMs(); return ms >= 30000 ? Math.max(1, Math.round(ms / 6e4)) : Math.max(1, sess.estMin || 30); }
 function dash() {
@@ -792,10 +799,11 @@ function finish() {
   if (sess.dash) { if (sess.tm && sess.tm.since) { sess.tm.acc += Date.now() - sess.tm.since; sess.tm.since = null; } const m0 = dashMin(); sess.startedAt = Date.now() - m0 * 6e4; }
   const min = Math.max(1, Math.round((Date.now() - sess.startedAt) / 6e4)), ton = sessTon(sess), kcal = kcalOf(min), total = sessSets(sess);
   const rec = {id:sess.id,workoutId:sess.workoutId,title:sess.title,date:sess.date,startedAt:sess.startedAt,endedAt:Date.now(),minutes:min,exercises:sess.exercises.map(e => ({name:e.name,muscles:e.muscles,sets:doneSets(e).map(s => ({type:s.type,weight:num(s.weight),reps:Math.round(num(s.reps)),rir:Math.round(num(s.rir))}))})).filter(e => e.sets.length)};
-  setHub(h => { h.sessions.push(rec); });
+  setHub(h => { h.sessions = h.sessions.filter(x => x.id !== rec.id); h.sessions.push(rec); });
   syncEntries(rec);
   markHabit(false);
-  sess = null; saveSess(); ui.result = {min, ton, kcal}; ui.modal = 'result'; ui.screen = 'dash'; paint(); scrollTo(0, 0);
+  if (sess.dash) { sess.saved = true; sess.asked = true; } else sess = null;
+  saveSess(); ui.result = {min, ton, kcal}; ui.modal = 'result'; ui.screen = 'dash'; paint(); scrollTo(0, 0);
 }
 function markHabit(enable) {
   try { commit(st => {
@@ -829,10 +837,10 @@ function onClick(ev) {
     case 'sel': setSel(id); paint(true); break;
     case 'start': { const w = hub().workouts.find(x => x.id === id); if (!w) break; if (sess && !confirm('Текущая тренировка будет заменена. Продолжить?')) break; startSess(w); break; }
     case 'dopen': { const w = hub().workouts.find(x => x.id === id); if (!w || !dashSess(w)) break; ui.dopen = ui.dopen === e ? null : e; paint(true); break; }
-    case 'dset': { const w = hub().workouts.find(x => x.id === id), ss = dSess(w), z = ss && ss.exercises[e] && ss.exercises[e].sets[s]; if (!z) break; const dl = +t.dataset.d; if (t.dataset.k === 'w') z.weight = Math.max(0, Math.round((num(z.weight) + dl * 2.5) * 10) / 10); else z.reps = Math.max(1, Math.round(num(z.reps)) + dl); saveSess(); paint(true); break; }
-    case 'dtog': { const w = hub().workouts.find(x => x.id === id), ss = dSess(w), z = ss && ss.exercises[e] && ss.exercises[e].sets[s]; if (!z) break; z.done = !z.done; saveSess(); paint(true); break; }
+    case 'dset': { const w = hub().workouts.find(x => x.id === id), ss = dSess(w), z = ss && ss.exercises[e] && ss.exercises[e].sets[s]; if (!z) break; const dl = +t.dataset.d; ss.saved = false; if (t.dataset.k === 'w') z.weight = Math.max(0, Math.round((num(z.weight) + dl * 2.5) * 10) / 10); else z.reps = Math.max(1, Math.round(num(z.reps)) + dl); saveSess(); paint(true); break; }
+    case 'dtog': { const w = hub().workouts.find(x => x.id === id), ss = dSess(w), z = ss && ss.exercises[e] && ss.exercises[e].sets[s]; if (!z) break; z.done = !z.done; ss.saved = false; saveSess(); paint(true); maybeAsk(); break; }
     case 'dexall': { const w = hub().workouts.find(x => x.id === id), ss = dSess(w), ex = ss && ss.exercises[e]; if (!ex) break; const all = ex.sets.every(z => z.done); ex.sets.forEach(z => { z.done = !all; }); if (!all) ui.dopen = null; saveSess(); paint(true); break; }
-    case 'dchk': { const w = hub().workouts.find(x => x.id === id), ss = dashSess(w), ex = ss && ss.exercises[e]; if (!ex) break; const all = ex.sets.every(z => z.done); ex.sets.forEach(z => { z.done = !all; }); saveSess(); paint(true); break; }
+    case 'dchk': { const w = hub().workouts.find(x => x.id === id), ss = dashSess(w), ex = ss && ss.exercises[e]; if (!ex) break; const all = ex.sets.every(z => z.done); ex.sets.forEach(z => { z.done = !all; }); ss.saved = false; saveSess(); paint(true); maybeAsk(); break; }
     case 'dswo': ui.swOpen = !ui.swOpen; paint(true); break;
     case 'dsw': { const w = hub().workouts.find(x => x.id === id), ss = dashSess(w); if (!ss) break; if (ss.tm.since) { ss.tm.acc += Date.now() - ss.tm.since; ss.tm.since = null; } else ss.tm.since = Date.now(); saveSess(); paint(true); break; }
     case 'dswr': { const w = hub().workouts.find(x => x.id === id), ss = dSess(w); if (!ss) break; ss.tm = {acc:0, since:null}; saveSess(); paint(true); break; }
