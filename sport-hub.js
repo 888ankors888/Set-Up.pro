@@ -384,6 +384,39 @@ function hero(h, w, d) {
   <button data-act="addmenu" style="display:flex;flex-direction:column;align-items:center;gap:8px;flex:none;width:96px;color:var(--lime);font-weight:800;text-align:center;line-height:1.2"><span style="width:84px;height:84px;border-radius:50%;border:3px solid var(--lime);box-shadow:0 0 18px rgba(184,255,44,.45),inset 0 0 14px rgba(184,255,44,.2);display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" width="38" height="38" fill="none" stroke="#b8ff2c" stroke-width="2.6" stroke-linecap="round"><path d="M12 4v16M4 12h16"/></svg></span>Добавить тренировку</button></div>
   <div class="sh-row" style="margin-top:12px"><button class="sh-chip" data-act="progress">↗ Прогресс и PR</button></div></div>`;
 }
+
+const swIco = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13.5" r="7.5"/><path d="M12 13.5V9.5M9.5 2.5h5M12 2.5v3.5M18.5 6l1.4-1.4"/></svg>';
+const swMs = () => sess && sess.tm ? sess.tm.acc + (sess.tm.since ? Date.now() - sess.tm.since : 0) : 0;
+const dSess = w => sess && sess.dash && w && sess.workoutId === w.id && sess.date === todayS() ? sess : null;
+function dashSess(w) {
+  if (!w) return null; const cur = dSess(w); if (cur) return cur;
+  if (sess && !sess.dash && sessSets(sess) > 0 && !confirm('Начатая ранее тренировка будет заменена. Продолжить?')) return null;
+  const h = hub(), ex = JSON.parse(JSON.stringify(w.exercises)).map(e => { const pv = prevSets(h, e.name); e.sets.forEach(z => { z.done = false; z.id = uid('s'); }); e.oneRm = prs(h)[e.name] || 0; if (pv && pv.length) { e.sets.filter(z => z.type !== 'w').forEach((z, i) => { const p = pv[Math.min(i, pv.length - 1)]; if (num(p.weight) > 0) z.weight = p.weight; }); } return e; });
+  const est = Math.round(w.exercises.reduce((a, e) => a + e.sets.length * (e.restSec + 40), 0) / 60);
+  sess = {id:uid('ss'), workoutId:w.id, title:w.title, date:todayS(), startedAt:Date.now(), restEnd:null, restTotal:0, ai:null, exercises:ex, dash:true, tm:{acc:0, since:null}, estMin:est};
+  saveSess(); return sess;
+}
+function dashList(w) {
+  const ss = dSess(w), exs = ss ? ss.exercises : w.exercises, tm = ss && ss.tm, used = tm && (tm.acc > 0 || tm.since);
+  const sw = `<div class="sh-row sh-sb" style="margin:12px 0 8px"><span class="sh-lbl">Упражнения</span><button class="sh-chip${ui.swOpen ? ' on' : ''}" data-act="dswo" title="Секундомер (по желанию)" style="display:inline-flex;align-items:center;gap:6px;padding:6px 10px">${swIco}${used ? `<span data-t="sw">${fmtT(swMs())}</span>` : ''}</button></div>`
+    + (ui.swOpen ? `<div class="sh-dsw"><div class="sh-mu" style="margin-bottom:6px">Секундомер необязателен: если не включать, время возьмётся по плану.</div><div class="sh-row sh-sb"><b data-t="sw" style="font-size:28px;font-variant-numeric:tabular-nums">${fmtT(swMs())}</b><span class="sh-row" style="gap:8px"><button class="sh-chip on" data-act="dsw" data-id="${w.id}">${tm && tm.since ? 'Пауза' : used ? 'Продолжить' : 'Старт'}</button>${used ? `<button class="sh-chip" data-act="dswr" data-id="${w.id}">Сбросить</button>` : ''}</span></div></div>` : '');
+  const rows = exs.map((e, i) => {
+    const ns = e.sets.filter(z => z.type !== 'w'), r = ns[0] ? ns[0].reps : 0, wt = ns[0] ? num(ns[0].weight) : 0, done = e.sets.length > 0 && e.sets.every(z => z.done), open = ui.dopen === i && !!ss;
+    let menu = '';
+    if (open) {
+      let k = 0;
+      const st = (j, key, val, lab) => `<span class="sh-row" style="gap:6px"><button class="sh-sq sm" data-act="dset" data-id="${w.id}" data-e="${i}" data-s="${j}" data-k="${key}" data-d="-1">−</button><b style="min-width:52px;text-align:center;font-size:14px">${val}</b><button class="sh-sq sm" data-act="dset" data-id="${w.id}" data-e="${i}" data-s="${j}" data-k="${key}" data-d="1">+</button></span>`;
+      menu = `<div class="sh-dmenu">` + e.sets.map((z, j) => { if (z.type !== 'w') k++; return `<div class="sh-dset"><div class="sh-row sh-sb"><span class="sh-lbl">${z.type === 'w' ? 'Разминка' : 'Подход ' + k}</span><button class="sh-chip${z.done ? ' on' : ''}" data-act="dtog" data-id="${w.id}" data-e="${i}" data-s="${j}">${z.done ? 'Выполнен ✓' : 'Отметить'}</button></div><div class="sh-row sh-sb" style="margin-top:6px"><span class="sh-mu">Вес</span>${st(j, 'w', num(z.weight) ? num(z.weight) + ' кг' : 'свой')}</div><div class="sh-row sh-sb" style="margin-top:6px"><span class="sh-mu">Повторения</span>${st(j, 'r', Math.round(num(z.reps)))}</div></div>`; }).join('') + `<button class="sh-btn big" style="margin-top:10px" data-act="dexall" data-id="${w.id}" data-e="${i}">${done ? 'Снять отметку' : 'Упражнение выполнено'}</button></div>`;
+    }
+    return `<div class="sh-dx${done ? ' ok' : ''}" style="border-left:4px solid ${gc(e.muscles[0])}"><div class="sh-row sh-sb" style="gap:8px"><div style="min-width:0;flex:1"><div class="sh-h" style="font-size:16px">${esc(e.name)}</div><div class="sh-mu">${gtxt(e.muscles[0])} · ${ns.length} × ${r}${wt ? ' · ' + wt + ' кг' : ''}</div></div><span class="sh-row" style="gap:6px;flex:none">${ytBtn(e.name)}<button class="sh-dchk${done ? ' on' : ''}" data-act="dopen" data-id="${w.id}" data-e="${i}" aria-label="Выполнение упражнения"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button></span></div>${menu}</div>`;
+  }).join('');
+  return sw + rows;
+}
+function dashBtn(w) {
+  const ss = dSess(w), n = ss ? ss.exercises.filter(e => e.sets.length && e.sets.every(z => z.done)).length : 0;
+  return `<p class="sh-mu" style="margin:10px 0 8px">Выполнено упражнений: ${n} из ${w.exercises.length}</p><button class="sh-btn big" data-act="dfin" data-id="${w.id}">Тренировка выполнена</button>`;
+}
+function dashMin() { const ms = swMs(); return ms >= 30000 ? Math.max(1, Math.round(ms / 6e4)) : Math.max(1, sess.estMin || 30); }
 function dash() {
   const h = hub(), rec = recovery(h), pro = h.mode === 'pro';
   const sg = suggest(h, rec); const dsel = selDay(), pv = planOf(h, dsel), planned = pv && pv !== 'rest' ? h.workouts.find(x => x.id === pv) : null, rest = pv === 'rest';
@@ -392,17 +425,17 @@ function dash() {
   const ready = w && w.tags.length ? Math.round(w.tags.reduce((a, g) => a + rec[g], 0) / w.tags.length) : 0;
   const setsN = w ? w.exercises.reduce((a, e) => a + e.sets.length, 0) : 0, dur = w ? Math.round(w.exercises.reduce((a, e) => a + e.sets.length * (e.restSec + 40), 0) / 60) : 0;
   let o = '';
-  if (sess) o += `<div class="sh-card sh-syn"><div class="sh-lbl">Тренировка идёт</div><p class="sh-h" style="margin:4px 0 10px">${esc(sess.title)}</p><button class="sh-btn big" data-act="resume">Продолжить · ${fmtT(Date.now() - sess.startedAt)}</button></div>`;
+  if (sess && !sess.dash) o += `<div class="sh-card sh-syn"><div class="sh-lbl">Тренировка идёт</div><p class="sh-h" style="margin:4px 0 10px">${esc(sess.title)}</p><button class="sh-btn big" data-act="resume">Продолжить · ${fmtT(Date.now() - sess.startedAt)}</button></div>`;
   const isToday = selDay() === todayS(), isFut = dsel > todayS(); let card = '';
-  const wc = (label, btn, on) => `<div class="sh-card"><div class="sh-row sh-sb"><span class="sh-chip${on ? ' on' : ''}">${label}</span><span class="sh-row"><span class="sh-chip">${({ai:'Конструктор',plan:'План',preset:'Готовая',manual:'Вручную'})[w.src] || 'Вручную'}</span><button class="sh-chip" data-act="rep" data-id="${w.id}" title="Повторение" style="padding:5px 9px;line-height:0"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a3 3 0 013-3h15"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a3 3 0 01-3 3H3"/></svg></button><button class="sh-chip" data-act="editw" data-id="${w.id}">Изменить</button><button class="sh-chip" data-act="delplan" title="Удалить из плана" style="padding:5px 9px;line-height:0;color:#ff6b6b"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg></button></span></div>
+  const wc = (label, btn, on, list) => `<div class="sh-card"><div class="sh-row sh-sb"><span class="sh-chip${on ? ' on' : ''}">${label}</span><span class="sh-row"><span class="sh-chip">${({ai:'Конструктор',plan:'План',preset:'Готовая',manual:'Вручную'})[w.src] || 'Вручную'}</span><button class="sh-chip" data-act="rep" data-id="${w.id}" title="Повторение" style="padding:5px 9px;line-height:0"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a3 3 0 013-3h15"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a3 3 0 01-3 3H3"/></svg></button><button class="sh-chip" data-act="editw" data-id="${w.id}">Изменить</button><button class="sh-chip" data-act="delplan" title="Удалить из плана" style="padding:5px 9px;line-height:0;color:#ff6b6b"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg></button></span></div>
   ${w.meso ? `<p class="sh-mu" style="margin-top:10px">${esc(w.meso)}</p>` : ''}<h3 class="sh-h" style="margin:4px 0 8px">${esc(w.title)}</h3>
   <div class="sh-row sh-wrap sh-mu"><span>~${dur} мин</span><span>·</span><span>${w.exercises.length} упр.</span><span>·</span><span>${setsN} подх.</span><span>·</span><span>${fmtN(wTon(w))} кг</span></div>
-  <div class="sh-chips" style="margin:10px 0">${w.exercises.map(e => `<span class="sh-chip" style="${gtint(e.muscles[0])}">${esc(e.name)}</span>`).join('')}</div>
+  ${list !== undefined ? list : `<div class="sh-chips" style="margin:10px 0">${w.exercises.map(e => `<span class="sh-chip" style="${gtint(e.muscles[0])}">${esc(e.name)}</span>`).join('')}</div>`}
   <div class="sh-row sh-sb" style="margin-bottom:8px"><span class="sh-lbl">Забитость мышц</span><b style="color:${recCol(ready)}">${ready}%</b></div><div class="sh-bar" style="margin-bottom:14px"><i style="width:${ready}%;background:${recCol(ready)}"></i></div>${btn}</div>`;
   if (isFut && w && !rest && (planned || ui.selDay === dsel)) { const n = daysBetween(todayS(), dsel); card = wc('Запланировано', `<div class="sh-fbtn">Тренировка запланирована через ${n} ${plural(n, 'день', 'дня', 'дней')}</div>` + (h.dated[dsel] ? '<button class="sh-chip" style="margin-top:10px" data-act="undate">Убрать из плана на эту дату</button>' : ''), false); }
   else if (!isToday) card = dayCard(h, dsel);
   else if (!w && rest) card = `<div class="sh-card"><span class="sh-chip on">По плану</span><h3 class="sh-h" style="margin:10px 0 6px">День отдыха</h3><p class="sh-mu" style="margin-bottom:12px">Сегодня по плану восстановление. Можно выбрать тренировку вручную.</p><button class="sh-btn ghost big" data-act="favs">Выбрать программу</button></div>`;
-  else if (w) card = wc(planned && w === planned ? 'По плану' : 'Сегодня', `<button class="sh-btn big" data-act="start" data-id="${w.id}">${sess ? 'Начать заново' : 'Начать тренировку'}</button>`, true);
+  else if (w) card = wc(planned && w === planned ? 'По плану' : 'Сегодня', dashBtn(w), true, dashList(w));
   if (isToday && h.sessions.some(x => x.date === dsel)) card += dayCard(h, dsel);
   o += hero(h, w, selDay()) + card;
   const sm = ui.muscle;
@@ -636,11 +669,12 @@ function paint(keep) {
   syncTicker();
 }
 function syncTicker() {
-  const need = ui.screen === 'workout' && sess;
+  const need = sess && (ui.screen === 'workout' || (sess.dash && sess.tm && sess.tm.since));
   if (need && !ticker) ticker = setInterval(tick, 1000); else if (!need && ticker) { clearInterval(ticker); ticker = null; }
 }
 function tick() {
   if (!root || !root.isConnected || root.offsetParent === null || !sess) return;
+  root.querySelectorAll('[data-t=sw]').forEach(x => { x.textContent = fmtT(swMs()); });
   const q = s => root.querySelector(s), el = q('[data-t=elapsed]'); if (el) el.textContent = fmtT(Date.now() - sess.startedAt);
   const r = q('[data-t=rest]'); if (r) { const had = !!r.firstElementChild; if (sess.restEnd && sess.restEnd <= Date.now()) { sess.restEnd = null; saveSess(); toast2('Отдых закончен'); try { navigator.vibrate && navigator.vibrate(200); } catch (e) {} } const html = restHtml(); if (html || had) r.innerHTML = html; }
 }
@@ -754,6 +788,7 @@ function addExDay(name, l, pre) {
 }
 function saveSessEdit() { const d = ui.sdraft; d.exercises.forEach(x => { x.sets = x.sets.map(z => ({...z, weight:Math.min(10000, Math.max(0, num(z.weight))), reps:Math.max(1, Math.round(num(z.reps)) || 1)})); }); const ex = d.exercises.filter(x => x.sets.length); if (!ex.length) return toast2('Оставьте хотя бы один подход или удалите тренировку'); let rec = null; setHub(h => { const x = h.sessions.find(z => z.id === d.id); if (x) { x.exercises = ex; rec = x; } }); if (rec) syncEntries(rec); ui.modal = null; ui.sdraft = null; paint(true); toast2('Изменения сохранены');}
 function finish() {
+  if (sess.dash) { if (sess.tm && sess.tm.since) { sess.tm.acc += Date.now() - sess.tm.since; sess.tm.since = null; } const m0 = dashMin(); sess.startedAt = Date.now() - m0 * 6e4; }
   const min = Math.max(1, Math.round((Date.now() - sess.startedAt) / 6e4)), ton = sessTon(sess), kcal = kcalOf(min), total = sessSets(sess);
   const rec = {id:sess.id,workoutId:sess.workoutId,title:sess.title,date:sess.date,startedAt:sess.startedAt,endedAt:Date.now(),minutes:min,exercises:sess.exercises.map(e => ({name:e.name,muscles:e.muscles,sets:doneSets(e).map(s => ({type:s.type,weight:num(s.weight),reps:Math.round(num(s.reps)),rir:Math.round(num(s.rir))}))})).filter(e => e.sets.length)};
   setHub(h => { h.sessions.push(rec); });
@@ -791,6 +826,14 @@ function onClick(ev) {
     case 'mode': setHub(h => { h.mode = v; }); paint(true); break;
     case 'sel': setSel(id); paint(true); break;
     case 'start': { const w = hub().workouts.find(x => x.id === id); if (!w) break; if (sess && !confirm('Текущая тренировка будет заменена. Продолжить?')) break; startSess(w); break; }
+    case 'dopen': { const w = hub().workouts.find(x => x.id === id); if (!w || !dashSess(w)) break; ui.dopen = ui.dopen === e ? null : e; paint(true); break; }
+    case 'dset': { const w = hub().workouts.find(x => x.id === id), ss = dSess(w), z = ss && ss.exercises[e] && ss.exercises[e].sets[s]; if (!z) break; const dl = +t.dataset.d; if (t.dataset.k === 'w') z.weight = Math.max(0, Math.round((num(z.weight) + dl * 2.5) * 10) / 10); else z.reps = Math.max(1, Math.round(num(z.reps)) + dl); saveSess(); paint(true); break; }
+    case 'dtog': { const w = hub().workouts.find(x => x.id === id), ss = dSess(w), z = ss && ss.exercises[e] && ss.exercises[e].sets[s]; if (!z) break; z.done = !z.done; saveSess(); paint(true); break; }
+    case 'dexall': { const w = hub().workouts.find(x => x.id === id), ss = dSess(w), ex = ss && ss.exercises[e]; if (!ex) break; const all = ex.sets.every(z => z.done); ex.sets.forEach(z => { z.done = !all; }); if (!all) ui.dopen = null; saveSess(); paint(true); break; }
+    case 'dswo': ui.swOpen = !ui.swOpen; paint(true); break;
+    case 'dsw': { const w = hub().workouts.find(x => x.id === id), ss = dashSess(w); if (!ss) break; if (ss.tm.since) { ss.tm.acc += Date.now() - ss.tm.since; ss.tm.since = null; } else ss.tm.since = Date.now(); saveSess(); paint(true); break; }
+    case 'dswr': { const w = hub().workouts.find(x => x.id === id), ss = dSess(w); if (!ss) break; ss.tm = {acc:0, since:null}; saveSess(); paint(true); break; }
+    case 'dfin': { const w = hub().workouts.find(x => x.id === id), ss = dSess(w); if (!ss || !sessSets(ss)) { toast2('Отметьте выполненные упражнения'); break; } ui.dopen = null; ui.swOpen = false; finish(); break; }
     case 'resume': ui.screen = 'workout'; paint(); break;
     case 'back': ui.screen = 'dash'; paint(); break;
     case 'editw': { const w = hub().workouts.find(x => x.id === id); if (!w) break; openDraft({title:w.title,status:'template',editId:w.id,scope:'date',exercises:JSON.parse(JSON.stringify(w.exercises)).map(e => { e.sets.forEach(z => { z.done = false; }); return e; })}); break; }
@@ -938,7 +981,7 @@ function mount() {
   if (!wasVisible) { wasVisible = true; if (!ui.modal || ui.modal === 'result') paint(); }
 }
 function init() {
-  if (!document.querySelector('link[data-sport-hub]')) { const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = new URL('sport-hub.css?v=10', document.baseURI).href; l.dataset.sportHub = 'true'; document.head.append(l); }
+  if (!document.querySelector('link[data-sport-hub]')) { const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = new URL('sport-hub.css?v=11', document.baseURI).href; l.dataset.sportHub = 'true'; document.head.append(l); }
   try { const o = window.render; if (typeof o === 'function') { window.render = function () { const r = o.apply(this, arguments); try { mount(); } catch (e) { console.warn(e); } return r; }; } } catch (e) {}
   mount();
 }

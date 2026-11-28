@@ -141,3 +141,10 @@
 #sport-hub .sh-adds .sh-mainbtns>.sh-sq{flex:1;gap:8px;font-size:14px;font-weight:700;white-space:nowrap;padding:0 6px}
 #sport-hub .sh-adds .sh-mainbtns>.sh-favw>.sh-sq{width:100%;flex:none}
 #sport-hub .sh-adds .sh-sqrow.sh-mainbtns>span.sh-favw{flex:0 0 56px}
+#sport-hub .sh-dx{background:rgba(255,255,255,.04);border:1px solid var(--bd);border-radius:16px;padding:12px;margin-bottom:8px}
+#sport-hub .sh-dx.ok{border-color:rgba(184,255,44,.45)}
+#sport-hub .sh-dchk{width:52px;height:52px;border-radius:16px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.04);border:1.5px solid rgba(184,255,44,.5)!important;color:rgba(184,255,44,.55);flex:none}
+#sport-hub .sh-dchk.on{background:rgba(184,255,44,.18);color:#b8ff2c;box-shadow:0 0 14px rgba(184,255,44,.35)}
+#sport-hub .sh-dmenu{margin-top:12px;border-top:1px solid var(--bd);padding-top:10px}
+#sport-hub .sh-dset{padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+#sport-hub .sh-dsw{background:rgba(255,255,255,.04);border:1px solid var(--bd);border-radius:14px;padding:10px 12px;margin-bottom:10px}
