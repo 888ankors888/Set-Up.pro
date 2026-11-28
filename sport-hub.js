@@ -417,7 +417,8 @@ function dashList(w) {
 const allDone = ss => ss.exercises.length > 0 && ss.exercises.every(e => e.sets.length && e.sets.every(z => z.done));
 function dashBtn(w) {
   const ss = dSess(w), n = ss ? ss.exercises.filter(e => e.sets.length && e.sets.every(z => z.done)).length : 0, on = ss && (ss.saved || allDone(ss));
-  return `<p class="sh-mu" style="margin:10px 0 8px">Выполнено упражнений: ${n} из ${w.exercises.length}${ss && ss.saved ? ' · сохранено' : ''}</p><button class="sh-btn big${on ? '' : ' ghost'}" data-act="dfin" data-id="${w.id}">Тренировка выполнена${ss && ss.saved ? ' ✓' : ''}</button>`;
+  const ai = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 4.8L18.6 9.6l-4.8 1.8L12 16.2l-1.8-4.8-4.8-1.8 4.8-1.8L12 3Z"/><path d="M19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9L19 21Z"/></svg>';
+  return `<p class="sh-mu" style="margin:10px 0 8px">Выполнено упражнений: ${n} из ${w.exercises.length}${ss && ss.saved ? ' · сохранено' : ''}</p><div class="sh-row" style="gap:8px"><button class="sh-btn big${on ? '' : ' ghost'}" style="flex:1;margin:0" data-act="dfin" data-id="${w.id}">Тренировка выполнена${ss && ss.saved ? ' ✓' : ''}</button><button class="sh-sq sh-aibtn${ss && ss.review ? ' on' : ''}" data-act="rai" data-id="${w.id}" title="Разбор тренировки от ИИ" aria-label="Разбор тренировки от ИИ" style="width:56px;height:56px;flex:none;border-radius:16px;color:var(--lime)">${ai}</button></div>`;
 }
 function maybeAsk() {
   if (!sess || !sess.dash) return;
@@ -456,14 +457,15 @@ function resultPreview() {
   const used = swMs() >= 30000, min = dashMin(); return {min, ton:sessTon(sess), kcal:kcalOf(min), src:used ? 'timer' : 'plan'};
 }
 function revHtml() {
-  const r = ui.rev; if (!r) return '';
+  const r = sess && sess.review ? {data:sess.review} : ui.rev; if (!r) return '';
   if (r.busy) return '<div class="sh-dset" style="margin-top:10px"><p class="sh-mu">ИИ анализирует тренировку, это может занять до минуты…</p></div>';
   if (r.err) return `<div class="sh-dset" style="margin-top:10px"><p style="color:var(--red);font-size:13px">${esc(r.err)}</p></div>`;
   const d = r.data, li = a => (a || []).map(x => `<li style="margin:3px 0">${esc(x)}</li>`).join('');
   return `<div class="sh-dset" style="margin-top:10px"><div class="sh-lbl" style="margin-bottom:4px">Сводка</div><p style="font-size:14px;line-height:1.4">${esc(d.summary)}</p>${d.vs_previous ? `<div class="sh-lbl" style="margin:10px 0 4px">В сравнении с прошлыми</div><p style="font-size:14px;line-height:1.4">${esc(d.vs_previous)}</p>` : ''}<div class="sh-lbl" style="margin:10px 0 4px">Тренировки на эту неделю</div><ul style="padding-left:18px;font-size:14px;line-height:1.4">${li(d.week)}</ul><div class="sh-lbl" style="margin:10px 0 4px">Питание и вода</div><ul style="padding-left:18px;font-size:14px;line-height:1.4">${li(d.nutrition)}</ul>${(d.warnings || []).length ? `<ul style="padding-left:18px;font-size:13px;color:var(--amb);margin-top:8px">${li(d.warnings)}</ul>` : ''}<p class="sh-mu" style="font-size:12px;margin-top:8px">Это ориентиры, а не медицинская рекомендация.</p></div>`;
 }
 async function reviewRun() {
-  if (!sess || !sess.dash || (ui.rev && ui.rev.busy)) return;
+  if (!sess || !sess.dash || (ui.rev && ui.rev.busy)) { paint(true); return; }
+  if (sess.review) { paint(true); return; }
   if (!confirm('Отправить на сервер ИИ данные анкеты (возраст, пол, вес, рост, цель), итоги этой и последних тренировок и данные питания за сегодня? Имя и контакты не передаются.')) return;
   const h = hub(), pf = (S && S.profile) || {}, sp = (S && S.sports && S.sports.profile) || {}, pv = resultPreview(), nu = nutri(), prog = wProg(sess);
   const nn = (v, lo, hi) => { v = num(v); return v >= lo && v <= hi ? v : null; };
@@ -483,7 +485,7 @@ async function reviewRun() {
     if (res.status === 429) throw new Error('Слишком много запросов. Подождите минуту и повторите.');
     if (res.status === 404) throw new Error('Сервер ИИ ещё обновляется. Повторите через несколько минут.');
     if (!res.ok) throw new Error(typeof (j && j.detail) === 'string' ? j.detail : 'ИИ не смог подготовить разбор, повторите попытку.');
-    ui.rev = {sid:sess ? sess.id : '', data:j};
+    ui.rev = {sid:sess ? sess.id : ''}; if (sess) { sess.review = j; sess.reviewAt = Date.now(); saveSess(); if (sess.saved) setHub(hh => { const x = hh.sessions.find(z => z.id === sess.id); if (x) x.review = j; }); }
   } catch (e) { ui.rev = {sid:sess ? sess.id : '', err:e.name === 'AbortError' ? 'Сервер долго не отвечает. Повторите попытку.' : (e.message && !/fetch|network|load failed/i.test(e.message) ? e.message : 'Нет связи с сервером ИИ. Проверьте интернет и повторите.')}; }
   paint(true);
 }
@@ -717,6 +719,7 @@ function modalHtml() {
     const min = Math.max(1, Math.round((Date.now() - sess.startedAt) / 6e4)), n = sessSets(sess);
     return sheet('Завершить тренировку', `<div class="sh-stats"><div class="sh-stat"><b>${min}</b>мин</div><div class="sh-stat"><b>${fmtN(sessTon(sess))}</b>кг</div><div class="sh-stat"><b>${n}</b>подх.</div></div><p class="sh-mu" style="margin-bottom:12px">Примерно ${kcalOf(min)} ккал. Привычка «${esc(habitState().title)}» отметится автоматически.</p>${n ? '' : '<p style="color:var(--amb);margin-bottom:12px">Нет выполненных подходов — сохранять нечего.</p>'}<button class="sh-btn big" data-act="fsave" ${n ? '' : 'disabled'}>Сохранить и завершить</button><button class="sh-btn ghost big" style="margin-top:8px" data-act="mclose">Вернуться к тренировке</button>`);
   }
+  if (m === 'review') return sheet('Разбор тренировки', (sess && sess.dash ? revHtml() : '') || '<p class="sh-mu">Нет данных для разбора.</p>');
   if (m === 'result') {
     if (sess && sess.dash) {
       const r = resultPreview(), hb = habitState(), pg = wProg(sess), ai = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 4.8L18.6 9.6l-4.8 1.8L12 16.2l-1.8-4.8-4.8-1.8 4.8-1.8L12 3Z"/><path d="M19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9L19 15Z"/></svg>';
@@ -724,8 +727,7 @@ function modalHtml() {
     <p class="sh-mu" style="margin-top:6px">${r.src === 'timer' ? 'Время взято с секундомера.' : 'Время рассчитано по подходам, повторениям и отдыху между упражнениями.'}</p>${progHtml(pg) || '<p class="sh-mu" style="margin-top:10px">Отметьте подходы, и здесь появятся прогресс и рекорды.</p>'}
     <div class="sh-row" style="gap:8px;margin-top:12px"><button class="sh-btn ghost big" style="flex:1;margin:0" data-act="water" data-v="250">+250 мл воды</button><button class="sh-btn ghost big" style="flex:1;margin:0" data-act="water" data-v="500">+500 мл воды</button></div>
     <button class="sh-btn ghost big" style="margin-top:8px" data-act="food">Добавить перекус</button>
-    ${!hb.enabled ? '<button class="sh-btn ghost big" style="margin-top:8px" data-act="henable">Включить привычку и отметить</button>' : ''}
-    <div class="sh-row" style="gap:8px;margin-top:12px"><button class="sh-btn big" style="flex:1;margin:0" data-act="rsave">${sess.saved ? 'Обновить запись' : 'Сохранить тренировку'}</button><button class="sh-sq sh-aibtn" data-act="rai" title="Разбор тренировки от ИИ" aria-label="Разбор тренировки от ИИ" style="width:56px;height:56px;flex:none;border-radius:16px;color:var(--lime)">${ai}</button></div>${revHtml()}`);
+    <div class="sh-row" style="gap:8px;margin-top:12px"><button class="sh-btn big" style="flex:1;margin:0" data-act="rsave">${sess.saved ? 'Обновить запись' : 'Сохранить тренировку'}</button><button class="sh-sq sh-aibtn${sess.review ? ' on' : ''}" data-act="rai" title="Разбор тренировки от ИИ" aria-label="Разбор тренировки от ИИ" style="width:56px;height:56px;flex:none;border-radius:16px;color:var(--lime)">${ai}</button></div>${revHtml()}`);
     }
   }
   if (m === 'result') {
@@ -870,7 +872,7 @@ function saveSessEdit() { const d = ui.sdraft; d.exercises.forEach(x => { x.sets
 function finish() {
   if (sess.dash) { if (sess.tm && sess.tm.since) { sess.tm.acc += Date.now() - sess.tm.since; sess.tm.since = null; } const m0 = dashMin(); sess.startedAt = Date.now() - m0 * 6e4; }
   const min = Math.max(1, Math.round((Date.now() - sess.startedAt) / 6e4)), ton = sessTon(sess), kcal = kcalOf(min), total = sessSets(sess);
-  const rec = {id:sess.id,workoutId:sess.workoutId,title:sess.title,date:sess.date,startedAt:sess.startedAt,endedAt:Date.now(),minutes:min,dash:!!sess.dash, pr:sess.dash ? wProg(sess).filter(x => x.pr).map(x => x.name) : [], timeSrc:sess.dash ? (swMs() >= 30000 ? 'timer' : 'plan') : 'clock', exercises:sess.exercises.map(e => ({name:e.name,muscles:e.muscles,sets:doneSets(e).map(s => ({type:s.type,weight:num(s.weight),reps:Math.round(num(s.reps)),rir:Math.round(num(s.rir))}))})).filter(e => e.sets.length)};
+  const rec = {id:sess.id,workoutId:sess.workoutId,title:sess.title,date:sess.date,startedAt:sess.startedAt,endedAt:Date.now(),minutes:min,review:sess.review || null, dash:!!sess.dash, pr:sess.dash ? wProg(sess).filter(x => x.pr).map(x => x.name) : [], timeSrc:sess.dash ? (swMs() >= 30000 ? 'timer' : 'plan') : 'clock', exercises:sess.exercises.map(e => ({name:e.name,muscles:e.muscles,sets:doneSets(e).map(s => ({type:s.type,weight:num(s.weight),reps:Math.round(num(s.reps)),rir:Math.round(num(s.rir))}))})).filter(e => e.sets.length)};
   setHub(h => { h.sessions = h.sessions.filter(x => x.id !== rec.id); h.sessions.push(rec); });
   syncEntries(rec);
   markHabit(false);
@@ -916,7 +918,7 @@ function onClick(ev) {
     case 'dexall': { const w = hub().workouts.find(x => x.id === id), ss = dSess(w), ex = ss && ss.exercises[e]; if (!ex) break; const all = ex.sets.every(z => z.done); ex.sets.forEach(z => { z.done = !all; }); if (!all) ui.dopen = null; saveSess(); paint(true); break; }
     case 'dchk': { const w = hub().workouts.find(x => x.id === id), ss = dashSess(w), ex = ss && ss.exercises[e]; if (!ex) break; const all = ex.sets.every(z => z.done); ex.sets.forEach(z => { z.done = !all; }); ss.saved = false; saveSess(); paint(true); maybeAsk(); break; }
     case 'rsave': if (!sess || !sess.dash) break; if (!sessSets(sess)) { toast2('Отметьте выполненные упражнения'); break; } finish(); break;
-    case 'rai': reviewRun(); break;
+    case 'rai': { if (id) { const w = hub().workouts.find(x => x.id === id), ss = dashSess(w); if (!ss) break; if (!ss.review && !sessSets(ss)) { toast2('Отметьте выполненные упражнения'); break; } ui.modal = 'review'; } reviewRun(); break; }
     case 'dswo': ui.swOpen = !ui.swOpen; paint(true); break;
     case 'dsw': { const w = hub().workouts.find(x => x.id === id), ss = dashSess(w); if (!ss) break; if (ss.tm.since) { ss.tm.acc += Date.now() - ss.tm.since; ss.tm.since = null; } else ss.tm.since = Date.now(); saveSess(); paint(true); break; }
     case 'dswr': { const w = hub().workouts.find(x => x.id === id), ss = dSess(w); if (!ss) break; ss.tm = {acc:0, since:null}; saveSess(); paint(true); break; }
