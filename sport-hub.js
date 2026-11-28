@@ -298,7 +298,7 @@ function bodySvg(rec) {
     const k = fem ? FSX[g] || 1 : 1, tr = k !== 1 ? ` transform="translate(100 0) scale(${k} 1) translate(-100 0)"` : '';
     const el = `<path class="sh-mp${sel ? ' sel' : ''}" data-act="muscle" data-id="${g}" d="${d}"${tr} style="fill:${mix(col, Math.min(1, t * 1.05))};filter:${t > .05 ? `drop-shadow(0 0 ${(1 + t * 4).toFixed(1)}px ${col})` : 'none'}"/>`;
     return el + `<g transform="translate(200 0) scale(-1 1)">${el}</g>`; };
-  return `<svg viewBox="0 0 200 420" class="sh-cy sh-fig" role="img" aria-label="Мышцы забиты">
+  return `<svg viewBox="0 0 200 420" class="sh-cy sh-fig" role="img" aria-label="Нагрузка по мышцам">
   <defs><linearGradient id="shs" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${CY}" stop-opacity="0"/><stop offset=".5" stop-color="${CY}" stop-opacity=".35"/><stop offset="1" stop-color="${CY}" stop-opacity="0"/></linearGradient><clipPath id="shc"><rect width="200" height="420"/></clipPath></defs>
   ${sil}
   ${MUS[ui.body].map(mus).join('')}
@@ -517,7 +517,7 @@ function dash() {
   else if (w) card = wc(planned && w === planned ? 'По плану' : 'Сегодня', dashBtn(w), true, dashList(w));
   o += hero(h, w, selDay()) + card;
   const sm = ui.muscle;
-  o += `<div class="sh-card"><div class="sh-row sh-sb" style="margin-bottom:10px"><h3 class="sh-h" style="font-size:16px">Мышцы забиты</h3><div class="sh-seg"><button data-act="body" data-v="front" class="${ui.body === 'front' ? 'on' : ''}">Спереди</button><button data-act="body" data-v="back" class="${ui.body === 'back' ? 'on' : ''}">Сзади</button></div></div>
+  o += `<div class="sh-card"><div class="sh-row sh-sb" style="margin-bottom:10px"><h3 class="sh-h" style="font-size:16px">Нагрузка по мышцам</h3><div class="sh-seg"><button data-act="body" data-v="front" class="${ui.body === 'front' ? 'on' : ''}">Спереди</button><button data-act="body" data-v="back" class="${ui.body === 'back' ? 'on' : ''}">Сзади</button></div></div>
   <div class="sh-body">${bodySvg(rec)}<div style="flex:1">${sm ? `<div class="sh-lbl" style="color:${gc(sm)}">${GROUPS[sm]}</div><p class="sh-h" style="color:${gc(sm)}">${rec[sm]}%</p><p class="sh-mu" style="margin:4px 0 8px">${rec[sm] <= 0 ? 'Не забита' : rec[sm] <= 25 ? 'Слегка забита' : 'Сильно забита, дай отдых'}</p>${h.workouts.filter(x => x.tags.includes(sm)).slice(0, 2).map(x => `<button class="sh-chip" data-act="sel" data-id="${x.id}">${esc(x.title)}</button>`).join(' ')}` : `<p class="sh-mu">Нажмите на группу мышц, чтобы увидеть забитость. Красный — сильно забита, лимонный — свежая.</p>`}</div></div>
   <div class="sh-row sh-wrap" style="margin-top:10px">${Object.keys(GROUPS).map(g => `<button class="sh-chip" data-act="muscle" data-id="${g}" style="${gtint(g)}">${GROUPS[g]} ${rec[g]}%</button>`).join('')}</div></div>`;
   /* синергия */
