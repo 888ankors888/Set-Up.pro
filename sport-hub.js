@@ -417,7 +417,7 @@ function dashList(w) {
 const allDone = ss => ss.exercises.length > 0 && ss.exercises.every(e => e.sets.length && e.sets.every(z => z.done));
 function dashBtn(w) {
   const ss = dSess(w), n = ss ? ss.exercises.filter(e => e.sets.length && e.sets.every(z => z.done)).length : 0, on = ss && (ss.saved || allDone(ss));
-  const ai = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 4.8L18.6 9.6l-4.8 1.8L12 16.2l-1.8-4.8-4.8-1.8 4.8-1.8L12 3Z"/><path d="M19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9L19 21Z"/></svg>';
+  const ai = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 4.8L18.6 9.6l-4.8 1.8L12 16.2l-1.8-4.8-4.8-1.8 4.8-1.8L12 3Z"/><path d="M19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9L19 15Z"/></svg>';
   return `<p class="sh-mu" style="margin:10px 0 8px">Выполнено упражнений: ${n} из ${w.exercises.length}${ss && ss.saved ? ' · сохранено' : ''}</p><div class="sh-row" style="gap:8px"><button class="sh-btn big${on ? '' : ' ghost'}" style="flex:1;margin:0" data-act="dfin" data-id="${w.id}">Тренировка выполнена${ss && ss.saved ? ' ✓' : ''}</button><button class="sh-sq sh-aibtn${ss && ss.review ? ' on' : ''}" data-act="rai" data-id="${w.id}" title="Разбор тренировки от ИИ" aria-label="Разбор тренировки от ИИ" style="width:56px;height:56px;flex:none;border-radius:16px;color:var(--lime)">${ai}</button></div>`;
 }
 function maybeAsk() {
