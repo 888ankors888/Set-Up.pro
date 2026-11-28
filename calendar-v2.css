@@ -58,3 +58,5 @@ html:root:root:root:root:root body .setup-calendar .sc-legend span{display:inlin
 @media(prefers-reduced-motion:reduce){html:root:root:root:root:root body .setup-calendar *{transition:none!important;animation:none!important}}
 html:root:root:root:root:root body .setup-calendar .sc-cap::first-letter{text-transform:uppercase}
 html:root:root:root:root:root body .setup-calendar .sc-cap{color:#c8f560;font-weight:600}
+html:root:root:root:root:root:root:root body:has(#nav):has(.setup-calendar){padding-top:calc(62px + env(safe-area-inset-top,0px))!important}
+html:root:root:root:root:root body .setup-calendar{margin-top:4px!important}
