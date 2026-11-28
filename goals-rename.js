@@ -52,13 +52,34 @@ script.onerror = () => console.warn('habit-quick.js is not loaded');
 document.head.append(script);
 })();
 
-/* Loads the rebuilt sport section (training hub). */
+/* Removes the three marketing taglines wherever they are rendered. */
 (() => {
 'use strict';
-if (document.querySelector('script[data-sport-hub]')) return;
-const script = document.createElement('script');
-script.src = new URL('sport-hub.js?v=19', document.baseURI).href;
-script.dataset.sportHub = 'true';
-script.onerror = () => console.warn('sport-hub.js is not loaded');
-document.head.append(script);
+const norm = s => s.replace(/[\s\u00a0\u202f]+/g, ' ').trim().toLowerCase().replace(/\.$/, '');
+const PHRASES = new Set([
+  'маленькие шаги. большой результат',
+  'сила в движении. тонус в теле',
+  'маленькие шаги. к тому, что важно'
+]);
+const SKIP = new Set(['HTML', 'HEAD', 'BODY', 'MAIN', 'SCRIPT', 'STYLE']);
+let queued = false;
+function hit(el) { return el.textContent.length < 80 && PHRASES.has(norm(el.textContent)); }
+function run() {
+  queued = false;
+  document.querySelectorAll('h1,h2,h3,h4,p,div,span,small,em,i,b,strong,header,section').forEach(el => {
+    if (SKIP.has(el.tagName) || el.id === 'app' || el.dataset.taglineRemoved || !hit(el)) return;
+    if ([...el.querySelectorAll('*')].some(hit)) return;
+    el.dataset.taglineRemoved = 'true';
+    el.style.setProperty('display', 'none', 'important');
+    el.setAttribute('aria-hidden', 'true');
+  });
+}
+function schedule() { if (!queued) { queued = true; requestAnimationFrame(run); } }
+function start() {
+  run();
+  new MutationObserver(schedule).observe(document.body, { childList: true, subtree: true, characterData: true });
+  window.addEventListener('pageshow', schedule);
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once: true });
+else start();
 })();
