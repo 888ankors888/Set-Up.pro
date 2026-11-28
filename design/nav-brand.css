@@ -366,3 +366,11 @@ html:root:root:root body #nav .setup-wordnav > button:hover .setup-brand-label {
     box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35) !important;
   }
 }
+
+/* Цвет шара и неона в меню по активному разделу: питание лайм, спорт бирюзовый, привычки фиолетовый */
+html:root:root:root body .setup-sphere-layer[data-sphere="sport"]>svg{filter:hue-rotate(70deg) saturate(1.1)}
+html:root:root:root body .setup-sphere-layer[data-sphere="tracker"]>svg{filter:hue-rotate(170deg) saturate(1.05)}
+html:root:root:root body #nav:has(.setup-sphere-layer.is-on[data-sphere="sport"]) .setup-nav-orb{box-shadow:0 6px 16px rgba(0,0,0,.55),0 0 18px rgba(56,232,255,.5)!important}
+html:root:root:root body #nav:has(.setup-sphere-layer.is-on[data-sphere="sport"]) .setup-nav-glow{background:radial-gradient(circle,rgba(56,232,255,.38) 0%,rgba(56,232,255,0) 70%)!important}
+html:root:root:root body #nav:has(.setup-sphere-layer.is-on[data-sphere="tracker"]) .setup-nav-orb{box-shadow:0 6px 16px rgba(0,0,0,.55),0 0 18px rgba(187,107,217,.55)!important}
+html:root:root:root body #nav:has(.setup-sphere-layer.is-on[data-sphere="tracker"]) .setup-nav-glow{background:radial-gradient(circle,rgba(187,107,217,.4) 0%,rgba(187,107,217,0) 70%)!important}
