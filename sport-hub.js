@@ -524,11 +524,6 @@ function dash() {
   const addKcal = w ? kcalOf(dur) : 0;
   let nline = '<p class="sh-mu">Данные питания недоступны</p>';
   if (nu && nu.t) { const k = Math.round(nu.e.k || nu.e.kcal || 0), tk = Math.round(nu.t.kcal || nu.t.k || 0), p = Math.round(nu.e.p || 0), tp = Math.round(nu.t.p || 0); nline = `<div class="sh-row sh-sb"><span>Калории сегодня</span><b>${fmtN(k)} / ${fmtN(tk)}</b></div><div class="sh-bar" style="margin:6px 0 10px"><i style="width:${tk ? Math.min(100, k / tk * 100) : 0}%"></i></div><div class="sh-row sh-sb"><span>Белок</span><b>${p} / ${tp} г</b></div><p class="sh-mu" style="margin-top:8px">В тренировочный день добавьте около ${addKcal} ккал и 20–30 г белка после занятия.</p>`; }
-  o += `<div class="sh-card sh-syn"><div class="sh-lbl">Синергия Set-UP</div><div style="margin:10px 0">${nline}</div>
-  <button class="sh-btn ghost big" data-act="food" style="margin-bottom:10px">Добавить приём пищи</button>
-  <div class="sh-row sh-sb"><span>${esc(hb.title)}</span><b style="color:${hb.done ? 'var(--lime)' : 'var(--mu)'}">${hb.done ? 'выполнено' : hb.enabled ? 'ждёт тренировки' : 'не включена'}</b></div><p class="sh-mu" style="margin-top:6px">После тренировки привычка отметится автоматически.</p></div>`;
-  const mx = Math.max(1, ...wt), names = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
-  o += `<div class="sh-card"><div class="sh-row sh-sb" style="margin-bottom:10px"><h3 class="sh-h" style="font-size:16px">Тоннаж недели</h3><b>${fmtN(wt[ui.day])} кг</b></div><div class="sh-week">${wt.map((v, i) => `<button data-act="day" data-v="${i}" class="${i === ui.day ? 'on' : ''}"><i style="height:${Math.max(3, v / mx * 80)}px"></i>${names[i]}</button>`).join('')}</div></div>`;
   return o;
 }
 
