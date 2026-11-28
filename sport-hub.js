@@ -359,6 +359,12 @@ function addHtml() {
   } else if (ap === 'cfg') {
     const c = ui.cfg, l = find(c.n), on = favGet().ex.includes(c.n), st = (k, v, lab) => `<div class="sh-row sh-sb" style="margin-top:12px"><span class="sh-lbl">${lab}</span><span class="sh-row" style="gap:10px"><button class="sh-sq sm" data-act="cfgs" data-k="${k}" data-d="-1">−</button><b style="min-width:70px;text-align:center">${v}</b><button class="sh-sq sm" data-act="cfgs" data-k="${k}" data-d="1">+</button></span></div>`;
     body = back + `<span class="sh-chip" style="${gtint(l.m)}">${GROUPS[l.m]}</span></div><div class="sh-row sh-sb"><h3 class="sh-h" style="color:${gc(l.m)}">${esc(c.n)}</h3><button class="sh-chip" data-act="afav" data-k="ex" data-v="${esc(c.n)}" style="line-height:0;padding:7px 9px">${heartI(on)}</button></div>${st('sets', c.sets, 'Подходы')}${st('reps', c.reps, 'Повторения')}<div class="sh-row sh-sb" style="margin-top:12px"><span class="sh-lbl">Вес</span><button class="sh-chip${c.w ? '' : ' on'}" data-act="cfgbw">Свой вес</button></div>${c.w ? st('w', c.w + ' кг', '').replace('<span class="sh-lbl"></span>', '') : ''}<div class="sh-stats" style="margin-top:16px"><div class="sh-stat"><b>${c.sets}×${c.reps}</b>схема</div><div class="sh-stat"><b>${c.sets * c.reps}</b>повторов</div><div class="sh-stat"><b>${fmtN(c.sets * c.reps * c.w)}</b>кг объём</div></div><button class="sh-btn big" data-act="cfgadd">Добавить на ${d}</button>`;
+  } else if (ap === 'aprev') {
+    const w = ui.apw; if (!w) { ui.ap = null; return addHtml(); }
+    const L = w.exercises, pg = ui.pg || 'all', ns = L.reduce((a, e) => a + e.sets.filter(z => z.type !== 'w').length, 0);
+    const chips = `<div class="sh-chips" style="margin:2px 0 8px"><button class="sh-chip${pg === 'all' ? ' on' : ''}" data-act="pgm" data-v="all">Все</button>${Object.keys(GROUPS).map(g => `<button class="sh-chip" style="${pg === g ? 'background:' + gc(g) + ';color:#000;border-color:' + gc(g) : gtint(g)}" data-act="pgm" data-v="${g}">${GROUPS[g]}</button>`).join('')}</div>`;
+    const pick = ui.apAdd ? chips + LIB.filter(x => eqOk(ui.ai, x) && (pg === 'all' || x.m === pg)).map(x => { const on = L.some(e => e.name === x.n); return `<div class="sh-item" style="border-left:3px solid ${gc(x.m)}"><span style="flex:1;min-width:0">${esc(x.n)}<br><span class="sh-mu">${gtxt(x.m)}</span></span><button class="sh-sq sm" data-act="apaddex" data-v="${esc(x.n)}"${on ? ' style="color:var(--lime);border-color:var(--lime)!important"' : ''}>${on ? '✓' : '+'}</button></div>`; }).join('') : '';
+    body = back + `<span class="sh-chip">Проверьте программу</span></div><h3 class="sh-h">${esc(w.title)}</h3><div class="sh-mu" style="margin:4px 0 10px">${L.length} упр. · ${ns} подходов · ≈${prevMin(L)} мин</div>` + pvRows({id:'__ai'}) + `<button class="sh-chip${ui.apAdd ? ' on' : ''}" style="margin:12px 0 8px" data-act="apaddt">${ui.apAdd ? 'Скрыть список упражнений' : '+ Добавить упражнение'}</button>${pick}<button class="sh-btn big" style="margin-top:14px" data-act="apok"${L.length ? '' : ' disabled'}>Добавить на ${d}</button>`;
   } else if (ap === 'pv') {
     const x = progList().find(z => z.id === ui.pv); if (!x) { ui.ap = null; return addHtml(); }
     const on = favGet().pr.includes(x.id), h = hub(), wk = h.workouts.find(z => z.id === x.id);
@@ -411,8 +417,7 @@ async function aiGenerate() {
       return {id:uid('e'), name:x.name, muscles:[mu], tempo:(l && l.tempo) || '2-0-1', restSec:(l && l.rest) || 90, note:x.notes || '', sets:Array.from({length:sets}, () => ({id:uid('s'), type:'n', weight:wt, reps, rir:2, done:false}))};
     });
     const w = {id:uid('w'), title:'Программа на ' + dateLabel(d), src:'ai', tags:[...new Set(ex.flatMap(e => e.muscles))], exercises:ex, forDate:d, meso:'ИИ · ' + (j.summary || '')};
-    setHub(hh => { hh.workouts.push(w); hh.dated[d] = w.id; }); setSel(w.id);
-    ui.aiBusy = false; ui.modal = null; paint(); toast2('Программа от ИИ добавлена на ' + dateLabel(d));
+    ui.aiBusy = false; showPrev(w); toast2('Программа от ИИ собрана. Проверьте и добавьте');
     if (Array.isArray(j.warnings) && j.warnings.length) setTimeout(() => toast2(j.warnings[0]), 2500);
   } catch (e) { ui.aiBusy = false; ui.aiErr = e.name === 'AbortError' ? 'Сервер долго не отвечает. Повторите попытку.' : (e.message && !/fetch|network/i.test(e.message) ? e.message : 'Нет связи с сервером ИИ. Проверьте интернет и повторите.'); paint(true); }
 }
@@ -583,6 +588,15 @@ function buildDay() {
   w.estMin = Math.round(total / 60);
   return w;
 }
+function showPrev(w) {
+  ui.apw = w; ui.pve = {id:'__ai', list:w.exercises}; ui.pved = null; ui.apAdd = false; ui.pg = 'all';
+  ui.back = 'auto'; ui.modal = 'addmenu'; ui.ap = 'aprev'; ui.aq = ''; paint(true);
+}
+function prevMin(list) {
+  const sec = list.reduce((a, e) => { const ws = e.sets.filter(z => z.type !== 'w'), n = ws.length || 1, r = ws[0] ? ws[0].reps : 10, wm = e.sets.length - ws.length;
+    return a + 50 + wm * 85 + n * (Math.round(r * 3.5) + 5) + (n - 1) * (e.restSec || 60); }, 0);
+  return Math.round(sec / 60) + 5;
+}
 function addExDay(name, l, pre) {
   const d = selDay(), h0 = hub(), pv = planOf(h0, d), planned = pv && pv !== 'rest' ? h0.workouts.find(x => x.id === pv) : null;
   const base = (ui.selDay === d && h0.workouts.find(x => x.id === ui.sel)) || planned || (d === todayS() && pv !== 'rest' ? suggest(h0, recovery(h0)) : null);
@@ -702,7 +716,14 @@ function onClick(ev) {
     case 'ai': try { const p = S.sports && S.sports.profile; if (p) { ui.ai.goal = p.goal === 'strength' ? 'strength' : 'hyper'; ui.ai.eq = /без/i.test(p.equipment || '') ? 'none' : 'gym'; const mm = Number(p.minutes); if (mm) ui.ai.min = mm <= 30 ? 30 : mm <= 45 ? 45 : mm <= 60 ? 60 : 75; } } catch (x) {} ui.modal = 'ai'; paint(true); break;
     case 'aiset': if (t.dataset.k === 'focus') { const f = ui.ai.focus, i = f.indexOf(v); if (i < 0) f.push(v); else f.splice(i, 1); } else ui.ai[t.dataset.k] = t.dataset.k === 'min' ? +v : v; paint(true); break;
     case 'aireal': aiGenerate(); break;
-    case 'aigen': { const w = buildDay(); if (!w) { toast2('Не удалось подобрать упражнения'); break; } setHub(h => { h.workouts.push(w); h.dated[selDay()] = w.id; }); setSel(w.id); ui.modal = null; paint(); toast2('Программа добавлена на ' + dateLabel(selDay())); break; }
+    case 'aigen': { const w = buildDay(); if (!w) { toast2('Не удалось подобрать упражнения'); break; } showPrev(w); break; }
+    case 'apaddex': { const l = find(v); if (!l || !ui.apw) break; const p = exParams(l, ui.ai), ex = mkEx(l); ex.restSec = p.rest; ex.sets = (p.warm ? ex.sets.filter(z => z.type === 'w') : []).concat(Array.from({length:3}, () => ({id:uid('s'), type:'n', weight:p.w, reps:p.reps, rir:2, done:false}))); ui.apw.exercises.push(ex); paint(true); break; }
+    case 'apaddt': ui.apAdd = !ui.apAdd; paint(true); break;
+    case 'apok': { const w = ui.apw; if (!w || !w.exercises.length) { toast2('Добавьте хотя бы одно упражнение'); break; }
+      const ex = JSON.parse(JSON.stringify(w.exercises)); ex.forEach(q => { q.id = uid('e'); q.sets.forEach(z => { z.id = uid('s'); z.done = false; }); });
+      const nw = Object.assign({}, w, {id:uid('w'), exercises:ex, tags:[...new Set(ex.flatMap(q => q.muscles))], forDate:selDay()}); delete nw.estMin;
+      setHub(hh => { hh.workouts.push(nw); hh.dated[selDay()] = nw.id; }); setSel(nw.id);
+      ui.apw = null; ui.pve = null; ui.pved = null; ui.apAdd = false; ui.ap = null; ui.modal = null; paint(true); toast2('Программа добавлена на ' + dateLabel(selDay())); break; }
     case 'progress': ui.modal = 'progress'; paint(true); break;
     case 'mclose': if (t.classList.contains('sh-modal') && ev.target !== t) break;
       if ((ui.modal === 'manual' && ui.draft && ui.draft.exercises.length && JSON.stringify(ui.draft) !== ui.snap) || (ui.modal === 'sedit' && ui.sdraft && JSON.stringify(ui.sdraft) !== ui.ssnap)) { ui.confirmClose = true; paint(true); break; }
