@@ -535,6 +535,12 @@ const SPHERE_SVGS = {
   </g>
 </svg>`
 };
+(() => {
+  const swap = (key, m) => { let t = SPHERE_SVGS[key]; for (const [a, b] of m) t = t.split(a).join(b); SPHERE_SVGS[key] = t; };
+  swap('sport', [['#b4ff6b', '#a6f6ff'], ['#76e86c', '#38e8ff'], ['#2ba859', '#0a9fbd'], ['#4ce66d', '#38e8ff']]);
+  swap('tracker', [['#b4ff6b', '#e3b0f5'], ['#76e86c', '#bb6bd9'], ['#2ba859', '#7a36a0'], ['#4ce66d', '#bb6bd9']]);
+})();
+
 
 // Each inline SVG gets its own id namespace so the spheres never share gradients/filters/masks
 function uniqueSvg(svg, prefix) {
