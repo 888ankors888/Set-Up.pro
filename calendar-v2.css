@@ -1,6 +1,6 @@
 /* Календарь v2: неоновая неделя, индикаторы активности, месячный календарь */
 html:root:root:root:root:root body .setup-calendar{position:relative;margin:14px 0 20px!important;font-family:inherit}
-html:root:root:root:root:root body .setup-calendar-heading{display:flex;align-items:center;justify-content:space-between;flex-wrap:nowrap;gap:10px;margin:0 0 14px}
+html:root:root:root:root:root body .setup-calendar-heading{display:flex;align-items:center;justify-content:flex-end;flex-wrap:nowrap;gap:10px;margin:0 0 14px}
 html:root:root:root:root:root body .setup-calendar .sc-month{display:flex;flex-direction:column;align-items:flex-start;gap:1px;min-width:0;width:auto;margin:0;padding:6px 30px 6px 12px;position:relative;border:1px solid rgba(184,255,44,.22);border-radius:16px;background:linear-gradient(135deg,rgba(184,255,44,.1),rgba(255,255,255,.02));color:#f2f7f5;text-align:left;cursor:pointer;transition:border-color .2s,box-shadow .2s,transform .15s}
 html:root:root:root:root:root body .setup-calendar .sc-month:hover,html:root:root:root:root:root body .setup-calendar .sc-month[aria-expanded=true]{border-color:rgba(184,255,44,.6);box-shadow:0 0 18px rgba(184,255,44,.2)}
 html:root:root:root:root:root body .setup-calendar .sc-month:active{transform:scale(.98)}
