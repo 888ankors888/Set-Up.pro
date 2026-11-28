@@ -540,6 +540,7 @@ const SPHERE_SVGS = {
   swap('sport', [['#b4ff6b', '#a6f6ff'], ['#76e86c', '#38e8ff'], ['#2ba859', '#0a9fbd'], ['#4ce66d', '#38e8ff']]);
   swap('tracker', [['#b4ff6b', '#e3b0f5'], ['#76e86c', '#bb6bd9'], ['#2ba859', '#7a36a0'], ['#4ce66d', '#bb6bd9']]);
 })();
+window.setupSphereSvgs = SPHERE_SVGS;
 
 
 // Each inline SVG gets its own id namespace so the spheres never share gradients/filters/masks
@@ -917,6 +918,7 @@ function drawNotch(w, h, cx) {
 // Instant sphere swap: no fade or scale animation, the right sphere is simply shown
 function setSphere(tab) {
   if (!orbInner || !SPHERE_SVGS[tab]) return;
+  if (document.documentElement.dataset.setupSphere !== tab) { document.documentElement.dataset.setupSphere = tab; window.dispatchEvent(new CustomEvent('setup-sphere', {detail:tab})); }
   orbInner.querySelectorAll('.setup-sphere-layer').forEach(layer => {
     layer.classList.toggle('is-on', layer.dataset.sphere === tab);
   });

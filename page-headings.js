@@ -37,6 +37,8 @@ html:root:root:root:root body .eyebrow[data-ph]{position:relative;display:inline
 :is(.setup-page-heading):has(>div>.eyebrow[data-ph])>div::before{content:"";flex:1;min-width:20px;height:1px;background:linear-gradient(270deg,rgba(184,255,44,.55),rgba(56,232,255,.18) 60%,transparent)}
 :is(.setup-page-heading):has(>div>.eyebrow[data-ph])>div::after{content:"";flex:1;min-width:20px;height:1px;background:linear-gradient(90deg,rgba(184,255,44,.55),rgba(56,232,255,.18) 60%,transparent)}
 html:root:root:root:root body .setup-page-heading>.tag{margin-left:auto;flex:none}
+html:root:root:root:root:root:root:root:root body .setup-header-cap .eyebrow[data-ph]::before{content:none!important;display:none!important;width:0!important;height:0!important}
+html:root:root:root:root:root:root:root:root body .setup-header-cap .eyebrow[data-ph]{padding:4px 12px!important}
 @keyframes phpulse{0%,100%{opacity:.4}50%{opacity:1}}
 @media(max-width:380px){html:root:root:root:root body .eyebrow[data-ph]{letter-spacing:.1em;font-size:11px!important}}
 `;

@@ -174,7 +174,7 @@
 
   // Header logo: text + inline SVG sphere
   const logo = document.createElement('script');
-  logo.src = 'design/header-logo.js?v=local';
+  logo.src = 'design/header-logo.js?v=2';
   document.head.appendChild(logo);
 
   // Habit cards: category colours for status, CTA and the day strip

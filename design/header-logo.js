@@ -107,9 +107,26 @@ function build() {
   return a;
 }
 
+const GLOW = {sport:'56,232,255', eat:'184,255,44', tracker:'187,107,217'};
+function syncOrbs() {
+  const tab = document.documentElement.dataset.setupSphere || '', svgs = window.setupSphereSvgs || {};
+  const key = svgs[tab] ? tab : '';
+  document.querySelectorAll('i.setup-logo-orb').forEach(orb => {
+    if (orb.dataset.sphere === key && orb.firstElementChild) return;
+    orb.dataset.sphere = key;
+    const id = 'sl' + (++serial);
+    const src = key ? svgs[key] : SVG;
+    orb.innerHTML = src.replace(/(id="|url\(#)(sphereGrad|rimLight|neonGrad|checkWhiteGrad|glossTop|glossSide|neonGlow|checkShadow|mazeCutout|sphereClip)/g, '$1' + id + '-$2');
+    const c = GLOW[key] || '76,230,109';
+    orb.style.filter = 'drop-shadow(0 0 8px rgba(' + c + ',.5))';
+  });
+}
+window.addEventListener('setup-sphere', syncOrbs);
+
 let queued = false;
 function apply() {
   queued = false;
+  syncOrbs();
   document.querySelectorAll('.brand:not(.big),main>.setup-home').forEach(brand => {
     if (brand.querySelector(':scope>.setup-logo')) return;
     brand.prepend(build());
