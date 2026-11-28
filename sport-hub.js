@@ -513,7 +513,7 @@ function dash() {
   if (L0.length > 1 && w && L0.includes(w.id) && (isFut || isToday)) { const w0 = w; card = L0.map((id, i) => { w = h.workouts.find(x => x.id === id); calc(); pfx = (i + 1) + '. '; if (isFut) { const n = daysBetween(todayS(), dsel); return wc('Запланировано', futNote(n) + dashBtn(w), false, dashList(w)); } return wc('Сегодня', dashBtn(w), true, dashList(w)); }).join(''); w = w0; calc(); pfx = ''; }
   else if (isFut && w && !rest && (planned || ui.selDay === dsel)) { const n = daysBetween(todayS(), dsel); card = wc('Запланировано', futNote(n) + dashBtn(w) + (h.dated[dsel] ? '<button class="sh-chip" style="margin-top:10px" data-act="undate">Убрать из плана на эту дату</button>' : ''), false, dashList(w)); }
   else if (!isToday) card = dayCard(h, dsel);
-  else if (!w && rest) card = `<div class="sh-card"><span class="sh-chip on">По плану</span><h3 class="sh-h" style="margin:10px 0 6px">День отдыха</h3><p class="sh-mu" style="margin-bottom:12px">Сегодня по плану восстановление. Можно выбрать тренировку вручную.</p><button class="sh-btn ghost big" data-act="favs">Выбрать программу</button></div>`;
+  else if (!w && rest) card = '';
   else if (w) card = wc(planned && w === planned ? 'По плану' : 'Сегодня', dashBtn(w), true, dashList(w));
   o += hero(h, w, selDay()) + card;
   const sm = ui.muscle;

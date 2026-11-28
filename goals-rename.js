@@ -58,7 +58,7 @@ document.head.append(script);
 'use strict';
 if (document.querySelector('script[data-sport-hub]')) return;
 const script = document.createElement('script');
-script.src = new URL('sport-hub.js?v=44', document.baseURI).href;
+script.src = new URL('sport-hub.js?v=45', document.baseURI).href;
 script.dataset.sportHub = 'true';
 script.onerror = () => console.warn('sport-hub.js is not loaded');
 document.head.append(script);
