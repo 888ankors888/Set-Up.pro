@@ -410,7 +410,7 @@ function dashList(w) {
       const st = (j, key, val) => `<span class="sh-row" style="gap:4px"><button class="sh-sq sm" data-act="dset" data-id="${w.id}" data-e="${i}" data-s="${j}" data-k="${key}" data-d="-1">−</button><b style="min-width:50px;text-align:center;font-size:13px">${val}</b><button class="sh-sq sm" data-act="dset" data-id="${w.id}" data-e="${i}" data-s="${j}" data-k="${key}" data-d="1">+</button></span>`;
       menu = `<div class="sh-dmenu">` + e.sets.map((z, j) => { if (z.type !== 'w') k++; return `<div class="sh-dset"><div class="sh-row sh-sb"><span class="sh-lbl" style="margin:0">${z.type === 'w' ? 'Разминка' : 'Подход ' + k}</span><button class="sh-dchk sm${z.done ? ' on' : ''}" data-act="dtog" data-id="${w.id}" data-e="${i}" data-s="${j}" aria-label="Подход выполнен">${z.done ? chkI(16) : ''}</button></div><div class="sh-row sh-sb" style="margin-top:6px">${st(j, 'w', num(z.weight) ? num(z.weight) + ' кг' : 'свой')}${st(j, 'r', Math.round(num(z.reps)) + ' пов.')}</div></div>`; }).join('') + `</div>`;
     }
-    return `<div class="sh-dx${done ? ' ok' : ''}" style="border-left:4px solid ${gc(e.muscles[0])}"><div class="sh-row sh-sb" style="gap:8px"><div style="min-width:0;flex:1"><div class="sh-h" style="font-size:16px">${esc(e.name)}</div><div class="sh-mu">${gtxt(e.muscles[0])} · ${ns.length} × ${r}${wt ? ' · ' + wt + ' кг' : ''}</div></div><span class="sh-row" style="gap:6px;flex:none">${ytBtn(e.name)}<button class="sh-chip sh-dctl${open ? ' on' : ''}" data-act="dopen" data-id="${w.id}" data-e="${i}" aria-label="Управление" title="Управление подходами">${ctlI}</button><button class="sh-dchk${done ? ' on' : ''}" data-act="dchk" data-id="${w.id}" data-e="${i}" aria-label="Упражнение выполнено">${done ? chkI(20) : ''}</button></span></div>${menu}</div>`;
+    return `<div class="sh-dx${done ? ' ok' : ''}" style="border-left:4px solid ${gc(e.muscles[0])}"><div class="sh-row sh-sb sh-dhead" data-act="dopen" data-id="${w.id}" data-e="${i}" style="gap:8px;cursor:pointer"><div style="min-width:0;flex:1"><div class="sh-h" style="font-size:16px">${esc(e.name)}</div><div class="sh-mu">${gtxt(e.muscles[0])} · ${ns.length} × ${r}${wt ? ' · ' + wt + ' кг' : ''}</div></div><span class="sh-row" style="gap:6px;flex:none">${ytBtn(e.name)}<button class="sh-dchk${done ? ' on' : ''}" data-act="dchk" data-id="${w.id}" data-e="${i}" aria-label="Упражнение выполнено">${done ? chkI(20) : ''}</button></span></div>${menu}</div>`;
   }).join('');
   return sw + rows;
 }
@@ -820,6 +820,7 @@ function saveDraft(start) {
 function newEx(name, groups, l) { return l ? mkEx(l) : {id:uid('e'),name,muscles:groups || ['chest'],tempo:'2-0-1',restSec:90,sets:[0,1,2].map(() => ({id:uid('s'),type:'n',weight:0,reps:10,rir:2,done:false}))}; }
 
 function onClick(ev) {
+  if (ev.target.closest && ev.target.closest('a.sh-yt')) return;
   const t = ev.target.closest('[data-act]'); if (!t || !root.contains(t)) return;
   if (t.classList.contains('sh-modal') && ev.target !== t) return;
   const a = t.dataset.act, e = +t.dataset.e, s = +t.dataset.s, v = t.dataset.v, id = t.dataset.id;
