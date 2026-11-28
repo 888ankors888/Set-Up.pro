@@ -118,7 +118,8 @@ function syncOrbs() {
     const src = key ? svgs[key] : SVG;
     orb.innerHTML = src.replace(/(id="|url\(#)(sphereGrad|rimLight|neonGrad|checkWhiteGrad|glossTop|glossSide|neonGlow|checkShadow|mazeCutout|sphereClip)/g, '$1' + id + '-$2');
     const c = GLOW[key] || '76,230,109';
-    orb.style.filter = 'drop-shadow(0 0 8px rgba(' + c + ',.5))';
+    if (key) { orb.style.filter = 'none'; orb.style.borderRadius = '50%'; orb.style.overflow = 'hidden'; orb.style.boxShadow = '0 3px 8px rgba(0,0,0,.5), 0 0 12px rgba(' + c + ',.5)'; const sv = orb.firstElementChild; if (sv) sv.style.setProperty('overflow', 'hidden', 'important'); }
+    else { orb.style.filter = 'drop-shadow(0 0 8px rgba(' + c + ',.5))'; orb.style.borderRadius = ''; orb.style.overflow = ''; orb.style.boxShadow = ''; }
   });
 }
 window.addEventListener('setup-sphere', syncOrbs);
