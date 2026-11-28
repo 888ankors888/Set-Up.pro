@@ -14,7 +14,9 @@ html:root:root:root:root:root body .setup-calendar-tools button:hover:not(:disab
 html:root:root:root:root:root body .setup-calendar-tools button:active:not(:disabled){transform:scale(.93)}
 html:root:root:root:root:root body .setup-calendar-tools .sc-today{font-size:13px;font-weight:700;color:#c8f560}
 html:root:root:root:root:root body .setup-calendar-tools .sc-today[data-active]{opacity:.45}
-html:root:root:root:root:root body .setup-calendar-week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:7px}
+html:root:root:root:root:root body .setup-calendar-week{--g:7px;display:flex;gap:var(--g);position:relative;overflow-x:auto;overflow-y:visible;padding:8px 0 10px;margin:-8px 0 -10px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;scrollbar-width:none;overscroll-behavior-x:contain;touch-action:pan-x pan-y}
+html:root:root:root:root:root body .setup-calendar-week::-webkit-scrollbar{display:none}
+html:root:root:root:root:root body .setup-calendar-week button{flex:0 0 calc((100% - 6*var(--g))/7);scroll-snap-align:start}
 html:root:root:root:root:root body .setup-calendar-week button{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:80px;padding:10px 2px 8px;border:1px solid rgba(184,255,44,.14);border-radius:18px;background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.015));color:#e8f3ed;box-shadow:none;-webkit-tap-highlight-color:transparent;transition:transform .2s cubic-bezier(.2,.9,.3,1.3),background .25s,border-color .25s,box-shadow .25s}
 html:root:root:root:root:root body .setup-calendar-week button:active:not(:disabled){transform:scale(.92)}
 html:root:root:root:root:root body .setup-calendar-week small{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#8ca89e!important;-webkit-text-fill-color:#8ca89e!important}
@@ -52,6 +54,6 @@ html:root:root:root:root:root body .setup-calendar .sc-grid button[data-weekend]
 html:root:root:root:root:root body .setup-calendar .sc-grid button:disabled{opacity:.25;cursor:not-allowed}
 html:root:root:root:root:root body .setup-calendar .sc-legend{display:flex;justify-content:center;gap:14px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.08);font-size:11px;color:#9ebbb0}
 html:root:root:root:root:root body .setup-calendar .sc-legend span{display:inline-flex;align-items:center;gap:5px}
-@media(max-width:420px){html:root:root:root:root:root body .setup-calendar-week{gap:5px}html:root:root:root:root:root body .setup-calendar-week button{min-height:74px;border-radius:15px}html:root:root:root:root:root body .setup-calendar-week b{font-size:17px}html:root:root:root:root:root body .setup-calendar .sc-big{font-size:15px}}
+@media(max-width:420px){html:root:root:root:root:root body .setup-calendar-week{--g:5px}html:root:root:root:root:root body .setup-calendar-week button{min-height:74px;border-radius:15px}html:root:root:root:root:root body .setup-calendar-week b{font-size:17px}html:root:root:root:root:root body .setup-calendar .sc-big{font-size:15px}}
 @media(prefers-reduced-motion:reduce){html:root:root:root:root:root body .setup-calendar *{transition:none!important;animation:none!important}}
 html:root:root:root:root:root body .setup-calendar .sc-cap::first-letter{text-transform:uppercase}
