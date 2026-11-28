@@ -138,3 +138,6 @@
 #sport-hub .sh-fig .sh-mp.sel{stroke:#fff;stroke-width:1.8}
 @media(max-width:480px){#sport-hub .sh-body svg.sh-fig{width:210px}}
 #sport-hub .sh-sil2 .sh-seam{fill:#15191d;stroke:none;filter:none}
+#sport-hub .sh-adds .sh-mainbtns>.sh-sq{flex:1;gap:8px;font-size:14px;font-weight:700;white-space:nowrap;padding:0 6px}
+#sport-hub .sh-adds .sh-mainbtns>.sh-favw>.sh-sq{width:100%;flex:none}
+#sport-hub .sh-adds .sh-sqrow.sh-mainbtns>span.sh-favw{flex:0 0 56px}
