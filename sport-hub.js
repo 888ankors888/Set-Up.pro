@@ -385,6 +385,8 @@ function hero(h, w, d) {
   <div class="sh-row" style="margin-top:12px"><button class="sh-chip" data-act="progress">↗ Прогресс и PR</button></div></div>`;
 }
 
+const chkI = n => `<svg width="${n}" height="${n}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`;
+const ctlI = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>';
 const swIco = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13.5" r="7.5"/><path d="M12 13.5V9.5M9.5 2.5h5M12 2.5v3.5M18.5 6l1.4-1.4"/></svg>';
 const swMs = () => sess && sess.tm ? sess.tm.acc + (sess.tm.since ? Date.now() - sess.tm.since : 0) : 0;
 const dSess = w => sess && sess.dash && w && sess.workoutId === w.id && sess.date === todayS() ? sess : null;
@@ -405,10 +407,10 @@ function dashList(w) {
     let menu = '';
     if (open) {
       let k = 0;
-      const st = (j, key, val, lab) => `<span class="sh-row" style="gap:6px"><button class="sh-sq sm" data-act="dset" data-id="${w.id}" data-e="${i}" data-s="${j}" data-k="${key}" data-d="-1">−</button><b style="min-width:52px;text-align:center;font-size:14px">${val}</b><button class="sh-sq sm" data-act="dset" data-id="${w.id}" data-e="${i}" data-s="${j}" data-k="${key}" data-d="1">+</button></span>`;
-      menu = `<div class="sh-dmenu">` + e.sets.map((z, j) => { if (z.type !== 'w') k++; return `<div class="sh-dset"><div class="sh-row sh-sb"><span class="sh-lbl">${z.type === 'w' ? 'Разминка' : 'Подход ' + k}</span><button class="sh-chip${z.done ? ' on' : ''}" data-act="dtog" data-id="${w.id}" data-e="${i}" data-s="${j}">${z.done ? 'Выполнен ✓' : 'Отметить'}</button></div><div class="sh-row sh-sb" style="margin-top:6px"><span class="sh-mu">Вес</span>${st(j, 'w', num(z.weight) ? num(z.weight) + ' кг' : 'свой')}</div><div class="sh-row sh-sb" style="margin-top:6px"><span class="sh-mu">Повторения</span>${st(j, 'r', Math.round(num(z.reps)))}</div></div>`; }).join('') + `<button class="sh-btn big" style="margin-top:10px" data-act="dexall" data-id="${w.id}" data-e="${i}">${done ? 'Снять отметку' : 'Упражнение выполнено'}</button></div>`;
+      const st = (j, key, val) => `<span class="sh-row" style="gap:4px"><button class="sh-sq sm" data-act="dset" data-id="${w.id}" data-e="${i}" data-s="${j}" data-k="${key}" data-d="-1">−</button><b style="min-width:50px;text-align:center;font-size:13px">${val}</b><button class="sh-sq sm" data-act="dset" data-id="${w.id}" data-e="${i}" data-s="${j}" data-k="${key}" data-d="1">+</button></span>`;
+      menu = `<div class="sh-dmenu">` + e.sets.map((z, j) => { if (z.type !== 'w') k++; return `<div class="sh-dset"><div class="sh-row sh-sb"><span class="sh-lbl" style="margin:0">${z.type === 'w' ? 'Разминка' : 'Подход ' + k}</span><button class="sh-dchk sm${z.done ? ' on' : ''}" data-act="dtog" data-id="${w.id}" data-e="${i}" data-s="${j}" aria-label="Подход выполнен">${z.done ? chkI(16) : ''}</button></div><div class="sh-row sh-sb" style="margin-top:6px">${st(j, 'w', num(z.weight) ? num(z.weight) + ' кг' : 'свой')}${st(j, 'r', Math.round(num(z.reps)) + ' пов.')}</div></div>`; }).join('') + `</div>`;
     }
-    return `<div class="sh-dx${done ? ' ok' : ''}" style="border-left:4px solid ${gc(e.muscles[0])}"><div class="sh-row sh-sb" style="gap:8px"><div style="min-width:0;flex:1"><div class="sh-h" style="font-size:16px">${esc(e.name)}</div><div class="sh-mu">${gtxt(e.muscles[0])} · ${ns.length} × ${r}${wt ? ' · ' + wt + ' кг' : ''}</div></div><span class="sh-row" style="gap:6px;flex:none">${ytBtn(e.name)}<button class="sh-dchk${done ? ' on' : ''}" data-act="dopen" data-id="${w.id}" data-e="${i}" aria-label="Выполнение упражнения"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button></span></div>${menu}</div>`;
+    return `<div class="sh-dx${done ? ' ok' : ''}" style="border-left:4px solid ${gc(e.muscles[0])}"><div class="sh-row sh-sb" style="gap:8px"><div style="min-width:0;flex:1"><div class="sh-h" style="font-size:16px">${esc(e.name)}</div><div class="sh-mu">${gtxt(e.muscles[0])} · ${ns.length} × ${r}${wt ? ' · ' + wt + ' кг' : ''}</div></div><span class="sh-row" style="gap:6px;flex:none">${ytBtn(e.name)}<button class="sh-chip sh-dctl${open ? ' on' : ''}" data-act="dopen" data-id="${w.id}" data-e="${i}" aria-label="Управление" title="Управление подходами">${ctlI}</button><button class="sh-dchk${done ? ' on' : ''}" data-act="dchk" data-id="${w.id}" data-e="${i}" aria-label="Упражнение выполнено">${done ? chkI(20) : ''}</button></span></div>${menu}</div>`;
   }).join('');
   return sw + rows;
 }
@@ -829,6 +831,7 @@ function onClick(ev) {
     case 'dset': { const w = hub().workouts.find(x => x.id === id), ss = dSess(w), z = ss && ss.exercises[e] && ss.exercises[e].sets[s]; if (!z) break; const dl = +t.dataset.d; if (t.dataset.k === 'w') z.weight = Math.max(0, Math.round((num(z.weight) + dl * 2.5) * 10) / 10); else z.reps = Math.max(1, Math.round(num(z.reps)) + dl); saveSess(); paint(true); break; }
     case 'dtog': { const w = hub().workouts.find(x => x.id === id), ss = dSess(w), z = ss && ss.exercises[e] && ss.exercises[e].sets[s]; if (!z) break; z.done = !z.done; saveSess(); paint(true); break; }
     case 'dexall': { const w = hub().workouts.find(x => x.id === id), ss = dSess(w), ex = ss && ss.exercises[e]; if (!ex) break; const all = ex.sets.every(z => z.done); ex.sets.forEach(z => { z.done = !all; }); if (!all) ui.dopen = null; saveSess(); paint(true); break; }
+    case 'dchk': { const w = hub().workouts.find(x => x.id === id), ss = dashSess(w), ex = ss && ss.exercises[e]; if (!ex) break; const all = ex.sets.every(z => z.done); ex.sets.forEach(z => { z.done = !all; }); saveSess(); paint(true); break; }
     case 'dswo': ui.swOpen = !ui.swOpen; paint(true); break;
     case 'dsw': { const w = hub().workouts.find(x => x.id === id), ss = dashSess(w); if (!ss) break; if (ss.tm.since) { ss.tm.acc += Date.now() - ss.tm.since; ss.tm.since = null; } else ss.tm.since = Date.now(); saveSess(); paint(true); break; }
     case 'dswr': { const w = hub().workouts.find(x => x.id === id), ss = dSess(w); if (!ss) break; ss.tm = {acc:0, since:null}; saveSess(); paint(true); break; }
@@ -980,7 +983,7 @@ function mount() {
   if (!wasVisible) { wasVisible = true; if (!ui.modal || ui.modal === 'result') paint(); }
 }
 function init() {
-  if (!document.querySelector('link[data-sport-hub]')) { const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = new URL('sport-hub.css?v=11', document.baseURI).href; l.dataset.sportHub = 'true'; document.head.append(l); }
+  if (!document.querySelector('link[data-sport-hub]')) { const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = new URL('sport-hub.css?v=12', document.baseURI).href; l.dataset.sportHub = 'true'; document.head.append(l); }
   try { const o = window.render; if (typeof o === 'function') { window.render = function () { const r = o.apply(this, arguments); try { mount(); } catch (e) { console.warn(e); } return r; }; } } catch (e) {}
   mount();
 }
