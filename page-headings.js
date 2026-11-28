@@ -11,6 +11,15 @@ const ICONS = {
 };
 const css = `
 html:root:root:root:root body :is(.setup-page-heading,[data-setup-section-header],[data-setup-sport-header]) h1{display:none!important}
+html:root:root:root:root:root:root body :is(.setup-page-heading,[data-setup-section-header],[data-setup-sport-header]):has(.eyebrow[data-ph]){position:absolute!important;height:0!important;width:0!important;margin:0!important;overflow:hidden!important;opacity:0!important;pointer-events:none!important}
+html:root:root:root:root:root:root body time.setup-header-date{display:none!important}
+html:root:root:root:root:root:root body .setup-header-cap{flex:1 1 0;min-width:0;display:flex;align-items:center;justify-content:center;gap:8px;margin:0 6px}
+html:root:root:root:root:root:root body .setup-header-cap:empty{display:none}
+html:root:root:root:root:root:root body .setup-header-cap::before,html:root:root:root:root:root:root body .setup-header-cap::after{content:"";flex:1 1 0;min-width:0;height:1px}
+html:root:root:root:root:root:root body .setup-header-cap::before{background:linear-gradient(270deg,rgba(184,255,44,.55),rgba(56,232,255,.18) 60%,transparent)}
+html:root:root:root:root:root:root body .setup-header-cap::after{background:linear-gradient(90deg,rgba(184,255,44,.55),rgba(56,232,255,.18) 60%,transparent)}
+html:root:root:root:root:root:root body .setup-header-cap .eyebrow[data-ph]{flex:0 1 auto;min-width:0;font-size:10px!important;letter-spacing:.08em;gap:6px;padding:4px 10px 4px 4px;overflow:hidden;text-overflow:ellipsis}
+html:root:root:root:root:root:root body .setup-header-cap .eyebrow[data-ph]::before{width:20px;height:20px;background-size:12px}
 html:root:root:root:root body :is(.setup-page-heading,[data-setup-section-header],[data-setup-sport-header]){display:flex!important;align-items:center;gap:12px;margin:-16px 0 14px!important;padding:0!important}
 html:root:root:root:root body :is(.setup-page-heading,[data-setup-section-header],[data-setup-sport-header])>div:not(.eyebrow){display:contents}
 html:root:root:root:root body .eyebrow[data-ph]{position:relative;display:inline-flex!important;align-items:center;gap:10px;flex:none;margin:0!important;padding:6px 16px 6px 7px;border-radius:999px;border:1px solid rgba(184,255,44,.38);background:linear-gradient(100deg,rgba(184,255,44,.16),rgba(56,232,255,.05) 70%,rgba(184,255,44,.02));box-shadow:0 0 20px rgba(184,255,44,.2),inset 0 0 14px rgba(184,255,44,.07);color:#d6ff6e!important;font-size:12px!important;font-weight:800;letter-spacing:.16em;text-transform:uppercase;text-shadow:0 0 12px rgba(184,255,44,.55);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);white-space:nowrap}
@@ -35,6 +44,18 @@ function run() {
     const t = (e.textContent || '').toLowerCase();
     const k = /спорт|трениров/.test(t) ? 'sport' : /питани|еда|еды/.test(t) ? 'eat' : /привыч/.test(t) ? 'habit' : '';
     if (k && e.dataset.ph !== k) e.dataset.ph = k;
+  });
+  let src = null;
+  document.querySelectorAll('.setup-page-heading .eyebrow[data-ph],[data-setup-section-header] .eyebrow[data-ph],[data-setup-sport-header] .eyebrow[data-ph],#app>header>.eyebrow[data-ph]').forEach(e => { if (!src && e.offsetParent !== null) src = e; });
+  document.querySelectorAll('.brand:not(.big),main>.setup-home').forEach(b => {
+    let cap = b.querySelector('.setup-header-cap');
+    if (!cap) { cap = document.createElement('div'); cap.className = 'setup-header-cap'; b.append(cap); }
+    const k = src ? src.dataset.ph : '', t = src ? src.textContent.trim() : '';
+    let pill = cap.firstElementChild;
+    if (!k) { if (pill) pill.remove(); return; }
+    if (!pill) { pill = document.createElement('span'); pill.className = 'eyebrow'; cap.append(pill); }
+    if (pill.dataset.ph !== k) pill.dataset.ph = k;
+    if (pill.textContent !== t) pill.textContent = t;
   });
 }
 const sched = () => { if (!q) { q = true; requestAnimationFrame(run); } };
