@@ -339,6 +339,7 @@ const repMatch = (r, d) => d >= r.start && (!r.until || d <= r.until) && (r.wd ?
 const planOf = (h, d) => { if (h.dated[d]) return h.dated[d]; const r = h.repeats.find(x => repMatch(x, d) && h.workouts.some(w => w.id === x.wid)); return r ? r.wid : h.plan[wdOf(d)]; };
 const plural = (n, a, b, c) => { const m = n % 100, k = n % 10; return m > 10 && m < 15 ? c : k === 1 ? a : k > 1 && k < 5 ? b : c; };
 const addToDay = (h, d, wid) => { const cur = planOf(h, d); if (cur && cur !== 'rest' && cur !== wid && h.workouts.some(x => x.id === cur)) { const L = h.extra[d] || (h.extra[d] = []); if (!L.includes(wid)) L.push(wid); } else h.dated[d] = wid; };
+const replaceOnDay = (h, d, oldId, newId) => { const L = h.extra[d], i = L && oldId ? L.indexOf(oldId) : -1; if (i >= 0) L[i] = newId; else h.dated[d] = newId; };
 const dayList = (h, d) => { const p = planOf(h, d), L = []; if (p && p !== 'rest' && h.workouts.some(x => x.id === p)) L.push(p); (h.extra[d] || []).forEach(i => { if (!L.includes(i) && h.workouts.some(x => x.id === i)) L.push(i); }); return L; };
 const dropPrimary = (x, d) => { const ex = x.extra[d]; if (ex && ex.length) { x.dated[d] = ex.shift(); if (!ex.length) delete x.extra[d]; } else x.dated[d] = 'rest'; };
 const assignDate = (id) => { const d = selDay(); setHub(h => { addToDay(h, d, id); }); };
@@ -867,7 +868,7 @@ function addExDay(name, l, pre) {
   setHub(h => {
     if (base && base.forDate === d) target = h.workouts.find(x => x.id === base.id);
     else { target = base ? JSON.parse(JSON.stringify(base)) : {title:'Тренировка',src:'manual',tags:[],exercises:[]}; target.id = uid('w'); target.forDate = d; h.workouts.push(target); }
-    target.exercises.push(ex); target.tags = [...new Set(target.exercises.flatMap(e => e.muscles))]; h.dated[d] = target.id;
+    target.exercises.push(ex); target.tags = [...new Set(target.exercises.flatMap(e => e.muscles))]; replaceOnDay(h, d, base && base.id, target.id);
   });
   if (target) setSel(target.id);
   toast2('Добавлено: ' + ex.name);
@@ -900,7 +901,7 @@ function saveDraft(start) {
   const w = {id:uid('w'),title:(d.title || 'Своя тренировка').trim(),src:'manual',tags:[...new Set(d.exercises.flatMap(e => e.muscles))],exercises:d.exercises.map(e => ({...e,sets:e.sets.map(s => ({...s,weight:num(s.weight),reps:Math.round(num(s.reps)) || 1}))}))};
   if (d.editId) {
     if (d.scope === 'all') { w.id = d.editId; const old = hub().workouts.find(x => x.id === d.editId); if (old) { w.src = old.src; if (old.meso) w.meso = old.meso; } setHub(h => { h.workouts = h.workouts.map(x => x.id === d.editId ? w : x); }); setSel(w.id); }
-    else { w.forDate = selDay(); setHub(h => { h.workouts.push(w); addToDay(h, selDay(), w.id); }); setSel(w.id); }
+    else { w.forDate = selDay(); setHub(h => { h.workouts.push(w); replaceOnDay(h, selDay(), d.editId, w.id); }); setSel(w.id); }
   } else if (d.status !== 'free') { setHub(h => { h.workouts.push(w); }); if (d.status === 'today') { assignDate(w.id); setSel(w.id); } }
   ui.modal = null; ui.draft = null;
   if (start && !isFuture()) startSess(w); else { paint(); toast2(d.status === 'free' ? 'Черновик закрыт' : d.editId ? 'Изменения сохранены' : 'Тренировка сохранена'); }
