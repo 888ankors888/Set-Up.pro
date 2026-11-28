@@ -436,7 +436,6 @@ function dash() {
   else if (!isToday) card = dayCard(h, dsel);
   else if (!w && rest) card = `<div class="sh-card"><span class="sh-chip on">По плану</span><h3 class="sh-h" style="margin:10px 0 6px">День отдыха</h3><p class="sh-mu" style="margin-bottom:12px">Сегодня по плану восстановление. Можно выбрать тренировку вручную.</p><button class="sh-btn ghost big" data-act="favs">Выбрать программу</button></div>`;
   else if (w) card = wc(planned && w === planned ? 'По плану' : 'Сегодня', dashBtn(w), true, dashList(w));
-  if (isToday && h.sessions.some(x => x.date === dsel)) card += dayCard(h, dsel);
   o += hero(h, w, selDay()) + card;
   const sm = ui.muscle;
   o += `<div class="sh-card"><div class="sh-row sh-sb" style="margin-bottom:10px"><h3 class="sh-h" style="font-size:16px">Мышцы забиты</h3><div class="sh-seg"><button data-act="body" data-v="front" class="${ui.body === 'front' ? 'on' : ''}">Спереди</button><button data-act="body" data-v="back" class="${ui.body === 'back' ? 'on' : ''}">Сзади</button></div></div>
