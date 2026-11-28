@@ -12,10 +12,11 @@ function sportHeader(){
 if(typeof tab==='undefined'||tab!=='training')return;
 const app=document.getElementById('app');if(!app)return;
 let heading=app.querySelector('h1');
-if(!heading)return;
+if(!heading){const header=document.createElement('header');heading=document.createElement('h1');header.append(heading);app.prepend(header);}
 let eyebrow=heading.previousElementSibling;
 if(!eyebrow?.classList.contains('eyebrow')){eyebrow=document.createElement('div');eyebrow.className='eyebrow';heading.before(eyebrow);}
 text(eyebrow,'Ваш спорт · ваша энергия');
+text(heading,'Сила в движении. Тонус в теле.');
 }
 function removeSportSettingsCard(){
 const app=document.getElementById('app');if(!app)return;
