@@ -1,0 +1,8 @@
+/* Цвет фона блоков по разделу: питание зелёный (как был), спорт бирюзовый, привычки фиолетовый */
+html:root:root:root:root body:has(#nav .setup-sphere-layer.is-on[data-sphere="sport"]) :is(.card,.welcome){background:linear-gradient(140deg,#0f3a47,#082b36)!important;border-color:rgba(56,232,255,.28)!important}
+html:root:root:root:root body:has(#nav .setup-sphere-layer.is-on[data-sphere="sport"]) .card .card{background:#07242e!important}
+html:root:root:root:root body:has(#nav .setup-sphere-layer.is-on[data-sphere="sport"]) #sport-hub{--card:#0f3340;--card2:#0a2832;--bd:rgba(56,232,255,.26)}
+html:root:root:root:root body:has(#nav .setup-sphere-layer.is-on[data-sphere="sport"]) #sport-hub .sh-top{background:rgba(5,24,31,.95)}
+html:root:root:root:root body:has(#nav .setup-sphere-layer.is-on[data-sphere="tracker"]) :is(.card,.welcome){background:linear-gradient(140deg,#2f1c4a,#1e1233)!important;border-color:rgba(187,107,217,.32)!important}
+html:root:root:root:root body:has(#nav .setup-sphere-layer.is-on[data-sphere="tracker"]) .card .card{background:#1a0f2e!important}
+html:root:root:root:root body:has(#nav .setup-sphere-layer.is-on[data-sphere="tracker"]){--hb-surface:rgba(44,24,70,.66);--hb-line:rgba(187,107,217,.28);--hb-glow:#2a1646}
