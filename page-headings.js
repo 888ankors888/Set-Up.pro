@@ -12,13 +12,17 @@ const ICONS = {
 const css = `
 html:root:root:root:root body :is(.setup-page-heading,[data-setup-section-header],[data-setup-sport-header]) h1{display:none!important}
 html:root:root:root:root:root:root body :is(.setup-page-heading,[data-setup-section-header],[data-setup-sport-header]):has(.eyebrow[data-ph]){position:absolute!important;height:0!important;width:0!important;margin:0!important;overflow:hidden!important;opacity:0!important;pointer-events:none!important}
-html:root:root:root:root:root:root body time.setup-header-date{display:none!important}
+html:root:root:root:root:root:root:root:root body:has(#nav) time.setup-header-date,html:root:root:root:root:root:root:root:root body time.setup-header-date{display:none!important;width:0!important;margin:0!important}
 html:root:root:root:root:root:root body .setup-header-cap{flex:1 1 0;min-width:0;display:flex;align-items:center;justify-content:center;gap:8px;margin:0 6px}
 html:root:root:root:root:root:root body .setup-header-cap:empty{display:none}
-html:root:root:root:root:root:root body .setup-header-cap::before,html:root:root:root:root:root:root body .setup-header-cap::after{content:"";flex:1 1 0;min-width:0;height:1px}
+html:root:root:root:root:root:root body .setup-header-cap::before,html:root:root:root:root:root:root body .setup-header-cap::after{content:none}
 html:root:root:root:root:root:root body .setup-header-cap::before{background:linear-gradient(270deg,rgba(184,255,44,.55),rgba(56,232,255,.18) 60%,transparent)}
 html:root:root:root:root:root:root body .setup-header-cap::after{background:linear-gradient(90deg,rgba(184,255,44,.55),rgba(56,232,255,.18) 60%,transparent)}
-html:root:root:root:root:root:root body .setup-header-cap .eyebrow[data-ph]{flex:0 1 auto;min-width:0;font-size:10px!important;letter-spacing:.08em;gap:6px;padding:4px 10px 4px 4px;overflow:hidden;text-overflow:ellipsis}
+html:root:root:root:root:root:root body .setup-header-cap .eyebrow[data-ph]{flex:1 1 auto;min-width:0;justify-content:center;font-style:normal!important;font-size:10px!important;letter-spacing:.08em;gap:6px;padding:4px 10px 4px 4px;overflow:hidden;text-overflow:ellipsis}
+html:root:root:root:root:root:root body .setup-header-cap .eyebrow[data-ph=sport]{border-color:rgba(56,232,255,.45);background:linear-gradient(100deg,rgba(56,232,255,.18),rgba(56,232,255,.04));box-shadow:0 0 18px rgba(56,232,255,.22),inset 0 0 14px rgba(56,232,255,.07);color:#7df0ff!important;text-shadow:0 0 12px rgba(56,232,255,.55)}
+html:root:root:root:root:root:root body .setup-header-cap .eyebrow[data-ph=sport]::before{background-color:#38e8ff;box-shadow:0 0 14px rgba(56,232,255,.7)}
+html:root:root:root:root:root:root body .setup-header-cap .eyebrow[data-ph=habit]{border-color:rgba(187,107,217,.5);background:linear-gradient(100deg,rgba(187,107,217,.2),rgba(187,107,217,.05));box-shadow:0 0 18px rgba(187,107,217,.25),inset 0 0 14px rgba(187,107,217,.08);color:#dca0f0!important;text-shadow:0 0 12px rgba(187,107,217,.6)}
+html:root:root:root:root:root:root body .setup-header-cap .eyebrow[data-ph=habit]::before{background-color:#bb6bd9;box-shadow:0 0 14px rgba(187,107,217,.7)}
 html:root:root:root:root:root:root body .setup-header-cap .eyebrow[data-ph]::before{width:20px;height:20px;background-size:12px}
 html:root:root:root:root body :is(.setup-page-heading,[data-setup-section-header],[data-setup-sport-header]){display:flex!important;align-items:center;gap:12px;margin:-16px 0 14px!important;padding:0!important}
 html:root:root:root:root body :is(.setup-page-heading,[data-setup-section-header],[data-setup-sport-header])>div:not(.eyebrow){display:contents}

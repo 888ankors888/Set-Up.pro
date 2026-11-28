@@ -39,7 +39,7 @@ function updateHeaderDate(){
   const localDate=[now.getFullYear(),String(now.getMonth()+1).padStart(2,'0'),String(now.getDate()).padStart(2,'0')].join('-');
   document.querySelectorAll('.brand:not(.big),main>.setup-home').forEach(brand=>{
     let date=brand.querySelector('time.setup-header-date');
-    if(!date){date=document.createElement('time');date.className='setup-header-date';brand.append(date);}
+    if(!date)return;
     if(date.textContent!==label)date.textContent=label;
     if(date.dateTime!==localDate){date.dateTime=localDate;date.setAttribute('aria-label',fullDateFormat.format(now));}
   });
