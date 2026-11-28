@@ -57,3 +57,4 @@ html:root:root:root:root:root body .setup-calendar .sc-legend span{display:inlin
 @media(max-width:420px){html:root:root:root:root:root body .setup-calendar-week{--g:5px}html:root:root:root:root:root body .setup-calendar-week button{min-height:74px;border-radius:15px}html:root:root:root:root:root body .setup-calendar-week b{font-size:17px}html:root:root:root:root:root body .setup-calendar .sc-big{font-size:15px}}
 @media(prefers-reduced-motion:reduce){html:root:root:root:root:root body .setup-calendar *{transition:none!important;animation:none!important}}
 html:root:root:root:root:root body .setup-calendar .sc-cap::first-letter{text-transform:uppercase}
+html:root:root:root:root:root body .setup-calendar .sc-cap{color:#c8f560;font-weight:600}
