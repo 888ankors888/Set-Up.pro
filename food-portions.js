@@ -160,7 +160,7 @@
 
   const UNIT_WORDS = [
     [/^(шт|штук|штуки|штука|ед|единиц)/, ['pc', 'piece', 'slice', 'serv', 'pot', 'leaf', 'roll', 'scoop']],
-    [/^(ст\.?\s*л|столов|ложк)/, ['tbsp']], [/^(ч\.?\s*л|чайн)/, ['tsp']],
+    [/^(ст\.?\s*л|столов|ложк|ложек|ложеч)/, ['tbsp']], [/^(ч\.?\s*л|чайн)/, ['tsp']],
     [/^стакан/, ['glass']], [/^чашк/, ['cup', 'mug']], [/^кружк/, ['mug', 'cup']], [/^банк/, ['can', 'pot']], [/^бутыл/, ['bottle']],
     [/^(бокал)/, ['wine', 'glass']], [/^рюмк/, ['shot']], [/^ломт|^ломот/, ['slice']], [/^(кус|кусоч)/, ['piece', 'lump', 'slice']],
     [/^порц/, ['serv', 'plate', 'pot']], [/^тарелк/, ['plate', 'serv']], [/^горст/, ['handful']], [/^(долк|долек)/, ['seg']], [/^шарик/, ['scoop']],
@@ -174,10 +174,10 @@
     const base = p.units.find(x => x.base);
     if (w > 0) return { u: base.id, q: round(w / base.g, 0) || 1 };
     if (qn > 0) {
-      if (/^(г|гр|грамм)/.test(uw)) return { u: 'g', q: qn, forceG: true };
+      if (/^(г|гр|грамм\S*)\.?$/.test(uw)) return { u: 'g', q: qn, forceG: true };
       if (/^мл|^миллил/.test(uw)) return { u: base.id, q: qn };
-      if (/^(л|литр)/.test(uw)) return { u: base.id, q: qn * 1000 / base.g };
-      if (/^(кг|килогр)/.test(uw)) return { u: p.units.find(x => x.id === 'g') ? 'g' : base.id, q: qn * 1000 / base.g };
+      if (/^(л|литр\S*)\.?$/.test(uw)) return { u: base.id, q: qn * 1000 / base.g };
+      if (/^(кг|килогр\S*)\.?$/.test(uw)) return { u: p.units.find(x => x.id === 'g') ? 'g' : base.id, q: qn * 1000 / base.g };
       const hit = UNIT_WORDS.find(([re]) => re.test(uw));
       if (hit) {
         const own = p.units.find(x => hit[1].includes(x.id));
@@ -185,8 +185,7 @@
         const gen = GENERIC[hit[1][0]];
         if (gen) { const gw = (hit[1][0] === 'tbsp' && !p.drink) ? 20 : gen; return { u: base.id, q: Math.max(1, round(qn * gw / base.g, 0)) }; }
       }
-      const own = p.units.find(x => !x.base);
-      if (own) return { u: own.id, q: qn };
+      if (!uw) { const own = p.units.find(x => !x.base); if (own) return { u: own.id, q: qn }; }
     }
     return { u: p.def.u, q: p.def.q };
   }

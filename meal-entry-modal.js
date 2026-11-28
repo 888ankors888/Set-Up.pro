@@ -168,7 +168,7 @@
     document.head.appendChild(pr);
   };
   const portions = document.createElement('script');
-  portions.src = 'food-portions.js?v=3';
+  portions.src = 'food-portions.js?v=4';
   portions.onload = portions.onerror = () => document.head.appendChild(loader);
   document.head.appendChild(portions);
 
