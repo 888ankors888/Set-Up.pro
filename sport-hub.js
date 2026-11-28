@@ -123,34 +123,30 @@ const mpath = {
  back: [['shoulders','M27 34 Q19 37 17 46 L21 57 Q27 54 29 45 L30 37Z',1],['back','M31 38 Q40 36 49 38 L49 80 Q40 82 34 74 Q29 56 31 38Z',1],['arms','M16 57 L12 72 L10 92 L17 94 L22 74 L23 58Z',1],['glutes','M35 86 Q42 84 49 88 L49 107 Q40 111 34 104 Q32 94 35 86Z',1],['legs','M35 110 Q34 132 36 156 L37 180 L46 180 Q47 160 48 138 L49 110Z',1]]
 };
 const recCol = p => p > 60 ? '#ff5a5f' : p > 25 ? '#ffb020' : '#b8ff2c'; /* p — забитость, % */
+const FIG = {
+  m: {body:'M92 44 L92 56 Q76 58 60 68 Q60 80 62 100 L66 140 Q70 160 70 172 Q64 190 66 208 L66 250 Q62 270 70 292 L70 340 Q72 360 74 382 Q68 394 58 400 L88 400 Q92 392 90 380 L92 340 Q96 300 94 290 L96 232 L100 216 L100 44 Z', arm:'M60 66 Q46 70 42 90 L36 140 L24 190 L14 204 L16 212 L24 208 L30 214 L38 208 L42 196 L50 150 L56 108 L62 98 Q64 80 60 66Z'},
+  f: {body:'M 93.2 44 L 93.2 56 Q 79.6 58 66 68 Q 66 80 67.7 100 L 73.2 140 Q 77.2 160 77.8 172 Q 65 190 60.1 208 L 63 250 Q 59.1 270 68.1 292 L 68.9 340 Q 71.3 360 73.7 382 Q 67.9 394 58 400 L 88 400 Q 92 392 89.9 380 L 91.7 340 Q 95.8 300 93.6 290 L 95.6 232 L 100 216 L 100 44 Z', arm:'M 64.8 66 Q 52.5 70 49 90 L 43.7 140 L 33.1 190 L 24.3 204 L 26.1 212 L 33.1 208 L 38.4 214 L 45.4 208 L 49 196 L 56 150 L 61.3 108 L 66.6 98 Q 68.3 80 64.8 66 Z', hair:'M86 26 Q84 6 100 6 Q116 6 114 26 Q116 40 112 48 Q108 40 108 34 L92 34 Q92 40 88 48 Q84 40 86 26Z'}
+};
+const FSX = {shoulders:.88, chest:.86, arms:.88, back:.86, abs:.76, glutes:1.16, legs:1.08};
+const MUS = {"front": [["shoulders", "M56 70 Q44 72 42 90 Q43 100 50 100 Q58 92 60 78Z"], ["shoulders", "M96 58 Q82 62 68 70 Q76 74 86 72 Q93 68 96 58Z"], ["chest", "M62 78 Q80 70 99 76 L99 108 Q82 118 66 106 Q58 94 62 78Z"], ["abs", "M81 118 Q90 116 99 118 L99 134 Q90 136 81 134Z"], ["abs", "M81 138 Q90 136 99 138 L99 154 Q90 156 81 154Z"], ["abs", "M81 158 Q90 156 99 158 L99 174 Q90 176 81 174Z"], ["abs", "M82 178 Q90 176 99 178 L99 196 Q91 198 83 194Z"], ["abs", "M72 112 Q78 120 80 140 Q80 168 76 188 Q72 168 71 140Z"], ["arms", "M44 106 Q39 120 42 138 Q48 144 52 136 Q54 120 52 106Z"], ["arms", "M38 150 Q32 170 27 188 Q33 192 38 184 Q44 168 46 152Z"], ["legs", "M71 226 Q66 255 72 286 Q79 288 81 272 Q81 246 79 226Z"], ["legs", "M83 224 Q91 226 94 252 Q93 276 88 286 Q83 280 83 260Z"], ["legs", "M74 306 Q71 335 76 372 Q82 345 82 308Z"]], "back": [["shoulders", "M56 70 Q44 72 42 90 Q43 100 50 100 Q58 92 60 78Z"], ["back", "M99 58 Q82 62 64 72 Q74 88 99 98Z"], ["back", "M66 102 Q82 108 99 104 L99 158 Q84 168 74 156 Q66 132 66 102Z"], ["arms", "M44 106 Q39 120 42 138 Q48 144 52 136 Q54 120 52 106Z"], ["arms", "M38 150 Q32 170 27 188 Q33 192 38 184 Q44 168 46 152Z"], ["glutes", "M72 198 Q86 192 99 200 L99 232 Q84 240 72 228 Q68 212 72 198Z"], ["legs", "M71 240 Q66 265 72 292 Q80 294 83 272 Q82 252 80 240Z"], ["legs", "M85 240 Q94 252 94 278 Q91 292 86 292 Q84 270 85 240Z"], ["legs", "M71 306 Q66 330 73 356 Q82 348 83 322 Q83 308 71 306Z"], ["legs", "M85 306 Q92 326 90 350 Q86 356 84 350 Q84 326 85 306Z"]]};
+const GREY = [142, 149, 155];
+const hex2 = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+const mix = (c, t) => { const g = hex2(c); return 'rgb(' + g.map((v, i) => Math.round(GREY[i] + (v - GREY[i]) * t)).join(',') + ')'; };
 function bodySvg(rec) {
-  const NEON = '#b8ff2c', CY = '#38e8ff';
-  const mus = (g, d, mir) => { const col = gc(g), sel = ui.muscle === g, r = rec[g] == null ? 0 : rec[g];
-    const el = `<path class="sh-mp${sel ? ' sel' : ''}" data-act="muscle" data-id="${g}" d="${d}" style="fill:${col};fill-opacity:${(.2 + r / 170).toFixed(2)};stroke:${col};filter:drop-shadow(0 0 ${sel ? 5 : 2.5}px ${col})"/>`;
-    return mir ? el + `<g transform="translate(100 0) scale(-1 1)">${el}</g>` : el; };
-  const half = d => `<path d="${d}" class="sh-sil"/><g transform="translate(100 0) scale(-1 1)"><path d="${d}" class="sh-sil"/></g>`;
-  const front = ui.body === 'front';
-  const circuits = front
-    ? `<path class="sh-ckt" d="M50 28 V36 M50 42 V58 M41 62 H59 M30 62 H24 L22 74 M70 62 H76 L78 74 M42 108 L40 150 M58 108 L60 150"/>`
-    : `<path class="sh-ckt" d="M50 28 V80 M50 46 H36 M50 46 H64 M50 66 H38 M50 66 H62 M42 112 L40 150 M58 112 L60 150"/>`;
-  const nodes = [[50,36],[27,35],[73,35],[14,72],[86,72],[40,150],[60,150],[50,58]].map(([x,y],k) => `<circle class="sh-node" cx="${x}" cy="${y}" r="1.6" style="animation-delay:${(k*.35).toFixed(2)}s"/>`).join('');
-  return `<svg viewBox="0 0 100 190" class="sh-cy" role="img" aria-label="Мышцы забиты">
-  <defs><pattern id="shg" width="8" height="8" patternUnits="userSpaceOnUse"><path d="M8 0H0V8" fill="none" stroke="${NEON}" stroke-opacity=".07" stroke-width=".5"/></pattern>
-  <linearGradient id="shs" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${NEON}" stop-opacity="0"/><stop offset=".5" stop-color="${NEON}" stop-opacity=".55"/><stop offset="1" stop-color="${NEON}" stop-opacity="0"/></linearGradient>
-  <clipPath id="shc"><rect x="0" y="0" width="100" height="190"/></clipPath></defs>
-  <rect width="100" height="190" rx="8" fill="#0b0f0c"/><rect width="100" height="190" rx="8" fill="url(#shg)"/>
-  <g stroke="${NEON}" stroke-opacity=".6" stroke-width="1" fill="none"><path d="M3 12V3H12M88 3H97V12M3 178V187H12M88 187H97V178"/></g>
-  <ellipse cx="50" cy="187" rx="26" ry="2.2" fill="${NEON}" fill-opacity=".22"/>
-  <g>${half(BODY_L)}</g>
-  <ellipse cx="50" cy="13" rx="8" ry="9.5" class="sh-sil"/>
-  <path d="M43 12.5 H57 L56 16 H44Z" fill="${CY}" fill-opacity=".85" style="filter:drop-shadow(0 0 3px ${CY})"/>
-  <path d="M58 9 L62 7 V16 L58 18" fill="none" stroke="${NEON}" stroke-width=".8"/>
-  ${circuits}
-  ${(mpath[ui.body]).map(([g, d, m]) => mus(g, d, m)).join('')}
-  ${front ? `<path class="sh-ckt" d="M41 72 H59 M41 82 H59 M50 62 V94" style="stroke-opacity:.35"/>` : ''}
-  ${nodes}
-  <g clip-path="url(#shc)"><rect class="sh-scan" x="0" y="0" width="100" height="14" fill="url(#shs)"/></g>
-  <text x="6" y="187" font-size="4.2" fill="${NEON}" fill-opacity=".7" font-family="monospace">${front ? 'FRONT' : 'REAR'}</text>
+  let fem = false; try { fem = S.profile && S.profile.sex === 'f'; } catch (e) {}
+  const fig = fem ? FIG.f : FIG.m, front = ui.body === 'front', CY = '#38e8ff', NEON = '#b8ff2c';
+  const sil = `<g class="sh-sil2">${fem ? `<path d="${fig.hair}"/>` : ''}<ellipse cx="100" cy="27" rx="${fem ? 12 : 13.5}" ry="${fem ? 16 : 17}"/>` +
+    `<path d="${fig.body}"/><g transform="translate(200 0) scale(-1 1)"><path d="${fig.body}"/></g><path d="${fig.arm}"/><g transform="translate(200 0) scale(-1 1)"><path d="${fig.arm}"/></g><rect class="sh-seam" x="98" y="56" width="4" height="160"/></g>`;
+  const mus = ([g, d]) => { const r = Math.max(0, Math.min(100, rec[g] == null ? 0 : rec[g])), t = r / 100, col = gc(g), sel = ui.muscle === g;
+    const k = fem ? FSX[g] || 1 : 1, tr = k !== 1 ? ` transform="translate(100 0) scale(${k} 1) translate(-100 0)"` : '';
+    const el = `<path class="sh-mp${sel ? ' sel' : ''}" data-act="muscle" data-id="${g}" d="${d}"${tr} style="fill:${mix(col, Math.min(1, t * 1.05))};filter:${t > .05 ? `drop-shadow(0 0 ${(1 + t * 4).toFixed(1)}px ${col})` : 'none'}"/>`;
+    return el + `<g transform="translate(200 0) scale(-1 1)">${el}</g>`; };
+  return `<svg viewBox="0 0 200 420" class="sh-cy sh-fig" role="img" aria-label="Мышцы забиты">
+  <defs><linearGradient id="shs" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${CY}" stop-opacity="0"/><stop offset=".5" stop-color="${CY}" stop-opacity=".35"/><stop offset="1" stop-color="${CY}" stop-opacity="0"/></linearGradient><clipPath id="shc"><rect width="200" height="420"/></clipPath></defs>
+  ${sil}
+  ${MUS[ui.body].map(mus).join('')}
+  <g clip-path="url(#shc)"><rect class="sh-scan" x="0" y="0" width="200" height="22" fill="url(#shs)"/></g>
+  <text x="8" y="412" font-size="8" fill="${NEON}" fill-opacity=".7" font-family="monospace">${front ? 'FRONT' : 'REAR'}</text>
   </svg>`;
 }
 function suggest(h, rec) {
@@ -680,7 +676,7 @@ function mount() {
   if (!wasVisible) { wasVisible = true; if (!ui.modal || ui.modal === 'result') paint(); }
 }
 function init() {
-  if (!document.querySelector('link[data-sport-hub]')) { const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = new URL('sport-hub.css?v=7', document.baseURI).href; l.dataset.sportHub = 'true'; document.head.append(l); }
+  if (!document.querySelector('link[data-sport-hub]')) { const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = new URL('sport-hub.css?v=9', document.baseURI).href; l.dataset.sportHub = 'true'; document.head.append(l); }
   try { const o = window.render; if (typeof o === 'function') { window.render = function () { const r = o.apply(this, arguments); try { mount(); } catch (e) { console.warn(e); } return r; }; } } catch (e) {}
   mount();
 }
