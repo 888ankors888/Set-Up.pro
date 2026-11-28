@@ -158,7 +158,7 @@
   // this dialog stays only for the photo estimate result (window.foodOpenEstimateWindow).
   // food-add-meals.js adds the meal buttons above the search field once the window script is loaded.
   const loader = document.createElement('script');
-  loader.src = 'food-add-modal.js?v=5';
+  loader.src = 'food-add-modal.js?v=6';
   loader.onload = () => {
     const meals = document.createElement('script');
     meals.src = 'food-add-meals.js?v=local';

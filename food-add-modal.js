@@ -172,7 +172,7 @@ const CSS = `
 .fam-mini{display:flex;align-items:center;gap:4px;flex:none}
 .fam-mini button{width:28px;height:28px;border-radius:8px;background:var(--bg2)!important;border:1px solid rgba(255,255,255,.1)!important;font-weight:700;display:flex;align-items:center;justify-content:center}
 .fam-mini button:hover{border-color:var(--lime)!important;color:var(--lime)}
-.fam-mini span{min-width:56px;text-align:center;font-size:12px;font-weight:700;font-variant-numeric:tabular-nums}
+.fam-dual{display:flex;gap:10px;align-items:stretch}.fam-dual .fam-primary{flex:1;width:auto}.fam-favbtn{flex:none;width:52px;min-height:46px;border-radius:14px;background:var(--bg2)!important;border:1px solid rgba(198,248,92,.35)!important;color:var(--lime);display:flex;align-items:center;justify-content:center}.fam-favbtn.on{background:rgba(198,248,92,.16)!important;border-color:var(--lime)!important}.fam-favbtn:disabled{opacity:.42}.fam-gi{display:flex;align-items:center;justify-content:center;gap:2px;min-width:64px}.fam-gi input{width:46px;background:transparent!important;border:0!important;border-bottom:1px dotted var(--mu)!important;border-radius:0;color:inherit;font:inherit;font-weight:700;text-align:right;padding:0;-moz-appearance:textfield}.fam-gi input::-webkit-outer-spin-button,.fam-gi input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}.fam-gi em{font-style:normal;color:var(--mu);font-size:12px}.fam-mini span{min-width:56px;text-align:center;font-size:12px;font-weight:700;font-variant-numeric:tabular-nums}
 .fam-total{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;margin:10px 0;border-radius:12px;background:var(--bg2);border:1px solid var(--line);font-size:12px;color:var(--mu);font-variant-numeric:tabular-nums}
 .fam-total b{color:var(--lime);font-size:14px}
 .fam-vf{position:relative;height:178px;border-radius:18px;overflow:hidden;background:radial-gradient(circle at 50% 50%,rgba(198,248,92,.1),rgba(6,16,13,.96));border:1px solid var(--line);display:flex;align-items:center;justify-content:center;text-align:center;margin-bottom:10px;padding:12px}
@@ -220,6 +220,7 @@ function ensure() {
 
   dlg.addEventListener('click', onClick);
   dlg.addEventListener('input', onInput);
+  dlg.addEventListener('change', e => { const t = e.target; if (t && t.dataset && t.dataset.gi !== undefined) { const r = st.ai.rows[Number(t.dataset.gi)], v = Number(String(t.value).replace(',', '.')); if (r && v > 0) r.grams = Math.min(5000, v); const ta = $('#fam-ai-text'); if (ta) st.ai.text = ta.value; paint(); } });
   dlg.addEventListener('keydown', e => {
     if (e.key === 'Enter' && e.target.id === 'fam-bc-manual') { e.preventDefault(); lookupBarcode(e.target.value); }
     if (e.key === 'Enter' && e.target.id === 'fam-input' && st.view === 'search') {
@@ -358,11 +359,11 @@ function aiHtml() {
     const m = f ? macros(f, r.grams) : null;
     return '<div class="fam-airow' + (r.on && f ? '' : ' off') + '"><button type="button" class="fam-chk" data-act="aichk" data-i="' + i + '" aria-label="Выбрать"' + (f ? '' : ' disabled') + '><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></button>' +
       '<div style="flex:1;min-width:0"><div class="fam-name">' + E(f ? f.n : r.label) + '</div><div class="fam-macros">' + (f ? Math.round(m.k) + ' ккал · Б ' + n1(m.p) + ' · Ж ' + n1(m.f) + ' · У ' + n1(m.u) + ' · ' + Math.round(r.grams) + (r.p.drink ? ' мл' : ' г') + (r.ai ? ' · расчёт ИИ' : '') : 'не удалось рассчитать — уточните описание') + '</div></div>' +
-      (f ? '<div class="fam-mini"><button type="button" data-act="aistep" data-i="' + i + '" data-d="-1" aria-label="Меньше">−</button><span><button type="button" data-act="aiunit" data-i="' + i + '" title="Сменить меру" style="background:none!important;border:0!important;width:auto;height:auto;padding:0 2px;font:inherit;color:inherit;text-decoration:underline dotted">' + E(FP.label(r.p, r.unit, r.qty)) + '</button></span><button type="button" data-act="aistep" data-i="' + i + '" data-d="1" aria-label="Больше">+</button></div>' +
-      '<button type="button" class="fam-heart' + (isFav(f.n) ? ' on' : '') + '" data-act="fav" data-key="' + E(f.n) + '" aria-label="Избранное" style="width:28px;height:28px">' + heartSvg(isFav(f.n)) + '</button>' : '') + '</div>';
+      (f ? '<div class="fam-mini"><button type="button" data-act="aistep" data-i="' + i + '" data-d="-1" aria-label="Меньше">−</button><span class="fam-gi"><input type="number" inputmode="decimal" min="1" step="any" data-gi="' + i + '" value="' + Math.round(r.grams) + '" aria-label="Количество"><em>' + (r.p.drink ? 'мл' : 'г') + '</em></span><button type="button" data-act="aistep" data-i="' + i + '" data-d="1" aria-label="Больше">+</button></div>' : '') + '</div>';
   }).join('');
   let tk = 0, tp = 0, tf = 0, tu = 0, n = 0;
   a.rows.forEach(r => { const f = r.name && findFood(r.name); if (f && r.on) { const m = macros(f, r.grams); tk += m.k; tp += m.p; tf += m.f; tu += m.u; n++; } });
+  const sel = a.rows.filter(r => r.on && r.name && findFood(r.name)), allFav = sel.length > 0 && sel.every(r => isFav(r.name));
   return '<div class="fam-sub"><button type="button" class="fam-back" data-act="back">← Назад</button><span class="fam-label">Поиск через ИИ</span></div>' +
     
     '<textarea class="fam-ta" id="fam-ai-text" maxlength="2000" placeholder="Опишите, что вы съели: например, овсянка с бананом и 2 яйца">' + E(a.text) + '</textarea>' +
@@ -372,7 +373,7 @@ function aiHtml() {
     (a.err ? '<div class="fam-err">' + E(a.err) + '</div>' : '') +
     (a.choices.length ? a.choices.map((c, ci) => '<div class="fam-note"><div style="margin-bottom:6px;font-weight:600">' + E(c.question) + '</div><div class="fam-chips" style="margin:0">' + c.options.map((o, oi) => '<button type="button" class="fam-chip" data-act="aichoice" data-c="' + ci + '" data-o="' + oi + '">' + E(o) + '</button>').join('') + '</div></div>').join('') : a.questions.length ? '<div class="fam-note">' + a.questions.map(E).join('<br>') + '</div>' : '') +
     (a.rows.length ? '<div style="margin-top:12px">' + rows + '<div class="fam-total"><span>Итого</span><span><b>' + Math.round(tk) + ' ккал</b> · Б ' + n1(tp) + ' · Ж ' + n1(tf) + ' · У ' + n1(tu) + '</span></div>' +
-      '<button type="button" class="fam-primary" data-act="aiadd"' + (n ? '' : ' disabled') + '>Добавить выбранное (' + n + ')</button></div>' : '');
+      '<div class="fam-dual"><button type="button" class="fam-primary" data-act="aiadd"' + (n ? '' : ' disabled') + '>Добавить приём пищи</button><button type="button" class="fam-favbtn' + (allFav ? ' on' : '') + '" data-act="aifavall"' + (n ? '' : ' disabled') + ' aria-label="Добавить в избранное">' + heartSvg(allFav) + '</button></div></div>' : '');
 }
 const STOP = new Set(['и', 'с', 'со', 'на', 'без', 'в', 'из', 'по']);
 function stem(w) {
@@ -722,9 +723,9 @@ function onClick(e) {
   else if (act === 'airun') runAi();
   else if (act === 'aichoice') { const c = st.ai.choices[Number(el.dataset.c)], o = c && c.options[Number(el.dataset.o)]; if (c && o) { st.ai.clar.push(c.question.replace(/\?$/, '') + ': ' + o); runAi(true); } }
   else if (act === 'aichk') { const r = st.ai.rows[Number(el.dataset.i)]; if (r && r.name) { r.on = !r.on; const ta = $('#fam-ai-text'); if (ta) st.ai.text = ta.value; paint(); } }
-  else if (act === 'aistep') { const r = st.ai.rows[Number(el.dataset.i)]; if (r && r.p) { const x = FP.unitOf(r.p, r.unit); r.qty = Math.max(x.min, Math.min(x.max, FP.round(r.qty + Number(el.dataset.d) * x.step, 2))); r.grams = FP.grams(r.p, r.unit, r.qty); const ta = $('#fam-ai-text'); if (ta) st.ai.text = ta.value; paint(); } }
-  else if (act === 'aiunit') { const r = st.ai.rows[Number(el.dataset.i)]; if (r && r.p && r.p.units.length > 1) { const g = r.grams, k = (r.p.units.findIndex(x => x.id === r.unit) + 1) % r.p.units.length, x = r.p.units[k]; r.unit = x.id; r.qty = x.base ? Math.max(1, FP.round(g / x.g, 0)) : Math.max(x.min, FP.round(g / x.g / x.step, 0) * x.step); r.grams = FP.grams(r.p, r.unit, r.qty); const ta = $('#fam-ai-text'); if (ta) st.ai.text = ta.value; paint(); } }
-  else if (act === 'aiadd') { if (commit(st.ai.rows.filter(r => r.on && r.name).map(r => ({ food: findFood(r.name), grams: r.grams, label: FP.label(r.p, r.unit, r.qty) })), false)) { st.ai.rows = []; st.ai.text = ''; } }
+  else if (act === 'aistep') { const r = st.ai.rows[Number(el.dataset.i)]; if (r && r.p) { const st0 = r.grams < 50 ? 5 : r.grams < 300 ? 10 : 25; r.grams = Math.max(5, Math.min(5000, Math.round((r.grams + Number(el.dataset.d) * st0) / 5) * 5)); const ta = $('#fam-ai-text'); if (ta) st.ai.text = ta.value; paint(); } }
+  else if (act === 'aifavall') { const sel = st.ai.rows.filter(r => r.on && r.name && findFood(r.name)); if (sel.length) { const all = sel.every(r => isFav(r.name)); sel.forEach(r => { if (all === isFav(r.name)) toggleFav(r.name); }); const ta = $('#fam-ai-text'); if (ta) st.ai.text = ta.value; paint(); } }
+  else if (act === 'aiadd') { if (commit(st.ai.rows.filter(r => r.on && r.name).map(r => ({ food: findFood(r.name), grams: r.grams, label: Math.round(r.grams) + (r.p.drink ? ' мл' : ' г') })), false)) { st.ai.rows = []; st.ai.text = ''; } }
   else if (act === 'snap') snap();
   else if (act === 'gallery') { const f = $('#fam-file'); if (f) { f.onchange = () => { if (f.files && f.files[0]) sendPhoto(f.files[0]); }; f.click(); } }
   else if (act === 'bcphoto') { const f = $('#fam-bc-file'); if (f) { f.onchange = () => { if (f.files && f.files[0]) scanBarcodeFile(f.files[0]); f.value = ''; }; f.click(); } }
