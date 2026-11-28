@@ -494,6 +494,7 @@ function render(){
   window.SetupCalendar?.remember(day);
   if(tab==='today')tab='diary'; // Compatibility with older external scripts.
   const nav=$('#nav');
+  if(!S.profile&&!editing){S.profile={sex:'f',age:30,h:165,w:65,tw:60,act:1.375,goal:'lose',health:[],notes:'',pw:8,pl:18};try{if(!localStorage.getItem('setup_onboard'))localStorage.setItem('setup_onboard','pending')}catch(e){}save()}
   if(!S.profile||editing){$('#app').innerHTML=brand(true)+formView();nav.style.display='none';return}
   nav.style.display='flex';
   const T=[['sport','Спорт'],['goals','Мои цели'],['diary','Дневник'],['report','Отчёты'],['profile','Настройки']];
@@ -1184,7 +1185,7 @@ html:root:root:root:root body:has(#sport-section:not([hidden])) #app [data-setup
 
 <script src="food-suggest.js?v=1"></script>
 <script src="diary-energy.js?v=2"></script>
-<script src="page-headings.js?v=5"></script><script src="swipe-nav.js?v=2"></script>
+<script src="page-headings.js?v=5"></script><script src="first-run.js?v=1"></script><script src="swipe-nav.js?v=2"></script>
 <script src="workouts/store.js?v=integrated-1"></script>
 <script id="integrated-sport">
 (() => {
