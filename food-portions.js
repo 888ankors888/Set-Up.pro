@@ -183,8 +183,7 @@
         const own = p.units.find(x => hit[1].includes(x.id));
         if (own) return { u: own.id, q: qn };
         const gen = GENERIC[hit[1][0]];
-        if (gen && !p.units.some(x => !x.base)) { p.units.unshift(Object.assign(u(hit[1][0], gen), { pres: [1, 2, 3] })); return { u: hit[1][0], q: qn }; }
-        if (gen) { const x = p.units.find(y => !y.base); return { u: x.id, q: qn }; }
+        if (gen) { const gw = (hit[1][0] === 'tbsp' && !p.drink) ? 20 : gen; return { u: base.id, q: Math.max(1, round(qn * gw / base.g, 0)) }; }
       }
       const own = p.units.find(x => !x.base);
       if (own) return { u: own.id, q: qn };
